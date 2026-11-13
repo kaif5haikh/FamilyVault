@@ -1,5 +1,11 @@
 # Revised architecture and database review gate
 
+**Execution update:** the owner's autonomous end-to-end mission supersedes the
+old stop-for-human-review gate below and authorizes implementation/engineering
+decisions. See ADR 0004. The historical checklist is retained as engineering
+acceptance work; it is not marked as a completed human review. Production
+deployment and real-data safety boundaries remain in force.
+
 **Status: revised architecture pending human review.** The owner's confirmed
 product decisions below are authoritative; they do not approve this revised SQL,
 financial implementation, production deployment or handling real family data.
