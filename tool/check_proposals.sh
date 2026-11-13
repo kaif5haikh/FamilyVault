@@ -24,7 +24,7 @@ PY
 scratch="$(mktemp -d "$PWD/.cache/pg-review-XXXXXXXX")"
 chmod 700 "$scratch"
 mkdir "$scratch/socket"
-initdb -D "$scratch/data" -A trust --no-locale > "$scratch/init.log"
+initdb -D "$scratch/data" -A trust --no-locale --encoding=UTF8 > "$scratch/init.log"
 cleanup() {
   pg_ctl -D "$scratch/data" -m fast -w stop > "$scratch/stop.log" 2>&1 || true
 }
@@ -49,7 +49,7 @@ GRANT SELECT ON ALL TABLES IN SCHEMA familyvault_proposal TO proposal_reader;
 -- Synthetic isolation probes, rolled back after verification.
 BEGIN;
 INSERT INTO familyvault_proposal.families VALUES
- ('00000000-0000-4000-8000-000000000001', 'synthetic isolation probe', 1, now(), now(), NULL);
+ ('00000000-0000-4000-8000-000000000001', 'synthetic isolation probe', 'INR', 1, now(), now(), NULL);
 SET LOCAL ROLE proposal_reader;
 DO $$
 BEGIN
@@ -61,4 +61,5 @@ ROLLBACK;
 SELECT count(*) AS proposal_table_count FROM pg_tables
  WHERE schemaname = 'familyvault_proposal';
 SQL
+python3 tool/check_design_constraints.py --pg-socket "$scratch/socket"
 printf '%s\n' 'PostgreSQL proposal: DDL/forced-RLS/deny-all checks passed (not production policy validation)'

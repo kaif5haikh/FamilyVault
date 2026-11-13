@@ -1,81 +1,153 @@
-# Backup, export, deletion and disaster recovery — proposal
+# Backup and recovery — both destinations required, implementation proposed
 
-## Backup is separate from sync
+The owner requires encrypted local backups **and** Google Drive backups. These
+are independent destinations using one authenticated archive format. Supabase is
+the live synchronization authority; Drive is never a live financial database.
+No Drive account, OAuth client/token, cloud project or paid service is configured
+by this documentation update. See [ADR 0003](decisions/0003-confirmed-product-architecture.md).
 
-Supabase is the shared live database, not an independent backup. Google Drive
-may receive encrypted archives through an explicitly authorized future adapter;
-it is not the live database. No Drive account access or cloud setup is performed
-now. Do not rely on paid PITR or assume free-tier backup retention/availability.
-Retention, cadence, recovery point/time objectives and custodians need review.
+## Snapshot and archive
 
-## Archive format and creation
+A snapshot freezes consistent authorized records, immutable document ciphertext,
+all recovery-wrapped keys needed to decrypt them, schema/protocol/envelope versions,
+family/snapshot IDs, authorization epoch, server watermark and attachment digests.
+Use SQLite backup API/consistent logical export, not a copy of an open WAL file.
+Coordinate document references with the DB snapshot; no missing attachment or
+missing recovery key envelope may be classified as a complete full-vault backup.
+Record whether pending offline operations are included and preserve their IDs.
 
-An authenticated, versioned manifest identifies family, creator, snapshot time,
-database/schema/protocol version, object versions, key versions, ciphertext
-digests/sizes and sync watermark. Identifiers and sensitive metadata belong
-inside the encrypted envelope. Never include refresh tokens, service keys or
-unwrapped document/DB keys in a plaintext archive.
+Encrypt/authenticate manifest, database data, attachment index and recovery key
+material with a reviewed versioned, bounded-memory AEAD archive. Use independent
+random backup keys and a separately held high-entropy recovery key. The archive
+may include wrapped keys; it must never contain the only usable recovery key,
+unwrapped private keys in plaintext, refresh tokens, Drive tokens or service keys.
+An OS-device-bound key alone cannot recover on a clean device. Recovery custodians,
+enrollment and any optional passphrase KDF are still protocol review decisions.
 
-Create a transactionally consistent SQLite snapshot using the SQLite backup API
-or a consistent logical export; copying an open database file ignores WAL state.
-Coordinate an attachment manifest with the snapshot; include referenced immutable
-ciphertext versions. Separate server-confirmed data from local pending operations.
-A backup with pending local work is valid but must be marked as such.
+The producer authenticates/decrypts/verifies the finished archive against the
+snapshot before marking the artifact complete. Record schema/format, manifest
+and ciphertext digests, exact size and validation time. Catalog fields alone do
+not prove those operations occurred. A complete archive with a clearly labelled
+pending-outbox section is distinct from an unfinished archive or missing files.
 
-Encrypt/authenticate the archive with a random backup key and wrap that key to a
-separately held high-entropy recovery key. If a user passphrase option is added,
-require a reviewed memory-hard KDF (e.g. Argon2id with versioned tuned parameters)
-and weak-password handling; password-only shortcuts are not a foundation feature.
-Stream in bounded memory using a reviewed chunked envelope, unique nonces and
-manifest binding. AEAD failure makes restore fail closed.
+## Independent copy state and success
 
-Upload ciphertext and verify destination acknowledgement and digest before
-recording backup success. Use opaque names and retain an independent encrypted
-copy/recovery material. Never store the only recovery key in the same destination.
-Server disaster backup must include database state, audit/receipt/feed floor,
-document ciphertext and wrapped key envelopes at a coordinated watermark.
+Artifact state: `building → complete` or `failed`. Destination attempt state:
+`queued → writing → verifying → verified`, with `failed`/`cancelled` outcomes.
+Start a copy only from a complete artifact. A destination receipt requires target
+acknowledgement, matching complete size/SHA-256 and verification evidence. Transport
+progress at 100%, an HTTP upload response or an existing filename alone is not
+success. Retrying creates/continues a known attempt; never reuse a failed receipt.
 
-## Restore procedure
+One snapshot can have a verified local copy and a failed/deferred Drive copy.
+Report each separately, including last successful time, pending/error/retry state,
+and whether a complete verified backup exists at **both** required destinations.
+Do not mark a skipped job successful or show overall healthy status from one copy.
 
-1. Use an isolated installation/temp vault; retain the current vault untouched.
-2. Obtain recovery material separately, authenticate/decrypt archive and verify
-   every manifest digest, envelope version and object reference.
-3. Run integrity/foreign-key checks and supported migrations on the restored copy.
-   Reject unsupported future schemas; no destructive downgrade/reset fallback.
-4. Authenticate online and fetch **current** memberships/device grants. Backup
-   permissions and old refresh tokens never grant current access.
-5. Preserve entity/operation IDs; register the restored installation as a new
-   device. Reconcile pending operations against server receipts and the retention
-   floor before replay; a stale snapshot must rebootstrap to avoid resurrection.
-6. Check authorized counts/reconciliation totals privately; verify documents can
-   actually decrypt. Present results without logging record contents.
-7. Switch to the validated vault only after user review; retain the former copy
-   until recovery is confirmed. Any permanent cleanup requires explicit approval.
+## Local destination
 
-Exercise missing/wrong key, tampered/truncated archive, absent attachment, old
-schema, expired cursor, already-accepted pending mutation and revoked member.
-Document an actual isolated restore drill before calling backups production-ready.
+Offer encrypted export to an explicitly selected local destination. Produce a
+staged file, flush/durably commit where supported, read it back, authenticate the
+archive and verify size/digest before recording a verified copy. Prefer atomic
+rename plus durable directory update when the filesystem supports them. Mobile
+document providers can lack atomic rename/fsync: write a commit marker last,
+read back all bytes and do not claim stronger durability than the provider offers.
+Orphan temporary files/markers never become restorable entries automatically.
 
-## Export and recovery portability
+Manual backups are required. Scheduled backups use platform-permitted jobs with
+unlocked key availability, storage and power constraints. Cadence/time zone/retention
+are not yet chosen. Android/iOS can delay or refuse jobs; record deferred/failed
+attempts and provide foreground/manual recovery. A file solely on the source phone
+is lost with that phone; independent custody/removable storage needs review.
+Local destination URIs, bookmarks, job leases and OAuth key references stay in the
+account/device encrypted local store, outside the shared backend catalog.
 
-Offer explicit-scope export of authorized structured data with currency/units,
-dates, stable IDs, version and relationships. Export documents only with current
-authorization and successful decryption. Plaintext exports require reauthentication,
-an explicit destination and an exposure notice at the export action. Avoid
-leaving copies in shared temp directories; avoid CSV formula injection when
-human-readable spreadsheet export is implemented. No export implementation yet.
+## Google Drive destination
 
-## Deletion
+Proposed adapter uses the narrow `drive.file` scope for app-created/explicitly
+selected encrypted backup files. OAuth consent and platform client configuration
+remain future work. Store tokens in OS secure storage; no credentials in archives,
+Git, PostgreSQL catalog or logs. Family membership does not confer Google-account
+access; backup account custody/discovery on a clean device must be decided and tested.
+The hidden `appDataFolder` alternative has different discovery/sharing behavior
+and is not silently substituted for user-accessible backup files.
 
-Differentiate user/device revocation, logical record deletion, document version
-retention, family deletion and account deletion. Domain deletion emits tombstones
-and audit metadata; hard purge occurs only after reviewed retention/cursor/backup
-constraints. Document object deletion follows reference/manifest validation.
-Auth user deletion must not silently cascade-delete shared financial history.
-Preserve required provenance with an approved pseudonymization policy.
+Use resumable binary uploads and opaque names/app metadata. Each snapshot version
+is a **new file**, not an overwrite or reliance on provider revision retention.
+The authenticated encrypted manifest/catalog identifies snapshot, lineage and
+watermark; Drive filename/modified time is not an authority. Retries reconcile
+known attempt IDs and verify any candidate remote file before treating it as the
+same backup. Do not create public links or automatically share files externally.
 
-Reauthenticate family-wide deletion, export/recovery options and explicit scope
-confirmation; revoke memberships/sessions/devices, remove envelopes and eligible
-objects, then verify. Explain delayed expiry of encrypted backups and the inability
-to erase recipients' downloads. Do not invent legal retention periods. Important
-data is never permanently deleted by this initialization work.
+After a final upload acknowledgement, retrieve file metadata and verify identity,
+non-trashed state, complete size and SHA-256 where provided. If the strong digest
+is unavailable, read/download the completed ciphertext and hash it; MD5 alone is
+not the application's authenticity/integrity test. Verify authenticated archive
+contents again before every restore regardless of cached upload success.
+Interrupted/resumable-session expiry, 401/403, quota, deletion and unavailable
+network remain incomplete/failed states. No automatic paid quota purchase.
+
+Download backups with the separately authorized Drive connection. Scan/discover
+app-created versions and rebuild a local catalog from authenticated manifests,
+not from a source-device database that may have been lost. Clean Android and iOS
+installs, a missing catalog and the operator's Drive credentials are required test
+cases. A Drive account/file unavailable to the recovering member remains a real
+recovery dependency; local export is an independent alternative.
+
+API facts informing this proposed design: [scopes](https://developers.google.com/workspace/drive/api/guides/api-specific-auth),
+[resumable uploads](https://developers.google.com/workspace/drive/api/guides/manage-uploads),
+[file checksums](https://developers.google.com/workspace/drive/api/reference/rest/v3/files),
+[revision handling](https://developers.google.com/workspace/drive/api/guides/manage-revisions),
+[app data folder](https://developers.google.com/workspace/drive/api/guides/appdata).
+No Google Drive integration is implemented or tested yet.
+
+## Restore and clean-device acceptance
+
+1. Begin on a clean installation/isolation directory; preserve the existing vault.
+   Select a verified local export or independently downloaded Drive version.
+2. Obtain recovery material separately. Authenticate manifest and all envelope
+   metadata; check every digest/length/key reference and reject missing, truncated,
+   wrong-key, tampered or unsupported archives before activating any restored data.
+3. Reconstruct DB and document files, validate SQLite integrity/FKs, apply only
+   reviewed migrations and actually decrypt/verify every referenced document.
+   Metadata-only validation is not complete recovery. Do not restore auth tokens.
+4. In normal online recovery, independently authenticate the member, approve/enroll
+   the new device, fetch current membership/session bindings and rewrap keys for it.
+   Old grants/device approvals from a backup do not authorize current live access.
+5. Preserve record/operation IDs; reconcile pending work against current receipts
+   and the retention floor before retry. Rebootstrap stale cursors to prevent
+   duplication, permission resurrection and deleted-record resurrection.
+6. Compare snapshot counts, relationships, exact paise values and decryption results
+   privately. Present a clear validation report; switch only after validation and
+   explicit confirmation. Shared-server replacement is administrator-only and a
+   separate reviewed, destructive recovery operation.
+
+If Supabase/Auth itself is unavailable or lost, the recovery key permits isolated
+archive verification/decryption. This must not silently reactivate old accounts,
+roles or device grants. A quarantined offline recovery mode and trusted administrator
+re-establishment procedure need review before a disaster-recovery claim. Full
+backend recovery must restore coordinated data/receipts/audit/ciphertext at a known
+watermark, then establish current authentication and authorization independently.
+
+Test **both** destinations on clean devices: missing/wrong recovery key, absent
+source device/catalog, corrupted/truncated copy, missing document/key envelope,
+pending already-accepted operations, stale schema/cursor, revoked membership/device,
+Drive consent revoked/quota failure and interrupted copy. Record an actual restore
+drill and recovery time before claiming production readiness. The requirement is
+confirmed; no such drill has yet been performed.
+
+## Export, retention and deletion
+
+Authorized structured exports preserve IDs, dates, currency/scale and relationships;
+exact INR output is paise with Indian presentation. Plaintext export needs an
+explicit destination and reauthentication; do not create shared temporary copies
+or spreadsheet formula injection. All exports remain outside Git.
+
+Financial records use soft deletion and immutable audit. Family-wide purge/account
+removal are separate administrator workflows; Auth deletion must not cascade away
+shared history. Backup file deletion/retention and recovery custodians need review;
+no cadence, legal retention, RPO/RTO or paid PITR dependency is invented here.
+Do not delete the last verified independent copy before a replacement is verified.
+Key revocation cannot erase old downloads/backups. Hash lineage cannot by itself
+prove the newest backup exists if an attacker deletes the newest catalog/files;
+trusted recovery checkpoints and rollback detection require review.

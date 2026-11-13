@@ -5,6 +5,9 @@
 - Read `docs/architecture.md`, `docs/database.md` and `docs/review-gate.md` before
   implementation. Financial features and financial migrations wait for a human
   architecture/database review. Agents must not mark that review complete.
+- `docs/decisions/0003-confirmed-product-architecture.md` records authoritative
+  INR/paise, shared family editing/documents and both local/Drive backup decisions.
+  Ownership is metadata, never a private document ACL. Do not re-open these defaults.
 - Restricted billing remains unspecified; do not invent its requirements.
 - Routine project file edits, free tool installation, local checks, commits and
   private-origin pushes are authorized. Do not repeatedly request approval.

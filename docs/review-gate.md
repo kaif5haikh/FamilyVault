@@ -1,29 +1,45 @@
-# Architecture and database review gate
+# Revised architecture and database review gate
 
-**Status: pending human review.** Writing these documents or running a schema
-check does not constitute approval. Phase 3 infrastructure can proceed; financial
-features, financial migrations and real data entry cannot.
+**Status: revised architecture pending human review.** The owner's confirmed
+product decisions below are authoritative; they do not approve this revised SQL,
+financial implementation, production deployment or handling real family data.
+Agents must not mark architecture review complete from automated test results.
 
-Before the first financial implementation, record the reviewer, date, decisions
-and accepted changes here or in a linked reviewed PR:
+## Product decisions confirmed by the owner — 2026-11-13
 
-- [ ] Product scope and module boundaries; restricted billing remains deferred.
-- [ ] Role assignments, resource visibility and administrator access to private documents.
-- [ ] Currency, precision, time zones, accounting model and transfer invariants.
-- [ ] Liability interest/EMI rules and business P&L/stock costing basis.
-- [ ] Asset ownership and dated valuation rules; dashboard formulas.
-- [ ] PostgreSQL/SQLite schema, tenant-safe foreign keys and migration policy.
-- [ ] Durable sync ordering, conflict UX, revocation epoch, tombstone retention.
-- [ ] Document encryption, grant distribution, recovery and key rotation protocol.
-- [ ] Offline unlock/revocation limits; backup retention and recovery objectives.
+- [x] INR default, ₹, integer paise, Indian grouping and lakh/crore; extensible currencies and no financial floating point.
+- [x] Separate authenticated accounts, shared family view/add/edit, immutable actor history and soft financial deletion.
+- [x] Shared family document visibility with individual ownership metadata, authenticated audited access, encryption, enrollment and integrity.
+- [x] Both encrypted local and Google Drive backups with independent verified success and clean-device recovery requirements.
+- [x] Administrator-only membership/sensitive operations; outsider denial enforced on the backend.
 
-Before any production family data, additionally require:
+Authority and consequences: [ADR 0003](decisions/0003-confirmed-product-architecture.md).
+These are requirements, not claims of working features or completed recovery tests.
 
-- [ ] Executable RLS and storage-policy adversarial tests with distinct users/families.
-- [ ] Server mutation receipt and commit-order feed implementation plus multi-device fault tests.
-- [ ] Document encryption and interrupted-upload finalization tests.
-- [ ] Key recovery and encrypted backup/restore exercise on an isolated installation.
-- [ ] Android and iOS native security, session lifecycle and device tests.
-- [ ] Dependency/native-binary vulnerability review and export/deletion verification.
+## Revised technical review required before financial implementation
 
-No item is implicitly checked by autonomous repository initialization.
+Record reviewer/date/accepted changes here or in a reviewed PR. Do not re-open
+confirmed product defaults as unresolved; assess their implementation design:
+
+- [ ] Module boundaries and separate unresolved business policy; billing stays unspecified.
+- [ ] Shared-write RLS/RPC contract, actor stamping, enrollment/session binding and administrator boundaries.
+- [ ] Exact paise input/storage/formatting, accounting model, rounding, time zones and transfer invariants.
+- [ ] Liability interest/EMI, business P&L/stock costing, valuation/ownership precision and dashboard formulas.
+- [ ] Revised PostgreSQL/future SQLite schema, constraint review and safe Drift v1 migration path.
+- [ ] Multi-member conflicts, atomic audit/feed, consistent snapshots, epochs and retention.
+- [ ] Family-wide historical document keys, authenticated access gateway, audit integrity and rotation/recovery protocol.
+- [ ] Local/Drive backup state/receipt verification, operator/custodian policy and source-independent clean-device recovery.
+- [ ] Offline lease/revocation limitations, scheduling, retention and disaster trust/RPO/RTO.
+
+## Evidence additionally required before production family data
+
+- [ ] Real Auth/RLS/RPC/Storage adversarial tests with independent members and a second family.
+- [ ] Multi-device replay/conflict/commit-order/epoch/tombstone fault tests.
+- [ ] Document crypto/enrollment/gateway access-audit and interrupted-upload tests.
+- [ ] Full clean-device restore from **each** backup destination, without source device/catalog/old keystore.
+- [ ] Key loss/rotation, revoked membership and backend/Auth-loss disaster exercise.
+- [ ] Android/iOS native security, session and background-scheduling tests.
+- [ ] Refreshed dependencies/native advisories, export and deletion/retention verification.
+
+The locked foundation may remain as infrastructure. No financial feature or live
+backend deployment begins merely because these documentation updates are committed.

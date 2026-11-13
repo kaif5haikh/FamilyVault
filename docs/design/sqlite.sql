@@ -1,6 +1,8 @@
 -- Phase 3 local metadata proposal, version 1. No financial tables or seed data.
 -- Drift definitions in lib/core/database/app_database.dart are authoritative.
 -- Production connections must use the encrypted native library and vault key.
+-- Confirmed INR/shared-vault/backup future projections are in sqlite-next.sql.
+-- That separate proposal is not applied by Flutter and does not alter Drift v1.
 PRAGMA foreign_keys = ON;
 BEGIN;
 CREATE TABLE pending_mutations (

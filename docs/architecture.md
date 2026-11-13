@@ -1,5 +1,9 @@
 # System architecture — proposal
 
+Product authority: [ADR 0003](decisions/0003-confirmed-product-architecture.md).
+INR/paise, shared family finance/documents and both backup destinations are
+confirmed. This revised technical architecture remains pending review.
+
 The local encrypted database is the mobile read model. Supabase PostgreSQL is the
 authoritative shared store. Sync reconciles them; Realtime only prompts a pull.
 There is no Google Drive live-sync dependency.
@@ -18,10 +22,15 @@ flowchart TD
   Crypto --> Files[Private encrypted local attachment files]
   Files --> Sync
   Sync --> Storage[Private Supabase Storage]
+  Files --> Gateway[Authenticated document gateway]
+  Gateway --> Storage
+  Gateway --> Audit[Access-start / outcome audit in PostgreSQL]
   PG -.wake hint.-> Sync
   Local --> Backup[Consistent encrypted backup / export service]
   Files --> Backup
-  Backup --> Destination[User-selected encrypted destination / optional Drive]
+  Backup --> LocalCopy[Verified encrypted local copy]
+  Backup --> DriveCopy[Verified encrypted Google Drive copy]
+  Recovery[Independently held recovery key] -.unwraps archive keys.-> Backup
 ```
 
 ## Module boundaries
@@ -29,15 +38,15 @@ flowchart TD
 | Boundary | Owns | Allowed dependencies |
 | --- | --- | --- |
 | Core | Configuration, typed errors, clock/IDs, secure storage, key access, database execution | Platform APIs and reviewed infrastructure packages |
-| Identity/access | Auth session, local unlock, membership, roles, device revocation, cached grants | Core and server access adapter |
+| Identity/access | Independent auth accounts, admin/member roles, local unlock, enrollment, bound sessions, revocation | Core and server access adapter |
 | Sync | Outbox, cursor, replay receipts, conflicts, attachment lifecycle | Core, access policy, typed module serializers |
 | Family finance | Accounts, journal, budgets, savings/report projections | Core and sync contracts; exposes journal service |
 | Wealth | Asset records, ownership and valuation observations | Core; journal links through application services |
 | Liabilities | Contracts, approved schedules and repayments | Core; journal service for settlement |
 | Business | Business scope, expenses/revenue, payroll records, inventory movement | Core, journal service; future billing adapter boundary only |
-| Document vault | Document metadata, immutable versions, grants, encryption envelopes | Core, access, sync and private storage adapter |
+| Document vault | Shared family visibility, ownership metadata, immutable versions, access audit, device key envelopes | Core, access, sync, authenticated gateway and private storage adapter |
 | Analytics | Permission-filtered projections of authorized module records | Read-only module query contracts, FL Chart presentation |
-| Backup/export | Snapshot manifests, archive encryption, recovery validation | Core and module export contracts |
+| Backup/export | Snapshot manifests, archive encryption, independent local/Drive receipts, recovery validation | Core, module export contracts and separately authorized Drive adapter |
 
 Avoid direct module-to-module table writes. Use application services to coordinate
 cross-module transactions. Derived dashboards have no independent editable totals.
@@ -54,12 +63,28 @@ Riverpod injects repositories and owns disposal; GoRouter enforces presentation
 gates. Neither is an authorization boundary. RLS and mutation RPCs independently
 authorize requests. Unknown/expired permissions fail closed.
 
+Shared records have no creator-only edit gate. Every authorized member can create
+and edit shared financial data and access shared documents. Preserve the creator,
+set modifier identity from the verified caller and append immutable audit. A
+document's owner can differ from its uploader and cannot restrict family access.
+Posted financial history is corrected through linked events; deletion is soft.
+Use exact integer paise for INR and `en_IN`/₹ presentation; currency catalogs remain
+extensible. No monetary computation or exact formatting passes through a double.
+
 ## Authentication and local unlock
 
 Supabase Auth handles online identity. Store refresh/session data only in secure
 platform storage. Disable implicit deep-link handling until exact verified links
 and redirect allowlists are configured. No open registration; members are invited
 by a trusted administrator through a server-only control plane.
+
+Proposed device enrollment requires an authenticated member's proof of private-key
+possession and administrator approval of the bound public-key identity. The
+server binds the verified Auth session to the approved device; arbitrary device
+headers are insufficient. Membership/session/device revocation is checked on
+backend requests. Sensitive administration is separate from ordinary collaboration.
+Historical document key backfill follows enrollment so every member can open the
+shared history without an owner-specific grant or shared private key.
 
 Authentication, local unlock and authorization are separate states. On startup,
 background, timeout and account change, close protected repositories and release
@@ -89,3 +114,22 @@ explicit caller checks and restricted EXECUTE grants. Use database membership
 state, not editable JWT user metadata, for current roles. Server time/revision,
 mutation receipts, audit events and change-feed events commit atomically.
 No administrative credentials enter Flutter. No cloud resources are created here.
+
+The proposed document gateway performs authenticated per-request checks and
+durable access-start audit before streaming ciphertext, then appends completion
+or failure. Deny direct unaudited Storage reads/client URL signing. Offline cache
+opens are device reports, not server-proven views. See the permission/threat docs
+for assurance limits; this gateway is not implemented.
+
+The gateway resolves an opaque version ID to its authorized server-owned object
+path; it never proxies an arbitrary client-supplied path or URL. Prefer a narrowly
+scoped server capability. If Storage requires a service-role credential, isolate
+it behind this authorization/audit boundary: it bypasses RLS and cannot protect
+itself from a compromised or incorrectly implemented gateway. Transfer completion
+records server streaming outcome, not proof that a human viewed the plaintext.
+
+Backups require both local and Drive adapters. Freeze one consistent authenticated
+archive, then verify/acknowledge each destination independently. Schedules are
+best-effort under mobile OS limits; report deferred work. Restore must work on a
+clean device with an independently held recovery key and current enrollment for
+live access. Neither adapter nor a clean-device restore is implemented yet.

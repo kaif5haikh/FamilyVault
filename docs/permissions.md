@@ -1,57 +1,73 @@
-# Permission matrix — proposed defaults for review
+# Permissions — confirmed shared model and proposed backend contract
 
-Roles are per-family: `administrator`, `member`, `viewer`. Family relationship is
-not a role. No role assignments or private document access are inferred for the
-four people. Default deny when membership/grants are absent, expired or revoked.
+The owner confirmed shared financial editing and shared document access in
+[ADR 0003](decisions/0003-confirmed-product-architecture.md). The active roles are
+`administrator` and `member`; `viewer` is not part of this product scope. Father,
+mother and sister have independent accounts; the owner is administrator. No real
+Auth accounts or relationship rows are seeded. A role never replaces enrollment.
 
-| Action | Administrator | Member | Viewer |
+| Action | Administrator | Every other authorized member | Enforcement requirement |
 | --- | --- | --- | --- |
-| Invite/revoke members, assign roles, revoke devices | Yes, trusted server control plane | No | No |
-| Read shared family finance/assets/liabilities | Yes | Yes | Yes |
-| Create shared records | Yes | Yes, within granted module | No |
-| Edit draft records | Yes, within scope/revision | Own or explicitly granted | No |
-| Change posted financial history | Linked correction with audit | Authorized linked correction | No |
-| Read restricted business records | Explicit business grant | Explicit business grant | Explicit read grant |
-| Read private documents | Owner/explicit document grant | Owner/explicit document grant | Explicit read grant |
-| Upload/version documents | Ownership or document write grant | Ownership or document write grant | No |
-| Grant document access | Owner or explicit manage grant | Owner or explicit manage grant | No |
-| Download/decrypt document | Read grant plus usable key envelope | Same | Same |
-| Export | Authorized scope with reauthentication | Authorized scope with reauthentication | Only if explicit export grant |
-| Family-wide restore/delete | Reauthenticated administrator plus reviewed recovery flow | No | No |
+| Read shared finance, assets/properties/metals, liabilities, dashboards/reports | Yes | Yes | Current family membership, enrolled session, family-scoped read policy |
+| Add income/expenses; edit another member's shared record | Yes | Yes | Validated RPC, expected revision, immutable creator and actor audit; no ownership condition |
+| Correct posted accounting facts | Yes | Yes | Linked correction/reversal preserving the prior history; accounting policy still under review |
+| Delete a shared financial record | Soft tombstone | Soft tombstone | Audited RPC, related invariants, never client hard DELETE |
+| List/read shared document metadata and finalized versions | Yes | Yes | Family membership; ownership has no visibility effect |
+| Upload a shared document or create a new version | Yes | Yes | Enrollment, ciphertext reservation, integrity checks and audited finalization |
+| Authenticated document download/decryption | Yes | Yes | Audited gateway and key envelope for the caller's enrolled device |
+| Change ordinary document metadata | Yes | Yes | Revision check and immutable change audit; never change family scope |
+| Invite/remove members or alter roles | Yes, reauthenticated | No | Trusted server control plane; no self-escalation or last-admin loss |
+| Approve/revoke device/session; recovery and key rotation | Yes, reauthenticated | No | Proof of device key possession plus trusted approval; no approval required for each ordinary read/upload |
+| Permanently purge records/versions or restore shared server state | Yes, explicit reviewed procedure | No | Separate sensitive operation; retention/recovery and destructive-action safeguards |
+| Read restricted business data | Separate policy review | Separate policy review | Existing business grant proposal cannot restrict shared family records; billing remains unspecified |
 
-Administrator control over membership does not itself grant decryption of private
-documents. Recovery custodians/key escrow access must be decided explicitly.
-The prototype does not implement these controls yet and accepts no real records.
+Proposed backup-operator policy, awaiting architecture review: any authorized
+member may make an encrypted local export of the shared data after local unlock;
+administrator manages shared Drive destination configuration/schedules, recovery
+custody and family-wide restore. A member may request enrollment/restore to a new
+local cache; this does not authorize enrollment approval or replacement of shared
+server state. Shared FamilyVault access does not grant access to somebody else's
+Google account. Never share Google or Supabase login credentials.
 
-## Database enforcement
+## Backend authorization contract
 
-- Every domain row includes `family_id`. Composite `(family_id, id)` foreign keys
-  prevent linking a record to another tenant's account/document/business.
-- Enable and force RLS on application tables; revoke all anonymous access. Policies
-  derive the user from `auth.uid()` and current active membership from the DB.
-- Shared reads require active membership and module/resource permission. Document
-  metadata, version rows, key envelopes and storage objects use document-specific
-  ACLs; do not apply a generic family-read policy to documents.
-- Deny direct client DML on authoritative domain tables. Validated mutation RPCs
-  enforce revision, scope, privilege, financial invariants and audit atomically.
-- Document ACL/key changes are online-only privileged operations. A storage path
-  containing a family/user UUID is not proof of authorization.
-- Helpers must avoid recursive RLS on memberships: tightly scoped definer helper,
-  fully qualified tables, fixed search path and minimal EXECUTE permissions.
-- No role checks from editable `user_metadata`. Administrative role changes,
-  device registration and membership onboarding need explicit trusted RPCs.
-- Revoke sessions with Supabase Auth and maintain current session/device deny
-  checks at privileged RPC entry. Unexpired JWTs are not instantly invalidated by
-  refresh-token revocation; resource membership checks close the key access gap.
-- Supabase service-role bypasses RLS: keep it server-only, restrict workers and
-  audit any administrative action. Views/aggregations must preserve invoker RLS.
+1. Resolve caller `auth.uid()` and the verified Auth JWT session identifier on the
+   server. Bind that session to an enrolled device only after possession proof and
+   administrator approval. A client-supplied `device_id` header is not enrollment.
+2. Require current active/non-deleted membership, matching user/device/session,
+   enrolled/non-revoked device and a non-revoked/unexpired server binding. Check at
+   read, write, key-envelope delivery, download and administrative boundaries.
+3. Shared financial reads and edits deliberately omit `created_by = auth.uid()`.
+   `created_by` cannot change; set `updated_by` from the caller, never its payload.
+   Document ownership likewise never appears in an ordinary read/upload predicate.
+4. Scope rows, joins, foreign keys, reports and aggregates to `family_id`. A valid
+   family UUID in an object path alone proves no access. Keep authorization epochs
+   and server current state authoritative after revocation and on reconnect.
+5. Enable/force RLS; no anonymous grants. Direct domain writes stay denied; typed
+   RPCs validate revision, provenance, accounting rules and atomic audit/feed writes.
+   Account/role/device/key changes and hard purge are separate administrator RPCs.
+6. Private Storage denies direct unaudited downloads and client signed-URL creation.
+   The proposed gateway authorizes a finalized version, commits an access-start
+   audit event, then streams ciphertext and appends a terminal event. Gateway
+   credentials, if needed for Storage, are server-only with minimal capabilities.
+   Ordinary signed URLs are bearer capabilities and do not satisfy this contract.
+7. Every member has a right to shared documents, but private keys/envelopes remain
+   device-specific. Return only the caller's envelope to a currently enrolled
+   device. Enrollment triggers historical key backfill; pending backfill is a
+   readiness state, never an owner-imposed permission restriction.
+8. Append-only audit events preserve actor, device, request/operation, revision and
+   trusted time. Read events distinguish authorization, transfer completion/failure
+   and untrusted offline cache reports. No document contents or identity numbers
+   enter audit payloads or operational logs.
+9. Security-definer helpers must use qualified names, fixed empty search path,
+   minimal owner privileges and restricted EXECUTE grants. Avoid recursive RLS
+   on memberships. Editable JWT user metadata never determines roles. Session
+   revocation alone may leave an unexpired JWT, so re-check current bindings.
 
-## Required adversarial tests before rollout
+## Evidence boundary
 
-Test two independent families and owner/member/viewer/outsider identities:
-cross-family reads/writes/FKs; member escalation; owner change; forged JWT metadata;
-revoked membership with old token; direct DML; guessed object paths; private
-document list/download/key access; signed URL TTL; aggregate inference; storage
-overwrite; unauthorized finalization; restore that attempts to restore old grants.
-The SQL proposal deliberately defines no permissive read policies before these
-module-specific rules are implemented and tested.
+The cloud SQL proposal has **deny-all RLS**, no usable allow policies or mutation
+RPCs. Its constraints and append-only audit guards can be tested locally; that
+is not proof of production shared access or a working gateway. The application
+remains disconnected. [Testing strategy](testing-strategy.md) specifies the
+required real Auth/RLS/Storage and multi-device tests before release.

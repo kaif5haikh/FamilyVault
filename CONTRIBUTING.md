@@ -22,6 +22,11 @@ Describe the concrete change and its validation in PR descriptions.
 
 ## Engineering rules
 
+Follow [ADR 0003](docs/decisions/0003-confirmed-product-architecture.md): INR
+amounts are exact integer paise, shared family edits are not creator-only,
+document ownership does not restrict visibility, and both encrypted local/Drive
+backups are required. Revised architecture review still gates financial work.
+
 - UI consumes local repositories; network adapters do not become UI data stores.
 - Use exact integers for money and measured quantities; never binary floating
   point for accounting. Currency, rounding and interest rules require review.

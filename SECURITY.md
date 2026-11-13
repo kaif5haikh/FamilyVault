@@ -13,12 +13,17 @@ documents, paste access tokens or upload database dumps.
 - HTTPS/TLS for every cloud connection, platform certificate verification intact.
 - Encrypted local SQLite, per-account keys in OS secure storage, private app files.
 - Client-side authenticated encryption of documents before any cloud upload.
-- Supabase RLS and private buckets; membership, role and object permissions checked
-  on the server. No service-role/secret keys on clients.
+- Supabase RLS/private buckets; current membership, enrolled session/device and
+  administrator boundaries checked on the server. Every authorized member shares
+  ordinary financial/document access; document ownership is not an access rule.
+  No service-role/secret keys on clients.
 - Persist sessions in secure storage, revoke sessions/devices server-side, lock
   locally on background and switch accounts without exposing another cache.
 - Server-controlled revisions, append-only audit events and idempotent mutations.
-- Encrypted backups with separate recovery material and regularly verified restore.
+- Authenticated document downloads through an audited gateway, with direct
+  unaudited Storage/client signed-URL paths denied.
+- Independent encrypted local and Google Drive backups, separate recovery material,
+  truthful destination status and verified clean-device restore from each.
 - No financial amounts, identity identifiers, filenames, document content, auth
   tokens, keys or signed URLs in logs, analytics or crash reports.
 

@@ -2,6 +2,10 @@
 
 Status: proposed for architecture review; infrastructure choices evaluated during setup.
 
+The confirmed currency/shared-family/document/dual-backup requirements in
+[ADR 0003](0003-confirmed-product-architecture.md) supersede conflicting initial
+assumptions. That confirmation does not approve financial implementation.
+
 ## Decisions
 
 1. Flutter/Dart with Riverpod and GoRouter, Android/iOS only. FL Chart is selected

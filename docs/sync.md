@@ -1,5 +1,9 @@
 # Offline synchronization protocol — design, not yet implemented
 
+This revision follows the confirmed shared-family model in
+[ADR 0003](decisions/0003-confirmed-product-architecture.md). No financial, document
+transport or backup integration is implemented by this architecture update.
+
 ## Identity and durable local writes
 
 Use UUIDv4 for entities, devices and operations. Entity identity never changes
@@ -7,6 +11,14 @@ across devices or restores. A mutation envelope contains operation ID, family ID
 device ID, entity type/ID, mutation kind, expected base revision, schema version
 and canonical payload digest. Actor identity is derived from the authenticated
 server session, never trusted from the envelope.
+
+INR payload amounts are integral paise with explicit currency/scale; reject decimal,
+floating, string-coerced, out-of-range or mismatched currency inputs before any
+database cast. Changing family/creator or an existing amount's unit is not an edit.
+All members may edit shared records, including another member's entries. Preserve
+`created_by`, assign `updated_by` from the verified session, and append the actor's
+audit event. The proposed database now guards stable identity/creator; atomic
+history, role checks and financial validation still require server implementation.
 
 One Drift transaction commits the domain change and an immutable outbox envelope.
 Persist before showing success. Later edits get new operation IDs; never rewrite
@@ -20,10 +32,11 @@ and worker scheduling are future work.
 
 1. A single coordinator per vault leases eligible operations; a crashed worker's
    lease can expire. Serialize aggregate dependencies (e.g. journal and postings).
-2. Refresh/revalidate session and current device/membership grants before sending.
+2. Refresh/revalidate session, server-bound enrolled device and current membership before sending.
    Check protocol/schema compatibility. Unknown grants block uploads.
 3. Server transaction locks a per-family sync clock row, checks session/device
-   revocation, membership, resource permissions and expected entity revision.
+   revocation, membership and expected entity revision. Ordinary family writes
+   have no creator/owner predicate; administrator operations use separate endpoints.
 4. Recompute the digest server-side over the canonical validated envelope,
    including target, mutation kind, base revision and payload; do not trust the
    caller's claimed digest. Look up `(family_id, actor_id, operation_id)`. An identical replay returns its
@@ -70,13 +83,19 @@ plaintext keys out of events; apply current resource/recipient authorization and
 typed payload filtering inside the pull RPC. Local merge must never regress an
 already accepted revision, and pending edits keep their own base snapshot.
 
-Before serving a pull, compare the caller's authorization epoch. Grant/membership
+Before serving a pull, compare the caller's authorization epoch. Membership/device/session
 changes bump it under the family lock and invalidate that user's snapshot. On
 mismatch, suspend reads, purge or quarantine revoked cache/key material, obtain
 a complete authorized snapshot at a fixed watermark, then resume incremental
 pull. Newly granted old records require snapshot backfill; a filtered change
 feed alone cannot discover them. An offline stale cache remains a documented
 revocation limitation, bounded by the reviewed local-unlock lease policy.
+
+New members/enrolled devices receive an authorized family snapshot containing
+the shared history, including documents owned/uploaded by other members. Fetch
+only the current recipient's key envelopes and arrange historical key backfill.
+Ownership changes do not change visibility or create an ACL epoch. Revocation
+does change authorization and must stop sync/key delivery even with an old JWT.
 
 Bootstrap must create the metadata snapshot and watermark in one server
 transaction holding the family clock lock. For a paginated bootstrap, materialize
@@ -120,12 +139,28 @@ verifying → finalized → acknowledged`. Failure at any step remains incomplet
 - On interruption, inspect reservation/object/finalization state and retry safely.
   Reconcile abandoned reservations and unreferenced objects after a reviewed grace
   period; never garbage-collect pending local-only material.
-- Download with authorization/short-lived signed URLs, verify ciphertext digest,
-  authenticate the envelope and decrypt locally. Private buckets still require
-  document ACL/key grants. Do not log object paths or signed URLs.
+- Download through the authenticated gateway with membership/enrolled-session
+  checks and committed access-start audit; direct unaudited reads/client signed
+  URLs stay denied. Verify ciphertext digest, authenticate the envelope and
+  decrypt locally. Append transfer completion/failure; queue offline cache opens
+  as device-reported observations, not proof of online downloads.
+- Ordinary upload/version creation is allowed to every member. The document owner
+  can differ from the uploader; immutable version creator and metadata modifiers
+  identify their actual actors. Key envelopes must cover authorized enrolled
+  recipients; historical backfill/readiness must not become an ownership ACL.
 
 PostgreSQL and Storage do not share an atomic transaction; reservations,
 finalization and reconciliation are required to bridge that boundary.
+
+## Backup boundary
+
+Live synchronization remains PostgreSQL/Auth/Storage. Local/Google Drive archive
+copy attempts have their own durable state/receipts and per-destination success;
+document upload receipts do not acknowledge backups, and Drive uploads do not
+acknowledge financial operations. Backup catalog sync carries no Drive tokens,
+local URIs or sole recovery keys. Restore preserves IDs, soft tombstones and
+original creator/modifier provenance; imported audit is historical evidence,
+never a way to claim a new user's identity or revive old device/session grants.
 
 ## Tombstones, recovery and test plan
 

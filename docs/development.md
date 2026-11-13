@@ -44,6 +44,12 @@ The schema proposal check uses an **isolated** temporary PostgreSQL cluster unde
 database or cloud project. Scratch data is preserved and the server is stopped
 by a trap. PostgreSQL server tools and Python 3 are required.
 
+The revised check uses UTF-8 (including ₹), validates the unchanged SQLite v1 and
+separate future projection proposal, and runs synthetic constraint/provenance/
+backup-evidence probes in both engines. No future schema is applied to Flutter.
+See [constraint review](database-constraint-review.md) and
+[testing strategy](testing-strategy.md) for what those tests do and do not prove.
+
 ```bash
 bash tool/check_proposals.sh
 git diff --check

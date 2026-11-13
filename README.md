@@ -28,6 +28,14 @@ Start with the [documentation index](docs/README.md),
 [architecture](docs/architecture.md) and [review gate](docs/review-gate.md).
 Read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) before changes.
 
+The owner has confirmed INR/₹ with exact integer paise and Indian formatting,
+shared family financial editing, shared family documents with individual ownership,
+and both local/Google Drive encrypted backups. The consolidated
+[ADR 0003](docs/decisions/0003-confirmed-product-architecture.md) records these
+requirements, consequences, risks and remaining review/implementation. The app
+remains a locked foundation; confirming requirements does not implement finance,
+document sharing, Google Drive or backup/restore.
+
 Required stack: Flutter/Dart, Riverpod, GoRouter, FL Chart, Drift/SQLite,
 Supabase PostgreSQL/Auth/private Storage. SQLite is encrypted using the reviewed
 native cipher build; sensitive document encryption happens before uploading.
@@ -54,5 +62,5 @@ flutter test --no-pub
 Keep credentials, personal documents, database files, exports and backups outside
 Git. Supabase service-role/secret keys never belong in the mobile app. Private
 repository visibility is not a data-security boundary. Use synthetic test inputs
-only. Google Drive is an optional encrypted backup destination, never the live
+only. Google Drive is a required encrypted backup destination alongside local backup, never the live
 sync database. A successful upload alone never means synchronization succeeded.
