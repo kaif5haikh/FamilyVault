@@ -1,0 +1,1772 @@
+{
+  "_meta": {
+    "description": "This file contains a serialized version of schema entities for drift.",
+    "version": "1.3.0"
+  },
+  "options": {
+    "store_date_time_values_as_text": false
+  },
+  "entities": [
+    {
+      "id": 0,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "pending_mutations",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "operation_id",
+            "getter_name": "operationId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "family_id",
+            "getter_name": "familyId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "device_id",
+            "getter_name": "deviceId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "entity_type",
+            "getter_name": "entityType",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "entity_id",
+            "getter_name": "entityId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "mutation_kind",
+            "getter_name": "mutationKind",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "base_revision",
+            "getter_name": "baseRevision",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "payload_json",
+            "getter_name": "payloadJson",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "payload_digest",
+            "getter_name": "payloadDigest",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "protocol_version",
+            "getter_name": "protocolVersion",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "state",
+            "getter_name": "state",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'pending\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "attempts",
+            "getter_name": "attempts",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_us",
+            "getter_name": "createdAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "next_attempt_at_us",
+            "getter_name": "nextAttemptAtUs",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "lease_expires_at_us",
+            "getter_name": "leaseExpiresAtUs",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "accepted_revision",
+            "getter_name": "acceptedRevision",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "CHECK (mutation_kind IN ('upsert', 'delete'))",
+          "CHECK (base_revision >= 0)",
+          "CHECK (json_valid(payload_json))",
+          "CHECK (length(payload_digest) = 64)",
+          "CHECK (protocol_version > 0)",
+          "CHECK (state IN ('pending', 'in_flight', 'conflicted', 'rejected', 'acknowledged'))",
+          "CHECK (attempts >= 0)",
+          "CHECK (accepted_revision IS NULL OR accepted_revision > 0)",
+          "CHECK (state <> 'acknowledged' OR accepted_revision IS NOT NULL)"
+        ],
+        "explicit_pk": [
+          "operation_id"
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "sync_checkpoints",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "family_id",
+            "getter_name": "familyId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "last_sequence",
+            "getter_name": "lastSequence",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "authorization_epoch",
+            "getter_name": "authorizationEpoch",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_at_us",
+            "getter_name": "updatedAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "CHECK (last_sequence >= 0)",
+          "CHECK (authorization_epoch >= 0)"
+        ],
+        "explicit_pk": [
+          "family_id"
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "references": [
+        0
+      ],
+      "type": "table",
+      "data": {
+        "name": "sync_conflicts",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "operation_id",
+            "getter_name": "operationId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "UNIQUE REFERENCES pending_mutations (operation_id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "UNIQUE REFERENCES pending_mutations (operation_id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              "unique",
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "pending_mutations",
+                    "column": "operation_id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "server_revision",
+            "getter_name": "serverRevision",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "server_snapshot_json",
+            "getter_name": "serverSnapshotJson",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "detected_at_us",
+            "getter_name": "detectedAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "resolved_at_us",
+            "getter_name": "resolvedAtUs",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "CHECK (server_revision > 0)",
+          "CHECK (json_valid(server_snapshot_json))"
+        ],
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "family_spaces",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "name",
+            "getter_name": "name",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "mode",
+            "getter_name": "mode",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "currency",
+            "getter_name": "currency",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'INR\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_us",
+            "getter_name": "createdAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "CHECK (mode IN ('offline', 'cloud'))",
+          "CHECK (currency = 'INR')"
+        ],
+        "strict": true,
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 4,
+      "references": [
+        3
+      ],
+      "type": "table",
+      "data": {
+        "name": "family_members",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "family_id",
+            "getter_name": "familyId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES family_spaces (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES family_spaces (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "family_spaces",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "auth_user_id",
+            "getter_name": "authUserId",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "display_name",
+            "getter_name": "displayName",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "relationship",
+            "getter_name": "relationship",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "role",
+            "getter_name": "role",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "active",
+            "getter_name": "active",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"active\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"active\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "revision",
+            "getter_name": "revision",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_us",
+            "getter_name": "createdAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "UNIQUE (family_id, id)",
+          "CHECK (role IN ('administrator', 'member'))",
+          "CHECK (revision > 0)"
+        ],
+        "strict": true,
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 5,
+      "references": [
+        4
+      ],
+      "type": "table",
+      "data": {
+        "name": "vault_devices",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "family_id",
+            "getter_name": "familyId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "member_id",
+            "getter_name": "memberId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "state",
+            "getter_name": "state",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_us",
+            "getter_name": "createdAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "UNIQUE (family_id, id, member_id)",
+          "FOREIGN KEY (family_id, member_id) REFERENCES family_members(family_id, id)",
+          "CHECK (state IN ('enrolled', 'revoked', 'pending'))"
+        ],
+        "strict": true,
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "references": [
+        3,
+        4
+      ],
+      "type": "table",
+      "data": {
+        "name": "ledger_accounts",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "family_id",
+            "getter_name": "familyId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES family_spaces (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES family_spaces (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "family_spaces",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "revision",
+            "getter_name": "revision",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_by",
+            "getter_name": "createdBy",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_by",
+            "getter_name": "updatedBy",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_us",
+            "getter_name": "createdAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_at_us",
+            "getter_name": "updatedAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "deleted_at_us",
+            "getter_name": "deletedAtUs",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "name",
+            "getter_name": "name",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "kind",
+            "getter_name": "kind",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "subtype",
+            "getter_name": "subtype",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "currency",
+            "getter_name": "currency",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'INR\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "system_account",
+            "getter_name": "systemAccount",
+            "moor_type": "bool",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "CHECK (\"system_account\" IN (0, 1))",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "CHECK (\"system_account\" IN (0, 1))"
+            },
+            "default_dart": "const CustomExpression('0')",
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "UNIQUE (family_id, id)",
+          "CHECK (revision > 0)",
+          "CHECK (updated_at_us >= created_at_us)",
+          "CHECK (deleted_at_us IS NULL OR deleted_at_us >= created_at_us)",
+          "FOREIGN KEY (family_id, created_by) REFERENCES family_members(family_id, id)",
+          "FOREIGN KEY (family_id, updated_by) REFERENCES family_members(family_id, id)",
+          "CHECK (kind IN ('asset', 'liability', 'equity', 'income', 'expense'))",
+          "CHECK (currency = 'INR')"
+        ],
+        "strict": true,
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "references": [
+        3,
+        4
+      ],
+      "type": "table",
+      "data": {
+        "name": "ledger_journals",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "family_id",
+            "getter_name": "familyId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES family_spaces (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES family_spaces (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "family_spaces",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "revision",
+            "getter_name": "revision",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_by",
+            "getter_name": "createdBy",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_by",
+            "getter_name": "updatedBy",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_us",
+            "getter_name": "createdAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_at_us",
+            "getter_name": "updatedAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "deleted_at_us",
+            "getter_name": "deletedAtUs",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "kind",
+            "getter_name": "kind",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "occurred_on",
+            "getter_name": "occurredOn",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "description",
+            "getter_name": "description",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "currency",
+            "getter_name": "currency",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'INR\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "status",
+            "getter_name": "status",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('\\'draft\\'')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "reverses_id",
+            "getter_name": "reversesId",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "business_id",
+            "getter_name": "businessId",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "related_entity_id",
+            "getter_name": "relatedEntityId",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "UNIQUE (family_id, id)",
+          "CHECK (revision > 0)",
+          "CHECK (updated_at_us >= created_at_us)",
+          "CHECK (deleted_at_us IS NULL OR deleted_at_us >= created_at_us)",
+          "FOREIGN KEY (family_id, created_by) REFERENCES family_members(family_id, id)",
+          "FOREIGN KEY (family_id, updated_by) REFERENCES family_members(family_id, id)",
+          "CHECK (kind IN ('income', 'expense', 'transfer', 'opening', 'adjustment', 'reversal', 'repayment', 'business'))",
+          "CHECK (currency = 'INR')",
+          "CHECK (status IN ('draft', 'posted'))",
+          "CHECK (date(occurred_on) IS NOT NULL AND date(occurred_on) = occurred_on AND length(occurred_on) = 10)",
+          "FOREIGN KEY (family_id, reverses_id) REFERENCES ledger_journals(family_id, id)",
+          "UNIQUE (reverses_id)"
+        ],
+        "strict": true,
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "references": [
+        7,
+        6
+      ],
+      "type": "table",
+      "data": {
+        "name": "ledger_postings",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "family_id",
+            "getter_name": "familyId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "journal_id",
+            "getter_name": "journalId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "account_id",
+            "getter_name": "accountId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "position",
+            "getter_name": "position",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "amount_minor",
+            "getter_name": "amountMinor",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "FOREIGN KEY (family_id, journal_id) REFERENCES ledger_journals(family_id, id)",
+          "FOREIGN KEY (family_id, account_id) REFERENCES ledger_accounts(family_id, id)",
+          "UNIQUE (journal_id, position)",
+          "CHECK (amount_minor <> 0)",
+          "CHECK (position >= 0)"
+        ],
+        "strict": true,
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "references": [
+        5
+      ],
+      "type": "table",
+      "data": {
+        "name": "local_audit_events",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "family_id",
+            "getter_name": "familyId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "actor_id",
+            "getter_name": "actorId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "device_id",
+            "getter_name": "deviceId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "operation_id",
+            "getter_name": "operationId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "entity_type",
+            "getter_name": "entityType",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "entity_id",
+            "getter_name": "entityId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "action",
+            "getter_name": "action",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "before_json",
+            "getter_name": "beforeJson",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "after_json",
+            "getter_name": "afterJson",
+            "moor_type": "string",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_us",
+            "getter_name": "createdAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "FOREIGN KEY (family_id, device_id, actor_id) REFERENCES vault_devices(family_id, id, member_id)",
+          "UNIQUE (family_id, operation_id, entity_type, entity_id)",
+          "CHECK (before_json IS NULL OR json_valid(before_json))",
+          "CHECK (after_json IS NULL OR json_valid(after_json))"
+        ],
+        "strict": true,
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "references": [
+        3,
+        4,
+        6
+      ],
+      "type": "table",
+      "data": {
+        "name": "monthly_budgets",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "family_id",
+            "getter_name": "familyId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES family_spaces (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES family_spaces (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "family_spaces",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "revision",
+            "getter_name": "revision",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_by",
+            "getter_name": "createdBy",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_by",
+            "getter_name": "updatedBy",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_us",
+            "getter_name": "createdAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_at_us",
+            "getter_name": "updatedAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "deleted_at_us",
+            "getter_name": "deletedAtUs",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "account_id",
+            "getter_name": "accountId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "month",
+            "getter_name": "month",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "amount_minor",
+            "getter_name": "amountMinor",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "UNIQUE (family_id, id)",
+          "CHECK (revision > 0)",
+          "CHECK (updated_at_us >= created_at_us)",
+          "CHECK (deleted_at_us IS NULL OR deleted_at_us >= created_at_us)",
+          "FOREIGN KEY (family_id, created_by) REFERENCES family_members(family_id, id)",
+          "FOREIGN KEY (family_id, updated_by) REFERENCES family_members(family_id, id)",
+          "FOREIGN KEY (family_id, account_id) REFERENCES ledger_accounts(family_id, id)",
+          "CHECK (amount_minor >= 0)",
+          "CHECK (length(month) = 7 AND date(month || '-01') IS NOT NULL)"
+        ],
+        "strict": true,
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 11,
+      "references": [
+        3,
+        4,
+        6
+      ],
+      "type": "table",
+      "data": {
+        "name": "reconciliation_checks",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "id",
+            "getter_name": "id",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "family_id",
+            "getter_name": "familyId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "defaultConstraints": "REFERENCES family_spaces (id)",
+            "dialectAwareDefaultConstraints": {
+              "sqlite": "REFERENCES family_spaces (id)"
+            },
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": [
+              {
+                "foreign_key": {
+                  "to": {
+                    "table": "family_spaces",
+                    "column": "id"
+                  },
+                  "initially_deferred": false,
+                  "on_update": null,
+                  "on_delete": null
+                }
+              }
+            ]
+          },
+          {
+            "name": "revision",
+            "getter_name": "revision",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": "const CustomExpression('1')",
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_by",
+            "getter_name": "createdBy",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_by",
+            "getter_name": "updatedBy",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "created_at_us",
+            "getter_name": "createdAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "updated_at_us",
+            "getter_name": "updatedAtUs",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "deleted_at_us",
+            "getter_name": "deletedAtUs",
+            "moor_type": "int",
+            "nullable": true,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "account_id",
+            "getter_name": "accountId",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "statement_date",
+            "getter_name": "statementDate",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "statement_minor",
+            "getter_name": "statementMinor",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "ledger_minor",
+            "getter_name": "ledgerMinor",
+            "moor_type": "int",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "notes",
+            "getter_name": "notes",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [
+          "UNIQUE (family_id, id)",
+          "CHECK (revision > 0)",
+          "CHECK (updated_at_us >= created_at_us)",
+          "CHECK (deleted_at_us IS NULL OR deleted_at_us >= created_at_us)",
+          "FOREIGN KEY (family_id, created_by) REFERENCES family_members(family_id, id)",
+          "FOREIGN KEY (family_id, updated_by) REFERENCES family_members(family_id, id)",
+          "FOREIGN KEY (family_id, account_id) REFERENCES ledger_accounts(family_id, id)",
+          "CHECK (date(statement_date) IS NOT NULL AND date(statement_date) = statement_date)"
+        ],
+        "strict": true,
+        "explicit_pk": [
+          "id"
+        ]
+      }
+    },
+    {
+      "id": 12,
+      "references": [],
+      "type": "table",
+      "data": {
+        "name": "vault_preferences",
+        "was_declared_in_moor": false,
+        "columns": [
+          {
+            "name": "key",
+            "getter_name": "key",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          },
+          {
+            "name": "value",
+            "getter_name": "value",
+            "moor_type": "string",
+            "nullable": false,
+            "customConstraints": null,
+            "default_dart": null,
+            "default_client_dart": null,
+            "dsl_features": []
+          }
+        ],
+        "is_virtual": false,
+        "without_rowid": false,
+        "constraints": [],
+        "strict": true,
+        "explicit_pk": [
+          "key"
+        ]
+      }
+    },
+    {
+      "id": 13,
+      "references": [
+        0
+      ],
+      "type": "index",
+      "data": {
+        "on": 0,
+        "name": "pending_mutations_retry",
+        "sql": null,
+        "unique": false,
+        "columns": [
+          {
+            "column": "state",
+            "order_by": null
+          },
+          {
+            "column": "next_attempt_at_us",
+            "order_by": null
+          }
+        ]
+      }
+    }
+  ],
+  "fixed_sql": [
+    {
+      "name": "pending_mutations",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"pending_mutations\" (\"operation_id\" TEXT NOT NULL, \"family_id\" TEXT NOT NULL, \"device_id\" TEXT NOT NULL, \"entity_type\" TEXT NOT NULL, \"entity_id\" TEXT NOT NULL, \"mutation_kind\" TEXT NOT NULL, \"base_revision\" INTEGER NOT NULL, \"payload_json\" TEXT NOT NULL, \"payload_digest\" TEXT NOT NULL, \"protocol_version\" INTEGER NOT NULL, \"state\" TEXT NOT NULL DEFAULT 'pending', \"attempts\" INTEGER NOT NULL DEFAULT 0, \"created_at_us\" INTEGER NOT NULL, \"next_attempt_at_us\" INTEGER NULL, \"lease_expires_at_us\" INTEGER NULL, \"accepted_revision\" INTEGER NULL, PRIMARY KEY (\"operation_id\"), CHECK (mutation_kind IN ('upsert', 'delete')), CHECK (base_revision >= 0), CHECK (json_valid(payload_json)), CHECK (length(payload_digest) = 64), CHECK (protocol_version > 0), CHECK (state IN ('pending', 'in_flight', 'conflicted', 'rejected', 'acknowledged')), CHECK (attempts >= 0), CHECK (accepted_revision IS NULL OR accepted_revision > 0), CHECK (state <> 'acknowledged' OR accepted_revision IS NOT NULL));"
+        }
+      ]
+    },
+    {
+      "name": "sync_checkpoints",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"sync_checkpoints\" (\"family_id\" TEXT NOT NULL, \"last_sequence\" INTEGER NOT NULL DEFAULT 0, \"authorization_epoch\" INTEGER NOT NULL DEFAULT 0, \"updated_at_us\" INTEGER NOT NULL, PRIMARY KEY (\"family_id\"), CHECK (last_sequence >= 0), CHECK (authorization_epoch >= 0));"
+        }
+      ]
+    },
+    {
+      "name": "sync_conflicts",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"sync_conflicts\" (\"id\" TEXT NOT NULL, \"operation_id\" TEXT NOT NULL UNIQUE REFERENCES pending_mutations (operation_id), \"server_revision\" INTEGER NOT NULL, \"server_snapshot_json\" TEXT NOT NULL, \"detected_at_us\" INTEGER NOT NULL, \"resolved_at_us\" INTEGER NULL, PRIMARY KEY (\"id\"), CHECK (server_revision > 0), CHECK (json_valid(server_snapshot_json)));"
+        }
+      ]
+    },
+    {
+      "name": "family_spaces",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"family_spaces\" (\"id\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"mode\" TEXT NOT NULL, \"currency\" TEXT NOT NULL DEFAULT 'INR', \"created_at_us\" INTEGER NOT NULL, PRIMARY KEY (\"id\"), CHECK (mode IN ('offline', 'cloud')), CHECK (currency = 'INR')) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "family_members",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"family_members\" (\"id\" TEXT NOT NULL, \"family_id\" TEXT NOT NULL REFERENCES family_spaces (id), \"auth_user_id\" TEXT NULL, \"display_name\" TEXT NOT NULL, \"relationship\" TEXT NOT NULL, \"role\" TEXT NOT NULL, \"active\" INTEGER NOT NULL DEFAULT 1 CHECK (\"active\" IN (0, 1)), \"revision\" INTEGER NOT NULL DEFAULT 1, \"created_at_us\" INTEGER NOT NULL, PRIMARY KEY (\"id\"), UNIQUE (family_id, id), CHECK (role IN ('administrator', 'member')), CHECK (revision > 0)) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "vault_devices",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"vault_devices\" (\"id\" TEXT NOT NULL, \"family_id\" TEXT NOT NULL, \"member_id\" TEXT NOT NULL, \"state\" TEXT NOT NULL, \"created_at_us\" INTEGER NOT NULL, PRIMARY KEY (\"id\"), UNIQUE (family_id, id, member_id), FOREIGN KEY (family_id, member_id) REFERENCES family_members(family_id, id), CHECK (state IN ('enrolled', 'revoked', 'pending'))) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "ledger_accounts",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"ledger_accounts\" (\"id\" TEXT NOT NULL, \"family_id\" TEXT NOT NULL REFERENCES family_spaces (id), \"revision\" INTEGER NOT NULL DEFAULT 1, \"created_by\" TEXT NOT NULL, \"updated_by\" TEXT NOT NULL, \"created_at_us\" INTEGER NOT NULL, \"updated_at_us\" INTEGER NOT NULL, \"deleted_at_us\" INTEGER NULL, \"name\" TEXT NOT NULL, \"kind\" TEXT NOT NULL, \"subtype\" TEXT NOT NULL, \"currency\" TEXT NOT NULL DEFAULT 'INR', \"system_account\" INTEGER NOT NULL DEFAULT 0 CHECK (\"system_account\" IN (0, 1)), PRIMARY KEY (\"id\"), UNIQUE (family_id, id), CHECK (revision > 0), CHECK (updated_at_us >= created_at_us), CHECK (deleted_at_us IS NULL OR deleted_at_us >= created_at_us), FOREIGN KEY (family_id, created_by) REFERENCES family_members(family_id, id), FOREIGN KEY (family_id, updated_by) REFERENCES family_members(family_id, id), CHECK (kind IN ('asset', 'liability', 'equity', 'income', 'expense')), CHECK (currency = 'INR')) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "ledger_journals",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"ledger_journals\" (\"id\" TEXT NOT NULL, \"family_id\" TEXT NOT NULL REFERENCES family_spaces (id), \"revision\" INTEGER NOT NULL DEFAULT 1, \"created_by\" TEXT NOT NULL, \"updated_by\" TEXT NOT NULL, \"created_at_us\" INTEGER NOT NULL, \"updated_at_us\" INTEGER NOT NULL, \"deleted_at_us\" INTEGER NULL, \"kind\" TEXT NOT NULL, \"occurred_on\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"currency\" TEXT NOT NULL DEFAULT 'INR', \"status\" TEXT NOT NULL DEFAULT 'draft', \"reverses_id\" TEXT NULL, \"business_id\" TEXT NULL, \"related_entity_id\" TEXT NULL, PRIMARY KEY (\"id\"), UNIQUE (family_id, id), CHECK (revision > 0), CHECK (updated_at_us >= created_at_us), CHECK (deleted_at_us IS NULL OR deleted_at_us >= created_at_us), FOREIGN KEY (family_id, created_by) REFERENCES family_members(family_id, id), FOREIGN KEY (family_id, updated_by) REFERENCES family_members(family_id, id), CHECK (kind IN ('income', 'expense', 'transfer', 'opening', 'adjustment', 'reversal', 'repayment', 'business')), CHECK (currency = 'INR'), CHECK (status IN ('draft', 'posted')), CHECK (date(occurred_on) IS NOT NULL AND date(occurred_on) = occurred_on AND length(occurred_on) = 10), FOREIGN KEY (family_id, reverses_id) REFERENCES ledger_journals(family_id, id), UNIQUE (reverses_id)) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "ledger_postings",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"ledger_postings\" (\"id\" TEXT NOT NULL, \"family_id\" TEXT NOT NULL, \"journal_id\" TEXT NOT NULL, \"account_id\" TEXT NOT NULL, \"position\" INTEGER NOT NULL, \"amount_minor\" INTEGER NOT NULL, PRIMARY KEY (\"id\"), FOREIGN KEY (family_id, journal_id) REFERENCES ledger_journals(family_id, id), FOREIGN KEY (family_id, account_id) REFERENCES ledger_accounts(family_id, id), UNIQUE (journal_id, position), CHECK (amount_minor <> 0), CHECK (position >= 0)) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "local_audit_events",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"local_audit_events\" (\"id\" TEXT NOT NULL, \"family_id\" TEXT NOT NULL, \"actor_id\" TEXT NOT NULL, \"device_id\" TEXT NOT NULL, \"operation_id\" TEXT NOT NULL, \"entity_type\" TEXT NOT NULL, \"entity_id\" TEXT NOT NULL, \"action\" TEXT NOT NULL, \"before_json\" TEXT NULL, \"after_json\" TEXT NULL, \"created_at_us\" INTEGER NOT NULL, PRIMARY KEY (\"id\"), FOREIGN KEY (family_id, device_id, actor_id) REFERENCES vault_devices(family_id, id, member_id), UNIQUE (family_id, operation_id, entity_type, entity_id), CHECK (before_json IS NULL OR json_valid(before_json)), CHECK (after_json IS NULL OR json_valid(after_json))) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "monthly_budgets",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"monthly_budgets\" (\"id\" TEXT NOT NULL, \"family_id\" TEXT NOT NULL REFERENCES family_spaces (id), \"revision\" INTEGER NOT NULL DEFAULT 1, \"created_by\" TEXT NOT NULL, \"updated_by\" TEXT NOT NULL, \"created_at_us\" INTEGER NOT NULL, \"updated_at_us\" INTEGER NOT NULL, \"deleted_at_us\" INTEGER NULL, \"account_id\" TEXT NOT NULL, \"month\" TEXT NOT NULL, \"amount_minor\" INTEGER NOT NULL, PRIMARY KEY (\"id\"), UNIQUE (family_id, id), CHECK (revision > 0), CHECK (updated_at_us >= created_at_us), CHECK (deleted_at_us IS NULL OR deleted_at_us >= created_at_us), FOREIGN KEY (family_id, created_by) REFERENCES family_members(family_id, id), FOREIGN KEY (family_id, updated_by) REFERENCES family_members(family_id, id), FOREIGN KEY (family_id, account_id) REFERENCES ledger_accounts(family_id, id), CHECK (amount_minor >= 0), CHECK (length(month) = 7 AND date(month || '-01') IS NOT NULL)) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "reconciliation_checks",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"reconciliation_checks\" (\"id\" TEXT NOT NULL, \"family_id\" TEXT NOT NULL REFERENCES family_spaces (id), \"revision\" INTEGER NOT NULL DEFAULT 1, \"created_by\" TEXT NOT NULL, \"updated_by\" TEXT NOT NULL, \"created_at_us\" INTEGER NOT NULL, \"updated_at_us\" INTEGER NOT NULL, \"deleted_at_us\" INTEGER NULL, \"account_id\" TEXT NOT NULL, \"statement_date\" TEXT NOT NULL, \"statement_minor\" INTEGER NOT NULL, \"ledger_minor\" INTEGER NOT NULL, \"notes\" TEXT NOT NULL, PRIMARY KEY (\"id\"), UNIQUE (family_id, id), CHECK (revision > 0), CHECK (updated_at_us >= created_at_us), CHECK (deleted_at_us IS NULL OR deleted_at_us >= created_at_us), FOREIGN KEY (family_id, created_by) REFERENCES family_members(family_id, id), FOREIGN KEY (family_id, updated_by) REFERENCES family_members(family_id, id), FOREIGN KEY (family_id, account_id) REFERENCES ledger_accounts(family_id, id), CHECK (date(statement_date) IS NOT NULL AND date(statement_date) = statement_date)) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "vault_preferences",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE TABLE IF NOT EXISTS \"vault_preferences\" (\"key\" TEXT NOT NULL, \"value\" TEXT NOT NULL, PRIMARY KEY (\"key\")) STRICT;"
+        }
+      ]
+    },
+    {
+      "name": "pending_mutations_retry",
+      "sql": [
+        {
+          "dialect": "sqlite",
+          "sql": "CREATE INDEX pending_mutations_retry ON pending_mutations (state, next_attempt_at_us)"
+        }
+      ]
+    }
+  ]
+}

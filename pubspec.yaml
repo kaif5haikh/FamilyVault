@@ -18,6 +18,13 @@ dependencies:
   sqlite3: ^3.9.1
   supabase_flutter: ^2.18.3
   flutter_secure_storage: ^11.2.0
+  uuid: ^4.6.0
+  crypto: ^3.0.8
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  intl: ^0.20.3
+  cryptography: ^2.9.0
+  local_auth: ^3.0.2
 
 dev_dependencies:
   flutter_test:

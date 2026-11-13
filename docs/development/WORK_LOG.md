@@ -15,3 +15,16 @@
 ## M01 complete
 
 Implemented/tested exact INR Money, safe failure/config boundaries and localization strings. All 14 tests/analyzer pass. Reviewed candidate dependency SDKs, archive hashes, licences and OSV versions before later adoption (no matches returned for the ten new candidates; native review still required). Next M02: structured finance tables, additive v1 upgrade, immutable posted ledger and atomic audit/outbox.
+
+## M02 complete
+
+- Implemented additive encrypted Drift v2 and exact double-entry accounting,
+  immutable postings/reversals, idempotent commands, shared provenance, atomic
+  audit/outbox, budgets and reconciliation. No real records or sample balances.
+- `bash tool/check.sh` passed: generator, formatting, analyzer, 27 Flutter tests,
+  OSV (145 hosted packages), SQLite integrity and proposal probes (50 SQLite /
+  51 PostgreSQL; these remain design probes, not actual cloud sync).
+- Generated v2 schema snapshot and encrypted generated-v1 migration tests. No v1
+  schema/history overwrite. SQL trigger tampering and outbox-failure rollback tested.
+- Next M03: secure local vault creation/unlock, lifecycle locking and app wiring;
+  then immediately functional finance screens and reporting.

@@ -3,6 +3,10 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 
 import 'encrypted_connection.dart';
+import 'finance_tables.dart';
+import 'ledger_guards.dart';
+
+export 'finance_tables.dart';
 
 part 'app_database.g.dart';
 
@@ -81,7 +85,23 @@ class SyncConflicts extends Table {
   ];
 }
 
-@DriftDatabase(tables: [PendingMutations, SyncCheckpoints, SyncConflicts])
+@DriftDatabase(
+  tables: [
+    PendingMutations,
+    SyncCheckpoints,
+    SyncConflicts,
+    FamilySpaces,
+    FamilyMembers,
+    VaultDevices,
+    LedgerAccounts,
+    LedgerJournals,
+    LedgerPostings,
+    LocalAuditEvents,
+    MonthlyBudgets,
+    ReconciliationChecks,
+    VaultPreferences,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase._(super.executor);
 
@@ -91,17 +111,44 @@ class AppDatabase extends _$AppDatabase {
   }) => AppDatabase._(openEncryptedConnection(file: file, key: key));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (migrator) => migrator.createAll(),
+    onCreate: (migrator) async {
+      await migrator.createAll();
+      await _installLedgerGuards();
+    },
     onUpgrade: (migrator, from, to) async {
-      // Never recover an unsupported schema by dropping or clearing a vault.
-      throw StateError('An explicit database migration is required');
+      if (from != 1 || to != 2) {
+        throw StateError('An explicit database migration is required');
+      }
+      await transaction(() async {
+        for (final table in <TableInfo<Table, dynamic>>[
+          familySpaces,
+          familyMembers,
+          vaultDevices,
+          ledgerAccounts,
+          ledgerJournals,
+          ledgerPostings,
+          localAuditEvents,
+          monthlyBudgets,
+          reconciliationChecks,
+          vaultPreferences,
+        ]) {
+          await migrator.createTable(table);
+        }
+        await _installLedgerGuards();
+      });
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON;');
     },
   );
+
+  Future<void> _installLedgerGuards() async {
+    for (final statement in ledgerGuards) {
+      await customStatement(statement);
+    }
+  }
 }

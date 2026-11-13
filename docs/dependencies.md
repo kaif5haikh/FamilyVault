@@ -82,3 +82,18 @@ A successful local analyzer/test/build is recorded in the operation log when run
 Before real data, require Android/iOS encryption and secure-storage tests on devices,
 RLS/storage adversarial tests, key recovery/backup drills and a refreshed dependency
 and native-binary advisory review. Cloud SDK inclusion alone provides no offline sync.
+
+## Autonomous implementation additions — M02/M03
+
+Promoted uuid 4.6.0 (MIT), path 1.9.1 (BSD), path_provider 2.1.6 (BSD),
+intl 0.20.3 (BSD) and crypto 3.0.8 (BSD) to direct dependencies. Added cryptography
+2.9.0 (Apache-2.0) for upcoming authenticated document/backup/key envelopes and
+local_auth 3.0.2 (Flutter BSD) for the device-credential/biometric unlock gate.
+Official registry SDK constraints, release status, upstream source and licences
+were inspected; registry source archive SHA-256 values were verified. None of
+these reviewed versions is discontinued. Native authentication still needs mobile
+build/runtime validation. No biometric or key data is logged.
+
+The M02 resolved-graph audit checked **145 hosted packages** and returned no OSV
+matches on 2026-11-13. This does not cover platform/vendor advisories or certify
+application security. Exact graph remains in the committed lockfile.
