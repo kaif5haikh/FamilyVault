@@ -13,8 +13,8 @@ def git(*args: str) -> bytes:
 
 files = [p.decode() for p in git("ls-files", "-z").split(b"\0") if p]
 problems: list[str] = []
-private_dirs = {"private", "documents", "uploads", "scans", "exports", "backups", "recovery"}
-private_extensions = {".pdf", ".csv", ".xlsx", ".xls", ".db", ".sqlite", ".sqlite3", ".pem", ".key", ".jks", ".keystore", ".p12", ".pfx", ".enc", ".age", ".dump"}
+private_dirs = {"private", "documents", "uploads", "scans", "exports", "backups", "recovery", "secrets", ".secrets", ".ssh", ".aws"}
+private_extensions = {".pdf", ".csv", ".xlsx", ".xls", ".db", ".sqlite", ".sqlite3", ".pem", ".key", ".jks", ".keystore", ".p12", ".pfx", ".enc", ".age", ".dump", ".mobileprovision", ".provisionprofile", ".apk", ".aab", ".ipa"}
 secret_patterns = [
     re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     re.compile(rb"\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})\b"),
@@ -24,6 +24,11 @@ secret_patterns = [
 ]
 for file in files:
     path = PurePosixPath(file)
+    approved_image = (
+        path.parts[0] == "assets"
+        or re.fullmatch(r"android/app/src/main/res/mipmap-[^/]+/ic_launcher\.png", file)
+        or re.fullmatch(r"ios/Runner/Assets\.xcassets/(AppIcon\.appiconset|LaunchImage\.imageset)/[^/]+\.png", file)
+    )
     if (
         private_dirs.intersection(path.parts)
         or path.suffix.lower() in private_extensions
@@ -31,6 +36,7 @@ for file in files:
         or (path.name.startswith(".env") and path.name != ".env.example")
         or path.name in {"google-services.json", "GoogleService-Info.plist", "key.properties"}
         or tuple(path.parts[:2]) == ("config", "local")
+        or (path.suffix.lower() in {".png", ".jpg", ".jpeg", ".heic"} and not approved_image)
     ):
         problems.append(f"Forbidden tracked data/config path: {file}")
     content = git("show", f":{file}")

@@ -73,9 +73,12 @@ CREATE TABLE change_events (
     entity_id uuid NOT NULL,
     revision bigint NOT NULL CHECK (revision > 0),
     is_deleted boolean NOT NULL,
+    payload_schema_version integer NOT NULL CHECK (payload_schema_version > 0),
+    snapshot_json jsonb NOT NULL CHECK (jsonb_typeof(snapshot_json) = 'object'),
     committed_at timestamptz NOT NULL,
     PRIMARY KEY (family_id, sequence)
-); -- Pull RPC resolves authorized current snapshots; never expose this feed directly.
+); -- Immutable revision snapshots. Pull RPC applies current ACL/recipient filtering.
+-- Never expose this feed directly or include file bytes/plaintext document keys.
 
 CREATE TABLE audit_events (
     id uuid PRIMARY KEY,

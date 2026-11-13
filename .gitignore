@@ -22,6 +22,12 @@ credentials*
 .npmrc
 .pypirc
 auth.json
+secrets/
+.secrets/
+.ssh/
+.aws/
+*.mobileprovision
+*.provisionprofile
 config/local/
 supabase/.temp/
 supabase/.branches/
@@ -34,6 +40,8 @@ coverage/
 *.log
 *.tmp
 *.bak
+*.hprof
+.kotlin/
 *.db
 *.db-*
 *.sqlite
@@ -74,10 +82,15 @@ recovery/
 .pub/
 .pub-cache/
 build/
+*.apk
+*.aab
+*.ipa
+*.dSYM/
 doc/api/
 *.symbols
 *.map.json
 android/.gradle/
+android/.kotlin/
 android/captures/
 android/local.properties
 android/gradlew
@@ -112,3 +125,7 @@ Thumbs.db
 !assets/**/*.png
 !assets/**/*.jpg
 !assets/**/*.jpeg
+# Stock launcher images from the official Flutter template, reviewed in Phase 3.
+!android/app/src/main/res/mipmap-*/ic_launcher.png
+!ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png
+!ios/Runner/Assets.xcassets/LaunchImage.imageset/*.png

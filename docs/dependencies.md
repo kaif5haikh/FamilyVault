@@ -11,6 +11,7 @@ a registry version match alone is not proof.
 
 | Package | Reviewed stable | Published (UTC) | Purpose / security and maintenance decision |
 | --- | --- | --- | --- |
+| [material_ui](https://pub.dev/packages/material_ui/versions/1.11.0) | 1.11.0 | 2026-11-09 | Official Flutter Material 3 library; source, SDK constraints and maintenance status reviewed. Use standalone widget types consistently with GoRouter 18. |
 | [flutter_riverpod](https://pub.dev/packages/flutter_riverpod/versions/3.5.0) | 3.5.0 | 2026-11-06 | State management. Active upstream; use stable manual providers first, avoid unnecessary generator coupling. |
 | [go_router](https://pub.dev/packages/go_router/versions/18.1.4) | 18.1.4 | 2026-11-09 | Navigation. Flutter-maintained router; redirects are presentation gates, never backend authorization. |
 | [fl_chart](https://pub.dev/packages/fl_chart/versions/1.3.1) | 1.3.1 | 2026-11-09 | Future analytics presentation. Active upstream; selected for later authorized projections, no placeholder financial charts. |
@@ -36,6 +37,20 @@ a security certification. Repeat against the resolved transitive Pub graph.
 Native Android/iOS/SQLite/cipher dependencies need separate vendor-advisory
 review; absence in the Pub advisory ecosystem does not cover them.
 
+After resolving the application, `python3 tool/audit_dependencies.py` checked all
+**138 hosted packages** in the lockfile graph, including `material_ui`, and
+returned no advisory matches on 2026-11-13. The repeatable script reports an
+unavailable service as a failed audit, never as a clean result.
+
+Direct runtime licence files were inspected: Riverpod, FL Chart, Drift, sqlite3
+and Supabase are MIT; GoRouter, Material UI and flutter_secure_storage use BSD
+licences. Preserve upstream notices. The app exposes Flutter's licence registry.
+
+Flutter 3.50 formally deprecates the bundled Material library. The foundation
+uses the official standalone package after checking the
+[Flutter migration guidance](https://docs.flutter.dev/release/breaking-changes/material-ui-and-cupertino-ui).
+This also avoids mixing widget types with the current GoRouter/FL Chart versions.
+
 Review upstream source/changelog and licence files on adoption; retain required
 third-party notices in distributions. No licence has been granted to the FamilyVault
 application by initialization; keep the private source proprietary unless the owner
@@ -54,6 +69,14 @@ route and native asset checksum verification. Do not add obsolete
 `sqlcipher_flutter_libs` alongside this setup.
 
 ## Release evidence still required
+
+The official Flutter template selects AGP 9.3.1, Kotlin Gradle plugin 2.4.20 and
+Gradle 9.5.0. The Gradle distribution checksum is pinned to the official checksum
+endpoint. OSV Maven queries for AGP, Kotlin Gradle plugin and Kotlin standard
+library at those versions returned no advisory matches. JDK 21 and Android API
+36 are used for the local build; native/toolchain advisories must still be
+refreshed before release. The selected Gradle version's compatibility/release
+notes are available from [Gradle](https://docs.gradle.org/9.5.0/release-notes.html).
 
 A successful local analyzer/test/build is recorded in the operation log when run.
 Before real data, require Android/iOS encryption and secure-storage tests on devices,

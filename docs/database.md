@@ -46,7 +46,7 @@ erDiagram
   DOCUMENT_VERSIONS ||--o| UPLOAD_RESERVATIONS : reserves
 ```
 
-Every domain relationship uses a composite `(family_id, id)` foreign key.
+Every family-scoped domain relationship uses a composite `(family_id, id)` foreign key.
 Business/account, liability/journal and document/version associations cannot
 cross families. No real records or sample family identities are inserted.
 

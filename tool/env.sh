@@ -8,6 +8,10 @@ export ANDROID_HOME="$FAMILYVAULT_ROOT/.tools/android-sdk"
 export ANDROID_SDK_ROOT="$ANDROID_HOME"
 export ANDROID_USER_HOME="$FAMILYVAULT_ROOT/.cache/android"
 export ANDROID_AVD_HOME="$FAMILYVAULT_ROOT/.cache/android/avd"
+# Keep this project's ADB daemon separate from an existing user daemon.
+export ADB_SERVER_SOCKET=tcp:localhost:5039
+export TMPDIR="$FAMILYVAULT_ROOT/.cache/tmp"
+mkdir -p "$TMPDIR"
 export XDG_CACHE_HOME="$FAMILYVAULT_ROOT/.cache/xdg"
 export XDG_CONFIG_HOME="$FAMILYVAULT_ROOT/.cache/config"
 export FLUTTER_CONFIG_DIR="$FAMILYVAULT_ROOT/.cache/flutter-config"

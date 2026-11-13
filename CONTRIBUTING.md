@@ -31,6 +31,8 @@ Describe the concrete change and its validation in PR descriptions.
 - Add reversible versioned database migrations and migration tests when changing
   a released schema. No automatic destructive fallback on migration failure.
 - Do not use plaintext preferences for refresh tokens or encryption keys.
+- Do not log raw database exceptions or generated row `toString()` output; they
+  can contain SQL parameters and sensitive payloads. Map them to safe typed errors.
 - Keep generated Drift code and the application's `pubspec.lock` in version control.
 - Do not deploy SQL under `docs/design/`; it is a proposal, not a migration.
 - Never put secrets in `--dart-define`; compiled values can be extracted.

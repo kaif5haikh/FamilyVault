@@ -24,7 +24,9 @@ and worker scheduling are future work.
    Check protocol/schema compatibility. Unknown grants block uploads.
 3. Server transaction locks a per-family sync clock row, checks session/device
    revocation, membership, resource permissions and expected entity revision.
-4. Look up `(family_id, actor_id, operation_id)`. An identical replay returns its
+4. Recompute the digest server-side over the canonical validated envelope,
+   including target, mutation kind, base revision and payload; do not trust the
+   caller's claimed digest. Look up `(family_id, actor_id, operation_id)`. An identical replay returns its
    prior receipt. Reuse with a different payload digest is rejected. Idempotency
    receipts outlive the maximum supported retry/restore window; old restored
    clients must rebootstrap rather than replay after that window.
@@ -61,6 +63,13 @@ page and cursor commit atomically in Drift. A partial page cannot advance its
 cursor. Realtime is only a wake-up signal; periodic/foreground/manual pulls are
 the recovery path for lost notifications.
 
+Change events retain an immutable, versioned snapshot of the changed entity at
+that revision (a minimal tombstone for deletion). Returning the current mutable
+row later would not provide an as-of-watermark snapshot. Keep file bytes and
+plaintext keys out of events; apply current resource/recipient authorization and
+typed payload filtering inside the pull RPC. Local merge must never regress an
+already accepted revision, and pending edits keep their own base snapshot.
+
 Before serving a pull, compare the caller's authorization epoch. Grant/membership
 changes bump it under the family lock and invalidate that user's snapshot. On
 mismatch, suspend reads, purge or quarantine revoked cache/key material, obtain
@@ -68,6 +77,13 @@ a complete authorized snapshot at a fixed watermark, then resume incremental
 pull. Newly granted old records require snapshot backfill; a filtered change
 feed alone cannot discover them. An offline stale cache remains a documented
 revocation limitation, bounded by the reviewed local-unlock lease policy.
+
+Bootstrap must create the metadata snapshot and watermark in one server
+transaction holding the family clock lock. For a paginated bootstrap, materialize
+an immutable, short-lived device-scoped snapshot in that transaction, then
+reauthorize every page and discard it if the epoch changes. Separate HTTP
+transactions do not share a PostgreSQL MVCC snapshot. No family lock is held
+while uploading/downloading file bytes.
 
 ## Conflicts and duplicate prevention
 

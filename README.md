@@ -36,6 +36,19 @@ Toolchain setup, verified checks and known limitations are recorded in
 [development setup](docs/development.md) and the
 [initialization record](docs/operations/2026-11-13-initialization.md).
 
+The initial Flutter shell includes a Material 3 theme, GoRouter navigation,
+Riverpod access boundary, secure session/PKCE storage adapters and an encrypted
+Drift database for sync metadata. The shell stays disconnected and locked;
+full authentication, document crypto, synchronization and financial features
+are later milestones. See [the foundation decision](docs/decisions/0002-mobile-foundation.md).
+
+```bash
+source tool/env.sh
+flutter pub get --enforce-lockfile
+flutter analyze --no-pub
+flutter test --no-pub
+```
+
 ## Security baseline
 
 Keep credentials, personal documents, database files, exports and backups outside

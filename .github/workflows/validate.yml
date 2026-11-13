@@ -1,0 +1,46 @@
+name: Validate foundation
+
+# Manual until the owner chooses an automated CI cadence for the private repo.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  flutter:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          flutter-version: '3.50.0'
+          cache: false
+      - run: flutter pub get --enforce-lockfile
+      - run: dart format --output=none --set-exit-if-changed lib test
+      - run: dart run build_runner build
+      - run: git diff --exit-code -- lib/core/database/app_database.g.dart
+      - run: flutter analyze --no-pub
+      - run: flutter test --no-pub
+      - run: python3 tool/audit_dependencies.py
+      - run: flutter build apk --debug --no-pub --target-platform android-arm64
+      - run: python3 tool/check_repository.py
+
+  schema-proposals:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Expose installed PostgreSQL server tools
+        run: echo "$(pg_config --bindir)" >> "$GITHUB_PATH"
+      - run: bash tool/check_proposals.sh
