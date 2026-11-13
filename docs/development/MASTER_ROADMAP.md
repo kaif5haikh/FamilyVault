@@ -9,7 +9,7 @@ No production deployment, real family data, paid services or destructive history
 - [x] M00 Inspect actual code/history/architecture and record execution authority.
 - [x] M01 Exact INR model/formatting, typed failures, localization/config foundation.
 - [x] M02 Additive Drift v1→v2 migration, relational ledger/accounts/audit/outbox and financial invariants.
-- [ ] M03 Secure vault creation/unlock/lifecycle, independent identity/session adapters and offline app composition.
+- [x] M03 Secure vault creation/unlock/lifecycle, independent identity/session adapters and offline app composition.
 - [ ] M04 Native responsive dashboard, income/expense/transfer/accounts/budgets/reports and transaction corrections/reconciliation.
 - [ ] M05 Wealth/property/metals/valuations, liabilities/interest/repayments and business accounting/inventory.
 - [ ] M06 Executable PostgreSQL/Supabase migrations, membership/enrollment/session/RLS/RPC and security integration tests.

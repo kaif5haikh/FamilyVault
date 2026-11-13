@@ -133,3 +133,13 @@ archive, then verify/acknowledge each destination independently. Schedules are
 best-effort under mobile OS limits; report deferred work. Restore must work on a
 clean device with an independently held recovery key and current enrollment for
 live access. Neither adapter nor a clean-device restore is implemented yet.
+
+## Autonomous implementation status (2026-11-13)
+
+The owner's mission in ADR 0004 supersedes the historical per-phase stop gate;
+it does not constitute a completed human security/architecture review. The
+executable local ledger is Drift v2 (ADR 0005), preserving v1 metadata/history.
+Device-protected creation/unlock/lifecycle is ADR 0006. Review-only SQL elsewhere
+in this document remains a proposal until an executable migration and behavioral
+integration evidence are recorded. Current behavior, outstanding work and test
+results are maintained in `docs/development/`; no production service is deployed.

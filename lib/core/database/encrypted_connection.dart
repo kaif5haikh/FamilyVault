@@ -4,7 +4,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 
 /// A caller supplies a securely generated, securely retained 256-bit vault key.
-/// This phase intentionally does not create/persist keys or unlock a real vault.
+/// VaultLifecycle creates and retains keys in OS secure storage after device auth.
 final class VaultDatabaseKey {
   VaultDatabaseKey.fromBytes(List<int> bytes) {
     if (bytes.length != 32 || bytes.any((value) => value < 0 || value > 255)) {

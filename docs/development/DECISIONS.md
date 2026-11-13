@@ -34,3 +34,14 @@ documents, independent identities, local plus encrypted Drive backups.
 - Renaming shared accounts preserves their creator; all writes retain modifier,
   revision, immutable audit and pending mutation in the same local transaction.
   Local enrollment checks do not substitute for the later server authorization.
+
+## M03 — local vault lifecycle
+
+See ADR 0006. Offline workspace keys live in a versioned OS-secure catalog, with
+an initializing/ready state so interrupted setup can resume without discarding
+keys. Device authentication precedes key use. Missing ready files/catalogs are
+recovery errors; no automatic reset. Background/idle locking disposes the encrypted
+database and its in-memory key bundle. Android screenshot protection and iOS
+snapshot masking supplement the Flutter privacy cover. Key zeroization is best
+effort, not a VM/hardware guarantee. Framework/platform error logs are constant,
+curated messages. The working offline overview is labelled "On this device".

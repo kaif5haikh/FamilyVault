@@ -27,3 +27,19 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `python3 tool/audit_dependencies.py`: 145 hosted Pub resolutions; no matches.
 - This proves host/local behavior only. Server sync, live credentials and native
   mobile secure storage are not established by these results.
+
+## M03 — device-protected vault and app composition
+
+- `bash tool/check.sh`: passed; **36 Flutter tests**, clean analysis/formatting,
+  code generation, 145-package OSV graph (no matches) and prior SQL design probes.
+- Seven lifecycle tests cover device denial, independent keys/persistence/close,
+  storage failure, interrupted setup, lock/open race and missing/corrupt catalog/
+  database preservation. Three app widget tests cover locked access, 320px/2x text
+  and background privacy/locking. Report formatting also covers >int64 totals.
+- A widget test exposed a label overflow at large text size; fixed with flexible
+  layout. All widget cases then passed without reducing text scale/assertions.
+- `flutter build apk --debug --no-pub`: succeeded, 142.2 seconds, Android debug APK
+  at `build/app/outputs/flutter-apk/app-debug.apk`. This proves Android compilation
+  of FragmentActivity/local_auth/secure-storage/privacy changes, not physical
+  biometric/key-store security or distribution signing. No physical device used.
+- iOS scene masking/Face ID configuration added; **not compiled on Linux**.

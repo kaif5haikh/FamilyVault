@@ -33,6 +33,8 @@
 	</dict>
 	<key>UIFileSharingEnabled</key>
 	<false/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Verify your identity to unlock your private family vault.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

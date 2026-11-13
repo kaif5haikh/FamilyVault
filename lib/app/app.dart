@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'router.dart';
 import 'theme.dart';
+import 'privacy_boundary.dart';
 
 class FamilyVaultApp extends ConsumerWidget {
   const FamilyVaultApp({super.key});
@@ -14,6 +15,11 @@ class FamilyVaultApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: VaultTheme.light,
       darkTheme: VaultTheme.dark,
+      locale: const Locale('en', 'IN'),
+      supportedLocales: const [Locale('en', 'IN'), Locale('hi', 'IN')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      builder: (context, child) =>
+          PrivacyBoundary(child: child ?? const SizedBox.shrink()),
       routerConfig: ref.watch(routerProvider),
     );
   }

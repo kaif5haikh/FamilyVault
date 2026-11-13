@@ -224,3 +224,13 @@ supported upgrade with synthetic prior-version fixtures once a released schema
 changes. PostgreSQL migrations are append-only, forward-compatible during rolling
 mobile upgrades and tested locally before deployment. Reject unsupported protocol
 versions; no destructive fallback. No production SQL is run in initialization.
+
+## Executable local schema update
+
+Drift v2 now adds family/device metadata, accounts, balanced immutable journal
+aggregates and postings, budgets, reconciliation, preferences and append-only
+local audit. `lib/core/database/finance_tables.dart`, `ledger_guards.dart` and the
+versioned snapshot are authoritative for this implemented local version. Historical
+v1 tables/snapshot remain intact. The separate proposed future schemas are not
+silently substituted for these migrations. See ADR 0005 and the development test
+journal for encrypted populated-v1 upgrade and ledger behavior evidence.
