@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd -- "$(git rev-parse --show-toplevel)"
+git diff --cached --check
+python3 tool/check_repository.py
+if [[ -x .tools/gitleaks/gitleaks ]]; then
+  scanner=.tools/gitleaks/gitleaks
+elif command -v gitleaks >/dev/null 2>&1; then
+  scanner="$(command -v gitleaks)"
+else
+  printf '%s\n' 'Install the reviewed Gitleaks release before committing.' >&2
+  exit 1
+fi
+git diff --cached --binary -- . | "$scanner" stdin --no-banner --redact
