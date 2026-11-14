@@ -1194,8 +1194,1917 @@ i1.GeneratedColumn<String> _column_63(String aliasedName) =>
       type: i1.DriftSqlType.string,
       $customConstraints: 'NOT NULL',
     );
+
+final class Schema3 extends i0.VersionedSchema {
+  Schema3({required super.database}) : super(version: 3);
+  @override
+  late final List<i1.DatabaseSchemaEntity> entities = [
+    pendingMutations,
+    syncCheckpoints,
+    syncConflicts,
+    familySpaces,
+    familyMembers,
+    vaultDevices,
+    ledgerAccounts,
+    ledgerJournals,
+    ledgerPostings,
+    localAuditEvents,
+    monthlyBudgets,
+    reconciliationChecks,
+    vaultPreferences,
+    wealthAssets,
+    propertyDetails,
+    metalDetails,
+    investmentDetails,
+    assetOwnerships,
+    assetValuations,
+    debtContracts,
+    debtRepayments,
+    businesses,
+    stockItems,
+    stockPositions,
+    stockMovements,
+    workers,
+    salaryPayments,
+    aggregateJournalLinks,
+    pendingMutationsRetry,
+  ];
+  late final Shape0 pendingMutations = Shape0(
+    source: i0.VersionedTable(
+      entityName: 'pending_mutations',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [
+        'PRIMARY KEY(operation_id)',
+        'CHECK(mutation_kind IN (\'upsert\', \'delete\'))',
+        'CHECK(base_revision >= 0)',
+        'CHECK(json_valid(payload_json))',
+        'CHECK(length(payload_digest) = 64)',
+        'CHECK(protocol_version > 0)',
+        'CHECK(state IN (\'pending\', \'in_flight\', \'conflicted\', \'rejected\', \'acknowledged\'))',
+        'CHECK(attempts >= 0)',
+        'CHECK(accepted_revision IS NULL OR accepted_revision > 0)',
+        'CHECK(state <> \'acknowledged\' OR accepted_revision IS NOT NULL)',
+      ],
+      columns: [
+        _column_0,
+        _column_1,
+        _column_2,
+        _column_3,
+        _column_4,
+        _column_5,
+        _column_6,
+        _column_7,
+        _column_8,
+        _column_9,
+        _column_10,
+        _column_11,
+        _column_12,
+        _column_13,
+        _column_14,
+        _column_15,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape1 syncCheckpoints = Shape1(
+    source: i0.VersionedTable(
+      entityName: 'sync_checkpoints',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [
+        'PRIMARY KEY(family_id)',
+        'CHECK(last_sequence >= 0)',
+        'CHECK(authorization_epoch >= 0)',
+      ],
+      columns: [_column_1, _column_16, _column_17, _column_18],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape2 syncConflicts = Shape2(
+    source: i0.VersionedTable(
+      entityName: 'sync_conflicts',
+      withoutRowId: false,
+      isStrict: false,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'CHECK(server_revision > 0)',
+        'CHECK(json_valid(server_snapshot_json))',
+      ],
+      columns: [
+        _column_19,
+        _column_20,
+        _column_21,
+        _column_22,
+        _column_23,
+        _column_24,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape3 familySpaces = Shape3(
+    source: i0.VersionedTable(
+      entityName: 'family_spaces',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'CHECK(mode IN (\'offline\', \'cloud\'))',
+        'CHECK(currency = \'INR\')',
+      ],
+      columns: [_column_19, _column_25, _column_26, _column_27, _column_12],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape4 familyMembers = Shape4(
+    source: i0.VersionedTable(
+      entityName: 'family_members',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'CHECK(role IN (\'administrator\', \'member\'))',
+        'CHECK(revision > 0)',
+      ],
+      columns: [
+        _column_19,
+        _column_28,
+        _column_29,
+        _column_30,
+        _column_31,
+        _column_32,
+        _column_33,
+        _column_34,
+        _column_12,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape5 vaultDevices = Shape5(
+    source: i0.VersionedTable(
+      entityName: 'vault_devices',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id, member_id)',
+        'FOREIGN KEY(family_id, member_id)REFERENCES family_members(family_id, id)',
+        'CHECK(state IN (\'enrolled\', \'revoked\', \'pending\'))',
+      ],
+      columns: [_column_19, _column_1, _column_35, _column_36, _column_12],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape6 ledgerAccounts = Shape6(
+    source: i0.VersionedTable(
+      entityName: 'ledger_accounts',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'CHECK(revision > 0)',
+        'CHECK(updated_at_us >= created_at_us)',
+        'CHECK(deleted_at_us IS NULL OR deleted_at_us >= created_at_us)',
+        'FOREIGN KEY(family_id, created_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, updated_by)REFERENCES family_members(family_id, id)',
+        'CHECK(kind IN (\'asset\', \'liability\', \'equity\', \'income\', \'expense\'))',
+        'CHECK(currency = \'INR\')',
+      ],
+      columns: [
+        _column_19,
+        _column_28,
+        _column_34,
+        _column_37,
+        _column_38,
+        _column_12,
+        _column_18,
+        _column_39,
+        _column_25,
+        _column_40,
+        _column_41,
+        _column_27,
+        _column_42,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape7 ledgerJournals = Shape7(
+    source: i0.VersionedTable(
+      entityName: 'ledger_journals',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'CHECK(revision > 0)',
+        'CHECK(updated_at_us >= created_at_us)',
+        'CHECK(deleted_at_us IS NULL OR deleted_at_us >= created_at_us)',
+        'FOREIGN KEY(family_id, created_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, updated_by)REFERENCES family_members(family_id, id)',
+        'CHECK(kind IN (\'income\', \'expense\', \'transfer\', \'opening\', \'adjustment\', \'reversal\', \'repayment\', \'business\'))',
+        'CHECK(currency = \'INR\')',
+        'CHECK(status IN (\'draft\', \'posted\'))',
+        'CHECK(date(occurred_on) IS NOT NULL AND date(occurred_on) = occurred_on AND length(occurred_on) = 10)',
+        'FOREIGN KEY(family_id, reverses_id)REFERENCES ledger_journals(family_id, id)',
+        'UNIQUE(reverses_id)',
+      ],
+      columns: [
+        _column_19,
+        _column_28,
+        _column_34,
+        _column_37,
+        _column_38,
+        _column_12,
+        _column_18,
+        _column_39,
+        _column_40,
+        _column_43,
+        _column_44,
+        _column_27,
+        _column_45,
+        _column_46,
+        _column_47,
+        _column_48,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape8 ledgerPostings = Shape8(
+    source: i0.VersionedTable(
+      entityName: 'ledger_postings',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'FOREIGN KEY(family_id, journal_id)REFERENCES ledger_journals(family_id, id)',
+        'FOREIGN KEY(family_id, account_id)REFERENCES ledger_accounts(family_id, id)',
+        'UNIQUE(journal_id, position)',
+        'CHECK(amount_minor <> 0)',
+        'CHECK(position >= 0)',
+      ],
+      columns: [
+        _column_19,
+        _column_1,
+        _column_49,
+        _column_50,
+        _column_51,
+        _column_52,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape9 localAuditEvents = Shape9(
+    source: i0.VersionedTable(
+      entityName: 'local_audit_events',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'FOREIGN KEY(family_id, device_id, actor_id)REFERENCES vault_devices(family_id, id, member_id)',
+        'UNIQUE(family_id, operation_id, entity_type, entity_id)',
+        'CHECK(before_json IS NULL OR json_valid(before_json))',
+        'CHECK(after_json IS NULL OR json_valid(after_json))',
+      ],
+      columns: [
+        _column_19,
+        _column_1,
+        _column_53,
+        _column_2,
+        _column_0,
+        _column_3,
+        _column_4,
+        _column_54,
+        _column_55,
+        _column_56,
+        _column_12,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape10 monthlyBudgets = Shape10(
+    source: i0.VersionedTable(
+      entityName: 'monthly_budgets',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'CHECK(revision > 0)',
+        'CHECK(updated_at_us >= created_at_us)',
+        'CHECK(deleted_at_us IS NULL OR deleted_at_us >= created_at_us)',
+        'FOREIGN KEY(family_id, created_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, updated_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, account_id)REFERENCES ledger_accounts(family_id, id)',
+        'CHECK(amount_minor >= 0)',
+        'CHECK(length(month) = 7 AND date(month || \'-01\') IS NOT NULL)',
+      ],
+      columns: [
+        _column_19,
+        _column_28,
+        _column_34,
+        _column_37,
+        _column_38,
+        _column_12,
+        _column_18,
+        _column_39,
+        _column_50,
+        _column_57,
+        _column_52,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape11 reconciliationChecks = Shape11(
+    source: i0.VersionedTable(
+      entityName: 'reconciliation_checks',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'CHECK(revision > 0)',
+        'CHECK(updated_at_us >= created_at_us)',
+        'CHECK(deleted_at_us IS NULL OR deleted_at_us >= created_at_us)',
+        'FOREIGN KEY(family_id, created_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, updated_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, account_id)REFERENCES ledger_accounts(family_id, id)',
+        'CHECK(date(statement_date) IS NOT NULL AND date(statement_date) = statement_date)',
+      ],
+      columns: [
+        _column_19,
+        _column_28,
+        _column_34,
+        _column_37,
+        _column_38,
+        _column_12,
+        _column_18,
+        _column_39,
+        _column_50,
+        _column_58,
+        _column_59,
+        _column_60,
+        _column_61,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape12 vaultPreferences = Shape12(
+    source: i0.VersionedTable(
+      entityName: 'vault_preferences',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: ['PRIMARY KEY("key")'],
+      columns: [_column_62, _column_63],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape13 wealthAssets = Shape13(
+    source: i0.VersionedTable(
+      entityName: 'wealth_assets',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'CHECK(revision > 0)',
+        'CHECK(updated_at_us >= created_at_us)',
+        'CHECK(deleted_at_us IS NULL OR deleted_at_us >= created_at_us)',
+        'FOREIGN KEY(family_id, created_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, updated_by)REFERENCES family_members(family_id, id)',
+        'CHECK(kind IN (\'property\', \'land\', \'gold\', \'silver\', \'jewellery\', \'vehicle\', \'deposit\', \'investment\', \'other\'))',
+        'FOREIGN KEY(family_id, account_id)REFERENCES ledger_accounts(family_id, id)',
+        'UNIQUE(account_id)',
+        'CHECK(family_ownership_bps BETWEEN 1 AND 10000)',
+        'CHECK(valuation_state IN (\'unrecorded\', \'recorded\', \'closed\'))',
+        'CHECK((valuation_state = \'closed\')=(deleted_at_us IS NOT NULL))',
+        'CHECK((valuation_state = \'closed\')=(closed_on IS NOT NULL))',
+        'CHECK(closed_on IS NULL OR(date(closed_on) IS NOT NULL AND date(closed_on) = closed_on AND length(closed_on) = 10 AND(purchased_on IS NULL OR closed_on >= purchased_on)))',
+        'CHECK(purchase_ownership_bps BETWEEN 1 AND 10000)',
+        'CHECK(purchase_total_minor IS NULL OR purchase_total_minor >= 0)',
+        'CHECK(purchased_on IS NULL OR(date(purchased_on) IS NOT NULL AND date(purchased_on) = purchased_on AND length(purchased_on) = 10))',
+        'CHECK(currency = \'INR\')',
+      ],
+      columns: [
+        _column_19,
+        _column_28,
+        _column_34,
+        _column_37,
+        _column_38,
+        _column_12,
+        _column_18,
+        _column_39,
+        _column_25,
+        _column_40,
+        _column_50,
+        _column_64,
+        _column_65,
+        _column_66,
+        _column_67,
+        _column_68,
+        _column_69,
+        _column_27,
+        _column_70,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape14 propertyDetails = Shape14(
+    source: i0.VersionedTable(
+      entityName: 'property_details',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(asset_id)',
+        'FOREIGN KEY(family_id, asset_id)REFERENCES wealth_assets(family_id, id)',
+        'CHECK((area_milli IS NULL)=(area_unit IS NULL))',
+        'CHECK(area_milli IS NULL OR area_milli > 0)',
+        'CHECK(area_unit IS NULL OR length(trim(area_unit)) BETWEEN 1 AND 24)',
+      ],
+      columns: [
+        _column_71,
+        _column_1,
+        _column_72,
+        _column_73,
+        _column_74,
+        _column_75,
+        _column_76,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape15 metalDetails = Shape15(
+    source: i0.VersionedTable(
+      entityName: 'metal_details',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(asset_id)',
+        'FOREIGN KEY(family_id, asset_id)REFERENCES wealth_assets(family_id, id)',
+        'CHECK(weight_mg > 0)',
+        'CHECK(metal IN (\'gold\', \'silver\'))',
+        'CHECK(purity_ppm IS NULL OR purity_ppm BETWEEN 1 AND 1000000)',
+        'CHECK(purity_kind IN (\'unrecorded\', \'nominal\', \'assayed\'))',
+        'CHECK((purity_kind = \'unrecorded\')=(purity_ppm IS NULL))',
+        'CHECK(purity_kind <> \'nominal\' OR(karat IS NOT NULL AND purity_ppm =(karat * 1000000 + 12)/ 24))',
+        'CHECK(karat IS NULL OR karat IN (18, 22, 24))',
+        'CHECK(purchase_rate_minor_per_gram IS NULL OR purchase_rate_minor_per_gram >= 0)',
+        'CHECK(making_charges_minor IS NULL OR making_charges_minor >= 0)',
+      ],
+      columns: [
+        _column_71,
+        _column_1,
+        _column_77,
+        _column_78,
+        _column_79,
+        _column_80,
+        _column_81,
+        _column_82,
+        _column_83,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape16 investmentDetails = Shape16(
+    source: i0.VersionedTable(
+      entityName: 'investment_details',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(asset_id)',
+        'FOREIGN KEY(family_id, asset_id)REFERENCES wealth_assets(family_id, id)',
+        'CHECK((quantity_scaled IS NULL)=(quantity_scale IS NULL))',
+        'CHECK(quantity_scaled IS NULL OR quantity_scaled > 0)',
+        'CHECK(quantity_scale IS NULL OR quantity_scale BETWEEN 0 AND 9)',
+      ],
+      columns: [
+        _column_71,
+        _column_1,
+        _column_84,
+        _column_85,
+        _column_86,
+        _column_87,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape17 assetOwnerships = Shape17(
+    source: i0.VersionedTable(
+      entityName: 'asset_ownerships',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'CHECK(revision > 0)',
+        'CHECK(updated_at_us >= created_at_us)',
+        'CHECK(deleted_at_us IS NULL OR deleted_at_us >= created_at_us)',
+        'FOREIGN KEY(family_id, created_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, updated_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, asset_id)REFERENCES wealth_assets(family_id, id)',
+        'FOREIGN KEY(family_id, member_id)REFERENCES family_members(family_id, id)',
+        'CHECK(share_bps BETWEEN 1 AND 10000)',
+      ],
+      columns: [
+        _column_19,
+        _column_28,
+        _column_34,
+        _column_37,
+        _column_38,
+        _column_12,
+        _column_18,
+        _column_39,
+        _column_71,
+        _column_88,
+        _column_89,
+        _column_90,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape18 assetValuations = Shape18(
+    source: i0.VersionedTable(
+      entityName: 'asset_valuations',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'FOREIGN KEY(family_id, device_id, created_by)REFERENCES vault_devices(family_id, id, member_id)',
+        'FOREIGN KEY(family_id, asset_id)REFERENCES wealth_assets(family_id, id)',
+        'UNIQUE(family_id, asset_id, asset_revision, event_index)',
+        'CHECK(asset_revision > 0 AND event_index >= 0)',
+        'FOREIGN KEY(family_id, journal_id)REFERENCES ledger_journals(family_id, id)',
+        'UNIQUE(journal_id)',
+        'CHECK(total_value_minor >= 0 AND family_value_minor >= 0)',
+        'CHECK(typeof(family_value_minor - previous_family_value_minor) = \'integer\')',
+        'CHECK((family_value_minor = previous_family_value_minor)=(journal_id IS NULL))',
+        'CHECK(ownership_bps BETWEEN 1 AND 10000)',
+        'CHECK(family_value_minor =(total_value_minor / 10000)* ownership_bps +((total_value_minor % 10000)* ownership_bps + 5000)/ 10000)',
+        'CHECK(json_valid(basis_json))',
+        'CHECK(source IN (\'purchase\', \'manual\', \'metal_rate\', \'carry_forward\'))',
+        'CHECK(date(valued_on) IS NOT NULL AND date(valued_on) = valued_on AND length(valued_on) = 10)',
+        'CHECK(currency = \'INR\')',
+      ],
+      columns: [
+        _column_19,
+        _column_1,
+        _column_37,
+        _column_2,
+        _column_12,
+        _column_71,
+        _column_91,
+        _column_92,
+        _column_93,
+        _column_94,
+        _column_95,
+        _column_96,
+        _column_97,
+        _column_98,
+        _column_99,
+        _column_61,
+        _column_100,
+        _column_27,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape19 debtContracts = Shape19(
+    source: i0.VersionedTable(
+      entityName: 'debt_contracts',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'CHECK(revision > 0)',
+        'CHECK(updated_at_us >= created_at_us)',
+        'CHECK(deleted_at_us IS NULL OR deleted_at_us >= created_at_us)',
+        'FOREIGN KEY(family_id, created_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, updated_by)REFERENCES family_members(family_id, id)',
+        'CHECK(direction IN (\'borrowed\', \'lent\', \'bank_loan\'))',
+        'FOREIGN KEY(family_id, account_id)REFERENCES ledger_accounts(family_id, id)',
+        'UNIQUE(account_id)',
+        'CHECK(principal_minor > 0)',
+        'CHECK(annual_rate_bps IS NULL OR annual_rate_bps BETWEEN 0 AND 1000000)',
+        'CHECK(interest_method IN (\'unrecorded\', \'simpleActual365\', \'flatMonthly\', \'reducingMonthly\'))',
+        'CHECK((interest_method = \'unrecorded\')=(annual_rate_bps IS NULL))',
+        'CHECK(term_months IS NULL OR term_months BETWEEN 1 AND 600)',
+        'CHECK(emi_minor IS NULL OR emi_minor >= 0)',
+        'CHECK(date(started_on) IS NOT NULL AND date(started_on) = started_on AND length(started_on) = 10)',
+        'CHECK(first_due_on IS NULL OR(date(first_due_on) IS NOT NULL AND date(first_due_on) = first_due_on AND length(first_due_on) = 10 AND first_due_on >= started_on))',
+        'CHECK(due_on IS NULL OR(date(due_on) IS NOT NULL AND date(due_on) = due_on AND length(due_on) = 10 AND due_on >= started_on))',
+        'CHECK(currency = \'INR\')',
+      ],
+      columns: [
+        _column_19,
+        _column_28,
+        _column_34,
+        _column_37,
+        _column_38,
+        _column_12,
+        _column_18,
+        _column_39,
+        _column_25,
+        _column_101,
+        _column_102,
+        _column_50,
+        _column_103,
+        _column_104,
+        _column_105,
+        _column_106,
+        _column_107,
+        _column_108,
+        _column_109,
+        _column_110,
+        _column_27,
+        _column_61,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape20 debtRepayments = Shape20(
+    source: i0.VersionedTable(
+      entityName: 'debt_repayments',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'FOREIGN KEY(family_id, device_id, created_by)REFERENCES vault_devices(family_id, id, member_id)',
+        'FOREIGN KEY(family_id, contract_id)REFERENCES debt_contracts(family_id, id)',
+        'FOREIGN KEY(family_id, journal_id)REFERENCES ledger_journals(family_id, id)',
+        'UNIQUE(journal_id)',
+        'CHECK(principal_minor >= 0 AND interest_minor >= 0)',
+        'CHECK(principal_minor > 0 OR interest_minor > 0)',
+        'CHECK(typeof(principal_minor + interest_minor) = \'integer\')',
+        'CHECK(date(paid_on) IS NOT NULL AND date(paid_on) = paid_on AND length(paid_on) = 10)',
+      ],
+      columns: [
+        _column_19,
+        _column_1,
+        _column_37,
+        _column_2,
+        _column_12,
+        _column_111,
+        _column_49,
+        _column_112,
+        _column_103,
+        _column_113,
+        _column_61,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape21 businesses = Shape21(
+    source: i0.VersionedTable(
+      entityName: 'businesses',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'CHECK(revision > 0)',
+        'CHECK(updated_at_us >= created_at_us)',
+        'CHECK(deleted_at_us IS NULL OR deleted_at_us >= created_at_us)',
+        'FOREIGN KEY(family_id, created_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, updated_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, inventory_account_id)REFERENCES ledger_accounts(family_id, id)',
+        'FOREIGN KEY(family_id, cost_of_goods_account_id)REFERENCES ledger_accounts(family_id, id)',
+        'FOREIGN KEY(family_id, salary_account_id)REFERENCES ledger_accounts(family_id, id)',
+        'CHECK(currency = \'INR\')',
+      ],
+      columns: [
+        _column_19,
+        _column_28,
+        _column_34,
+        _column_37,
+        _column_38,
+        _column_12,
+        _column_18,
+        _column_39,
+        _column_25,
+        _column_61,
+        _column_114,
+        _column_115,
+        _column_116,
+        _column_27,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape22 stockItems = Shape22(
+    source: i0.VersionedTable(
+      entityName: 'stock_items',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'CHECK(revision > 0)',
+        'CHECK(updated_at_us >= created_at_us)',
+        'CHECK(deleted_at_us IS NULL OR deleted_at_us >= created_at_us)',
+        'FOREIGN KEY(family_id, created_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, updated_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, business_id)REFERENCES businesses(family_id, id)',
+        'UNIQUE(family_id, id, business_id)',
+        'CHECK(unit = \'piece\')',
+      ],
+      columns: [
+        _column_19,
+        _column_28,
+        _column_34,
+        _column_37,
+        _column_38,
+        _column_12,
+        _column_18,
+        _column_39,
+        _column_117,
+        _column_25,
+        _column_118,
+        _column_119,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape23 stockPositions = Shape23(
+    source: i0.VersionedTable(
+      entityName: 'stock_positions',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(stock_item_id)',
+        'FOREIGN KEY(family_id, stock_item_id)REFERENCES stock_items(family_id, id)',
+        'CHECK(quantity >= 0 AND cost_pool_minor >= 0)',
+        'CHECK(quantity <> 0 OR cost_pool_minor = 0)',
+      ],
+      columns: [_column_120, _column_1, _column_121, _column_122],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape24 stockMovements = Shape24(
+    source: i0.VersionedTable(
+      entityName: 'stock_movements',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'FOREIGN KEY(family_id, device_id, created_by)REFERENCES vault_devices(family_id, id, member_id)',
+        'FOREIGN KEY(family_id, business_id)REFERENCES businesses(family_id, id)',
+        'FOREIGN KEY(family_id, stock_item_id)REFERENCES stock_items(family_id, id)',
+        'FOREIGN KEY(family_id, stock_item_id, business_id)REFERENCES stock_items(family_id, id, business_id)',
+        'FOREIGN KEY(family_id, reverses_id)REFERENCES stock_movements(family_id, id)',
+        'UNIQUE(family_id, stock_item_id, item_revision, event_index)',
+        'UNIQUE(reverses_id)',
+        'CHECK(item_revision > 0 AND event_index >= 0)',
+        'FOREIGN KEY(family_id, journal_id)REFERENCES ledger_journals(family_id, id)',
+        'UNIQUE(journal_id)',
+        'CHECK(quantity_delta <> 0)',
+        'CHECK(value_delta_minor = 0 OR journal_id IS NOT NULL)',
+        'CHECK((quantity_delta > 0 AND value_delta_minor >= 0)OR(quantity_delta < 0 AND value_delta_minor <= 0))',
+        'CHECK(kind IN (\'purchase\', \'opening\', \'stock_out\', \'return\', \'adjustment\', \'reversal\'))',
+        'CHECK((kind = \'reversal\')=(reverses_id IS NOT NULL))',
+        'CHECK(date(occurred_on) IS NOT NULL AND date(occurred_on) = occurred_on AND length(occurred_on) = 10)',
+      ],
+      columns: [
+        _column_19,
+        _column_1,
+        _column_37,
+        _column_2,
+        _column_12,
+        _column_117,
+        _column_120,
+        _column_123,
+        _column_92,
+        _column_46,
+        _column_93,
+        _column_43,
+        _column_40,
+        _column_124,
+        _column_125,
+        _column_61,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape25 workers = Shape25(
+    source: i0.VersionedTable(
+      entityName: 'workers',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'CHECK(revision > 0)',
+        'CHECK(updated_at_us >= created_at_us)',
+        'CHECK(deleted_at_us IS NULL OR deleted_at_us >= created_at_us)',
+        'FOREIGN KEY(family_id, created_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, updated_by)REFERENCES family_members(family_id, id)',
+        'FOREIGN KEY(family_id, business_id)REFERENCES businesses(family_id, id)',
+        'UNIQUE(family_id, id, business_id)',
+        'CHECK(monthly_salary_minor IS NULL OR monthly_salary_minor >= 0)',
+      ],
+      columns: [
+        _column_19,
+        _column_28,
+        _column_34,
+        _column_37,
+        _column_38,
+        _column_12,
+        _column_18,
+        _column_39,
+        _column_117,
+        _column_25,
+        _column_126,
+        _column_61,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape26 salaryPayments = Shape26(
+    source: i0.VersionedTable(
+      entityName: 'salary_payments',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(id)',
+        'UNIQUE(family_id, id)',
+        'FOREIGN KEY(family_id, device_id, created_by)REFERENCES vault_devices(family_id, id, member_id)',
+        'FOREIGN KEY(family_id, business_id)REFERENCES businesses(family_id, id)',
+        'FOREIGN KEY(family_id, worker_id)REFERENCES workers(family_id, id)',
+        'FOREIGN KEY(family_id, worker_id, business_id)REFERENCES workers(family_id, id, business_id)',
+        'FOREIGN KEY(family_id, journal_id)REFERENCES ledger_journals(family_id, id)',
+        'UNIQUE(journal_id)',
+        'CHECK(amount_minor > 0)',
+        'CHECK(length(period) = 7 AND date(period || \'-01\') IS NOT NULL)',
+        'CHECK(date(paid_on) IS NOT NULL AND date(paid_on) = paid_on AND length(paid_on) = 10)',
+      ],
+      columns: [
+        _column_19,
+        _column_1,
+        _column_37,
+        _column_2,
+        _column_12,
+        _column_117,
+        _column_127,
+        _column_49,
+        _column_128,
+        _column_112,
+        _column_52,
+        _column_61,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  late final Shape27 aggregateJournalLinks = Shape27(
+    source: i0.VersionedTable(
+      entityName: 'aggregate_journal_links',
+      withoutRowId: false,
+      isStrict: true,
+      tableConstraints: [
+        'PRIMARY KEY(journal_id)',
+        'FOREIGN KEY(family_id, journal_id)REFERENCES ledger_journals(family_id, id)',
+        'CHECK(aggregate_type IN (\'asset\', \'debt\', \'stock\', \'salary\', \'asset_rent\'))',
+        'CHECK(purpose IN (\'opening\', \'acquisition\', \'valuation\', \'valuation_bridge\', \'disposal\', \'disposal_bridge\', \'repayment\', \'salary\', \'stock\', \'rent\', \'reversal\', \'other\'))',
+      ],
+      columns: [
+        _column_49,
+        _column_1,
+        _column_129,
+        _column_130,
+        _column_0,
+        _column_131,
+      ],
+      attachedDatabase: database,
+    ),
+    alias: null,
+  );
+  final i1.Index pendingMutationsRetry = i1.Index(
+    'pending_mutations_retry',
+    'CREATE INDEX pending_mutations_retry ON pending_mutations (state, next_attempt_at_us)',
+  );
+}
+
+class Shape13 extends i0.VersionedTable {
+  Shape13({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get revision =>
+      columnsByName['revision']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get createdBy =>
+      columnsByName['created_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get updatedBy =>
+      columnsByName['updated_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createdAtUs =>
+      columnsByName['created_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get updatedAtUs =>
+      columnsByName['updated_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get deletedAtUs =>
+      columnsByName['deleted_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get name =>
+      columnsByName['name']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get kind =>
+      columnsByName['kind']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get accountId =>
+      columnsByName['account_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get familyOwnershipBps =>
+      columnsByName['family_ownership_bps']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get valuationState =>
+      columnsByName['valuation_state']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get closedOn =>
+      columnsByName['closed_on']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get purchaseTotalMinor =>
+      columnsByName['purchase_total_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get purchaseOwnershipBps =>
+      columnsByName['purchase_ownership_bps']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get purchasedOn =>
+      columnsByName['purchased_on']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get currency =>
+      columnsByName['currency']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get notes =>
+      columnsByName['notes']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<int> _column_64(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'family_ownership_bps',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_65(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'valuation_state',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL DEFAULT \'unrecorded\'',
+      defaultValue: const i1.CustomExpression('\'unrecorded\''),
+    );
+i1.GeneratedColumn<String> _column_66(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'closed_on',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<int> _column_67(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'purchase_total_minor',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<int> _column_68(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'purchase_ownership_bps',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_69(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'purchased_on',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<String> _column_70(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'notes',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL DEFAULT \'\'',
+      defaultValue: const i1.CustomExpression('\'\''),
+    );
+
+class Shape14 extends i0.VersionedTable {
+  Shape14({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get assetId =>
+      columnsByName['asset_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get city =>
+      columnsByName['city']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get location =>
+      columnsByName['location']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get recordReference =>
+      columnsByName['record_reference']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get areaMilli =>
+      columnsByName['area_milli']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get areaUnit =>
+      columnsByName['area_unit']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_71(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'asset_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_72(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'city',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_73(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'location',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_74(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'record_reference',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<int> _column_75(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'area_milli',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<String> _column_76(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'area_unit',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+
+class Shape15 extends i0.VersionedTable {
+  Shape15({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get assetId =>
+      columnsByName['asset_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get weightMg =>
+      columnsByName['weight_mg']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get metal =>
+      columnsByName['metal']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get purityPpm =>
+      columnsByName['purity_ppm']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get purityKind =>
+      columnsByName['purity_kind']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get karat =>
+      columnsByName['karat']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get purchaseRateMinorPerGram =>
+      columnsByName['purchase_rate_minor_per_gram']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get makingChargesMinor =>
+      columnsByName['making_charges_minor']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<int> _column_77(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'weight_mg',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_78(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'metal',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_79(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'purity_ppm',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<String> _column_80(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'purity_kind',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL DEFAULT \'unrecorded\'',
+      defaultValue: const i1.CustomExpression('\'unrecorded\''),
+    );
+i1.GeneratedColumn<int> _column_81(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'karat',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<int> _column_82(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'purchase_rate_minor_per_gram',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<int> _column_83(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'making_charges_minor',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+
+class Shape16 extends i0.VersionedTable {
+  Shape16({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get assetId =>
+      columnsByName['asset_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get instrument =>
+      columnsByName['instrument']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get symbol =>
+      columnsByName['symbol']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get quantityScaled =>
+      columnsByName['quantity_scaled']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get quantityScale =>
+      columnsByName['quantity_scale']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_84(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'instrument',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_85(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'symbol',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<int> _column_86(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'quantity_scaled',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<int> _column_87(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'quantity_scale',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+
+class Shape17 extends i0.VersionedTable {
+  Shape17({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get revision =>
+      columnsByName['revision']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get createdBy =>
+      columnsByName['created_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get updatedBy =>
+      columnsByName['updated_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createdAtUs =>
+      columnsByName['created_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get updatedAtUs =>
+      columnsByName['updated_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get deletedAtUs =>
+      columnsByName['deleted_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get assetId =>
+      columnsByName['asset_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get memberId =>
+      columnsByName['member_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get ownerLabel =>
+      columnsByName['owner_label']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get shareBps =>
+      columnsByName['share_bps']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_88(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'member_id',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<String> _column_89(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'owner_label',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_90(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'share_bps',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+
+class Shape18 extends i0.VersionedTable {
+  Shape18({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get createdBy =>
+      columnsByName['created_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get deviceId =>
+      columnsByName['device_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createdAtUs =>
+      columnsByName['created_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get assetId =>
+      columnsByName['asset_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get assetRevision =>
+      columnsByName['asset_revision']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get eventIndex =>
+      columnsByName['event_index']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get journalId =>
+      columnsByName['journal_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get valuedOn =>
+      columnsByName['valued_on']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get totalValueMinor =>
+      columnsByName['total_value_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get familyValueMinor =>
+      columnsByName['family_value_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get previousFamilyValueMinor =>
+      columnsByName['previous_family_value_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get ownershipBps =>
+      columnsByName['ownership_bps']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get source =>
+      columnsByName['source']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get notes =>
+      columnsByName['notes']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get basisJson =>
+      columnsByName['basis_json']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get currency =>
+      columnsByName['currency']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<int> _column_91(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'asset_revision',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_92(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'event_index',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+i1.GeneratedColumn<String> _column_93(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'journal_id',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<String> _column_94(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'valued_on',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_95(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'total_value_minor',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_96(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'family_value_minor',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_97(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'previous_family_value_minor',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_98(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'ownership_bps',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_99(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'source',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_100(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'basis_json',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL DEFAULT \'{}\'',
+      defaultValue: const i1.CustomExpression('\'{}\''),
+    );
+
+class Shape19 extends i0.VersionedTable {
+  Shape19({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get revision =>
+      columnsByName['revision']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get createdBy =>
+      columnsByName['created_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get updatedBy =>
+      columnsByName['updated_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createdAtUs =>
+      columnsByName['created_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get updatedAtUs =>
+      columnsByName['updated_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get deletedAtUs =>
+      columnsByName['deleted_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get name =>
+      columnsByName['name']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get direction =>
+      columnsByName['direction']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get counterparty =>
+      columnsByName['counterparty']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get accountId =>
+      columnsByName['account_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get principalMinor =>
+      columnsByName['principal_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get annualRateBps =>
+      columnsByName['annual_rate_bps']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get interestMethod =>
+      columnsByName['interest_method']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get termMonths =>
+      columnsByName['term_months']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get emiMinor =>
+      columnsByName['emi_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get startedOn =>
+      columnsByName['started_on']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get firstDueOn =>
+      columnsByName['first_due_on']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get dueOn =>
+      columnsByName['due_on']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get currency =>
+      columnsByName['currency']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get notes =>
+      columnsByName['notes']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_101(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'direction',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_102(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'counterparty',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_103(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'principal_minor',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_104(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'annual_rate_bps',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<String> _column_105(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'interest_method',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL DEFAULT \'unrecorded\'',
+      defaultValue: const i1.CustomExpression('\'unrecorded\''),
+    );
+i1.GeneratedColumn<int> _column_106(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'term_months',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<int> _column_107(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'emi_minor',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<String> _column_108(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'started_on',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_109(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'first_due_on',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<String> _column_110(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'due_on',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+
+class Shape20 extends i0.VersionedTable {
+  Shape20({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get createdBy =>
+      columnsByName['created_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get deviceId =>
+      columnsByName['device_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createdAtUs =>
+      columnsByName['created_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get contractId =>
+      columnsByName['contract_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get journalId =>
+      columnsByName['journal_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get paidOn =>
+      columnsByName['paid_on']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get principalMinor =>
+      columnsByName['principal_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get interestMinor =>
+      columnsByName['interest_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get notes =>
+      columnsByName['notes']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_111(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'contract_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_112(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'paid_on',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_113(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'interest_minor',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+
+class Shape21 extends i0.VersionedTable {
+  Shape21({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get revision =>
+      columnsByName['revision']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get createdBy =>
+      columnsByName['created_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get updatedBy =>
+      columnsByName['updated_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createdAtUs =>
+      columnsByName['created_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get updatedAtUs =>
+      columnsByName['updated_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get deletedAtUs =>
+      columnsByName['deleted_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get name =>
+      columnsByName['name']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get notes =>
+      columnsByName['notes']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get inventoryAccountId =>
+      columnsByName['inventory_account_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get costOfGoodsAccountId =>
+      columnsByName['cost_of_goods_account_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get salaryAccountId =>
+      columnsByName['salary_account_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get currency =>
+      columnsByName['currency']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_114(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'inventory_account_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_115(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'cost_of_goods_account_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_116(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'salary_account_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+
+class Shape22 extends i0.VersionedTable {
+  Shape22({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get revision =>
+      columnsByName['revision']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get createdBy =>
+      columnsByName['created_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get updatedBy =>
+      columnsByName['updated_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createdAtUs =>
+      columnsByName['created_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get updatedAtUs =>
+      columnsByName['updated_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get deletedAtUs =>
+      columnsByName['deleted_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get businessId =>
+      columnsByName['business_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get name =>
+      columnsByName['name']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get sku =>
+      columnsByName['sku']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get unit =>
+      columnsByName['unit']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_117(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'business_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_118(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'sku',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NULL',
+    );
+i1.GeneratedColumn<String> _column_119(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'unit',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL DEFAULT \'piece\'',
+      defaultValue: const i1.CustomExpression('\'piece\''),
+    );
+
+class Shape23 extends i0.VersionedTable {
+  Shape23({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get stockItemId =>
+      columnsByName['stock_item_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get quantity =>
+      columnsByName['quantity']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get costPoolMinor =>
+      columnsByName['cost_pool_minor']! as i1.GeneratedColumn<int>;
+}
+
+i1.GeneratedColumn<String> _column_120(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'stock_item_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_121(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'quantity',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+i1.GeneratedColumn<int> _column_122(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'cost_pool_minor',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL DEFAULT 0',
+      defaultValue: const i1.CustomExpression('0'),
+    );
+
+class Shape24 extends i0.VersionedTable {
+  Shape24({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get createdBy =>
+      columnsByName['created_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get deviceId =>
+      columnsByName['device_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createdAtUs =>
+      columnsByName['created_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get businessId =>
+      columnsByName['business_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get stockItemId =>
+      columnsByName['stock_item_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get itemRevision =>
+      columnsByName['item_revision']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get eventIndex =>
+      columnsByName['event_index']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get reversesId =>
+      columnsByName['reverses_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get journalId =>
+      columnsByName['journal_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get occurredOn =>
+      columnsByName['occurred_on']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get kind =>
+      columnsByName['kind']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get quantityDelta =>
+      columnsByName['quantity_delta']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get valueDeltaMinor =>
+      columnsByName['value_delta_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get notes =>
+      columnsByName['notes']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<int> _column_123(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'item_revision',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_124(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'quantity_delta',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<int> _column_125(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'value_delta_minor',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NOT NULL',
+    );
+
+class Shape25 extends i0.VersionedTable {
+  Shape25({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get revision =>
+      columnsByName['revision']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get createdBy =>
+      columnsByName['created_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get updatedBy =>
+      columnsByName['updated_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createdAtUs =>
+      columnsByName['created_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get updatedAtUs =>
+      columnsByName['updated_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<int> get deletedAtUs =>
+      columnsByName['deleted_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get businessId =>
+      columnsByName['business_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get name =>
+      columnsByName['name']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get monthlySalaryMinor =>
+      columnsByName['monthly_salary_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get notes =>
+      columnsByName['notes']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<int> _column_126(String aliasedName) =>
+    i1.GeneratedColumn<int>(
+      'monthly_salary_minor',
+      aliasedName,
+      true,
+      type: i1.DriftSqlType.int,
+      $customConstraints: 'NULL',
+    );
+
+class Shape26 extends i0.VersionedTable {
+  Shape26({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get id =>
+      columnsByName['id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get createdBy =>
+      columnsByName['created_by']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get deviceId =>
+      columnsByName['device_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get createdAtUs =>
+      columnsByName['created_at_us']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get businessId =>
+      columnsByName['business_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get workerId =>
+      columnsByName['worker_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get journalId =>
+      columnsByName['journal_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get period =>
+      columnsByName['period']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get paidOn =>
+      columnsByName['paid_on']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<int> get amountMinor =>
+      columnsByName['amount_minor']! as i1.GeneratedColumn<int>;
+  i1.GeneratedColumn<String> get notes =>
+      columnsByName['notes']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_127(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'worker_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_128(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'period',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+
+class Shape27 extends i0.VersionedTable {
+  Shape27({required super.source, required super.alias}) : super.aliased();
+  i1.GeneratedColumn<String> get journalId =>
+      columnsByName['journal_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get familyId =>
+      columnsByName['family_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get aggregateType =>
+      columnsByName['aggregate_type']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get aggregateId =>
+      columnsByName['aggregate_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get operationId =>
+      columnsByName['operation_id']! as i1.GeneratedColumn<String>;
+  i1.GeneratedColumn<String> get purpose =>
+      columnsByName['purpose']! as i1.GeneratedColumn<String>;
+}
+
+i1.GeneratedColumn<String> _column_129(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'aggregate_type',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_130(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'aggregate_id',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL',
+    );
+i1.GeneratedColumn<String> _column_131(String aliasedName) =>
+    i1.GeneratedColumn<String>(
+      'purpose',
+      aliasedName,
+      false,
+      type: i1.DriftSqlType.string,
+      $customConstraints: 'NOT NULL DEFAULT \'other\'',
+      defaultValue: const i1.CustomExpression('\'other\''),
+    );
 i0.MigrationStepWithVersion migrationSteps({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
+  required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
 }) {
   return (currentVersion, database) async {
     switch (currentVersion) {
@@ -1204,6 +3113,11 @@ i0.MigrationStepWithVersion migrationSteps({
         final migrator = i1.Migrator(database, schema);
         await from1To2(migrator, schema);
         return 2;
+      case 2:
+        final schema = Schema3(database: database);
+        final migrator = i1.Migrator(database, schema);
+        await from2To3(migrator, schema);
+        return 3;
       default:
         throw ArgumentError.value('Unknown migration from $currentVersion');
     }
@@ -1212,6 +3126,7 @@ i0.MigrationStepWithVersion migrationSteps({
 
 i1.OnUpgrade stepByStep({
   required Future<void> Function(i1.Migrator m, Schema2 schema) from1To2,
+  required Future<void> Function(i1.Migrator m, Schema3 schema) from2To3,
 }) => i0.VersionedSchema.stepByStepHelper(
-  step: migrationSteps(from1To2: from1To2),
+  step: migrationSteps(from1To2: from1To2, from2To3: from2To3),
 );

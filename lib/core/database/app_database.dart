@@ -5,8 +5,11 @@ import 'package:drift/drift.dart';
 import 'encrypted_connection.dart';
 import 'finance_tables.dart';
 import 'ledger_guards.dart';
+import 'wealth_tables.dart';
+import 'wealth_guards.dart';
 
 export 'finance_tables.dart';
+export 'wealth_tables.dart';
 
 part 'app_database.g.dart';
 
@@ -100,6 +103,21 @@ class SyncConflicts extends Table {
     MonthlyBudgets,
     ReconciliationChecks,
     VaultPreferences,
+    WealthAssets,
+    PropertyDetails,
+    MetalDetails,
+    InvestmentDetails,
+    AssetOwnerships,
+    AssetValuations,
+    DebtContracts,
+    DebtRepayments,
+    Businesses,
+    StockItems,
+    StockPositions,
+    StockMovements,
+    Workers,
+    SalaryPayments,
+    AggregateJournalLinks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -111,34 +129,61 @@ class AppDatabase extends _$AppDatabase {
   }) => AppDatabase._(openEncryptedConnection(file: file, key: key));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-    onCreate: (migrator) async {
+    onCreate: (migrator) => transaction(() async {
       await migrator.createAll();
       await _installLedgerGuards();
-    },
+      await _installWealthGuards();
+      await customStatement('PRAGMA user_version = $schemaVersion');
+    }),
     onUpgrade: (migrator, from, to) async {
-      if (from != 1 || to != 2) {
+      if ((from != 1 && from != 2) || to != 3) {
         throw StateError('An explicit database migration is required');
       }
       await transaction(() async {
+        if (from == 1) {
+          for (final table in <TableInfo<Table, dynamic>>[
+            familySpaces,
+            familyMembers,
+            vaultDevices,
+            ledgerAccounts,
+            ledgerJournals,
+            ledgerPostings,
+            localAuditEvents,
+            monthlyBudgets,
+            reconciliationChecks,
+            vaultPreferences,
+          ]) {
+            await migrator.createTable(table);
+          }
+        }
         for (final table in <TableInfo<Table, dynamic>>[
-          familySpaces,
-          familyMembers,
-          vaultDevices,
-          ledgerAccounts,
-          ledgerJournals,
-          ledgerPostings,
-          localAuditEvents,
-          monthlyBudgets,
-          reconciliationChecks,
-          vaultPreferences,
+          wealthAssets,
+          propertyDetails,
+          metalDetails,
+          investmentDetails,
+          assetOwnerships,
+          assetValuations,
+          debtContracts,
+          debtRepayments,
+          businesses,
+          stockItems,
+          stockPositions,
+          stockMovements,
+          workers,
+          salaryPayments,
+          aggregateJournalLinks,
         ]) {
           await migrator.createTable(table);
         }
         await _installLedgerGuards();
+        await _installWealthGuards();
+        // Keep the version stamp in the same transaction as its DDL. Drift's
+        // subsequent version write is idempotent if the process stops after this.
+        await customStatement('PRAGMA user_version = $schemaVersion');
       });
     },
     beforeOpen: (details) async {
@@ -148,6 +193,12 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> _installLedgerGuards() async {
     for (final statement in ledgerGuards) {
+      await customStatement(statement);
+    }
+  }
+
+  Future<void> _installWealthGuards() async {
+    for (final statement in wealthGuards()) {
       await customStatement(statement);
     }
   }

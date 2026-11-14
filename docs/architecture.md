@@ -1,8 +1,9 @@
-# System architecture — proposal
+# System architecture and implementation boundaries
 
 Product authority: [ADR 0003](decisions/0003-confirmed-product-architecture.md).
 INR/paise, shared family finance/documents and both backup destinations are
-confirmed. This revised technical architecture remains pending review.
+confirmed. ADR 0004 authorizes autonomous implementation; remaining designs are
+proposals until supported by executable code and behavioral evidence.
 
 The local encrypted database is the mobile read model. Supabase PostgreSQL is the
 authoritative shared store. Sync reconciles them; Realtime only prompts a pull.
@@ -98,7 +99,7 @@ local credentials; user-visible pending-operation handling must precede destruct
 of the only recoverable offline copy. Until that flow exists, protected data
 features remain disabled.
 
-## Implementation boundary of Phase 3
+## Historical Phase 3 boundary (superseded by ADR 0004)
 
 Only an app shell, theme/navigation, auth adapter boundary, encrypted local sync
 metadata tables and tests may be implemented. The running shell must not create
@@ -143,3 +144,7 @@ Device-protected creation/unlock/lifecycle is ADR 0006. Review-only SQL elsewher
 in this document remains a proposal until an executable migration and behavioral
 integration evidence are recorded. Current behavior, outstanding work and test
 results are maintained in `docs/development/`; no production service is deployed.
+
+Drift v3 now adds the wealth/debt/business relational and exact-math foundation
+(ADR 0008). Its services and UI are tracked independently; schema tests do not
+prove module or synchronization completion.

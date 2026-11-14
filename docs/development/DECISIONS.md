@@ -61,3 +61,10 @@ curated messages. The working offline overview is labelled "On this device".
   original/reversal/replacement association if acknowledged outbox rows are pruned.
 - Appearance is a private device preference in the encrypted database. The Hindi
   setting currently labels navigation; it does not claim full Hindi translation.
+
+## 2026-11-15 — wealth, debt and business foundation
+
+ADR 0008 specifies additive v3, exact ownership/metal calculations, explicitly
+labelled loan estimates and weighted-average stock. Root revision/event indexes
+and immutable journal-purpose links support atomic domain changes; module services
+remain the next unit. No actual family holdings, rates or loan terms are seeded.

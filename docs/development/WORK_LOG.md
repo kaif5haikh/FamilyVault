@@ -91,3 +91,25 @@ scan and existing design probes. Android debug rebuild passed in 34.8s. README a
 ADR 0007 now describe actual local finance functionality and remaining cloud/
 document/backup work. Next M05 is split into tested units: additive schema/exact
 math; wealth/valuation; debt/repayment; business/inventory/salary and their UI.
+
+## 2026-11-15 — M05a exact domain and schema foundation
+
+- Inspected current repository/architecture/history; preserved the private SSH
+  origin and prior commits. Reviewed v3 as an unreleased draft before freezing its
+  committed snapshot. Preserved each intermediate snapshot in ignored cache;
+  committed v1/v2 artifacts were never changed.
+- Added 15 family-scoped strict tables, immutable event/journal-purpose links,
+  ownership/account guards, weighted stock projection and reversal consistency.
+  New asset closure/valuation event-index fields support dated correction history.
+- Added exact fixed quantities, nominal/assayed metal valuation, explicit loan
+  estimates and inventory math. No real data, prices or business billing invented.
+- `dart run build_runner build` and `dart run drift_dev make-migrations` succeeded.
+  `bash tool/check.sh` passed: 55 tests plus static/advisory/design SQL checks.
+  Final evidence paths are recorded in TEST_RESULTS; older draft runs are not
+  substituted for the final unique transcript. Migration failures preserve data.
+- ADR 0008 records engineering choices and the boundary between tested local
+  schema/calculations and unfinished services, cloud sync, documents and backups.
+  Next: atomic module writer, native wealth/debt/business functionality.
+- Android debug rebuild passed in 18.8s. Indexed-content/policy/redacted secret
+  checks precede the milestone commit and the private-origin push hook verifies
+  repository identity/privacy. No production infrastructure is touched.

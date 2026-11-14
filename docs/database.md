@@ -1,8 +1,9 @@
-# Database design — confirmed product model, architecture pending review
+# Database design and executable schema history
 
 Product authority: [ADR 0003](decisions/0003-confirmed-product-architecture.md).
 INR, shared family editing, shared documents and both backup destinations are
-confirmed. This does not approve the revised schema for application migrations.
+confirmed. ADR 0004 authorizes additive implementation; the review-only SQL below
+is distinct from executable Drift migrations.
 
 `design/postgresql.sql` is an isolated review schema with **deny-all RLS**, no
 client write grants, draft integrity/provenance/audit guards and no usable read
@@ -234,3 +235,33 @@ versioned snapshot are authoritative for this implemented local version. Histori
 v1 tables/snapshot remain intact. The separate proposed future schemas are not
 silently substituted for these migrations. See ADR 0005 and the development test
 journal for encrypted populated-v1 upgrade and ledger behavior evidence.
+
+## Executable local schema, v3
+
+The application now uses 28 Drift tables, not the future proposal count above.
+Version 1 sync metadata and version 2 accounting are preserved. Version 3 adds
+wealth_assets, property_details, metal_details, investment_details,
+asset_ownerships, asset_valuations, debt_contracts, debt_repayments, businesses,
+stock_items, stock_movements, stock_positions, workers, salary_payments and
+aggregate_journal_links. See ADR 0008 and the committed v3 schema snapshot.
+
+```mermaid
+erDiagram
+  WEALTH_ASSETS ||--|| LEDGER_ACCOUNTS : values_in
+  WEALTH_ASSETS ||--o{ ASSET_VALUATIONS : observes
+  WEALTH_ASSETS ||--o{ ASSET_OWNERSHIPS : allocates
+  DEBT_CONTRACTS ||--|| LEDGER_ACCOUNTS : principal_in
+  DEBT_CONTRACTS ||--o{ DEBT_REPAYMENTS : settles
+  BUSINESSES ||--o{ STOCK_ITEMS : catalogs
+  STOCK_ITEMS ||--|| STOCK_POSITIONS : projects
+  STOCK_ITEMS ||--o{ STOCK_MOVEMENTS : preserves
+  BUSINESSES ||--o{ WORKERS : employs
+  WORKERS ||--o{ SALARY_PAYMENTS : receives
+  LEDGER_JOURNALS ||--o| AGGREGATE_JOURNAL_LINKS : belongs_to
+```
+
+All module associations are family scoped. Strict integer constraints and triggers
+supplement typed exact input/calculation checks. New event tables are append-only;
+root edits require the next revision and retain creator identity. Application
+service atomicity, backend authorization and realistic multi-client synchronization
+require their own implementation/tests; these are not proven by the diagram.

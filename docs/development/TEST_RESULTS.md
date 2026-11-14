@@ -62,3 +62,23 @@ Record exact command, date, outcome and material platform/provider limits below.
   signing or physical hardware validation. iOS remains uncompiled on Linux.
 - Synthetic dashboard image rendered with SDK fonts and visually inspected in the
   ignored screenshot cache. No family records/documents or credentials used.
+
+## M05a — 2026-11-15 schema and exact calculations
+
+- `bash tool/check.sh`: passed, **55 tests**, clean analysis, formatting and
+  generation; 145-package advisory graph had no matches. Existing SQL design
+  probes still pass (50 SQLite/51 PostgreSQL); these are not live backend tests.
+- New cases cover fixed decimal/overflow, independent high-precision EMI oracles,
+  exact principal conservation and leap-day interest; metal purity/valuation and
+  1,000 mixed weighted-average stock conservation operations.
+- Encrypted schema tests cover cross-family/business/account constraints,
+  ownership limits, valuation/posting consistency, append-only facts, negative/
+  overflowing stock rollback and latest-active movement reversals.
+- Populated encrypted v1 and v2 upgrade to v3 with history intact. An intentional
+  mid-upgrade table collision rolls back DDL and user_version, retaining the old
+  checkpoint and existing user table. Historical v1/v2 fixtures/snapshots unchanged.
+- Final transcript: `.cache/checks/m05a-final-history-check-20261115-a.txt`.
+  Services/UI for these modules are still next; no sync claim follows from DDL.
+- `flutter build apk --debug --no-pub`: passed, 18.8s; final transcript
+  `.cache/checks/m05a-final-history-android-20261115-a.txt`. Android compilation
+  only; physical security, release signing and iOS remain unvalidated.
