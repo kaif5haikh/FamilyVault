@@ -113,7 +113,7 @@ final class MutationWriter {
       entityId: entityId,
       action: action,
       before: before,
-      after: after,
+      after: bundle == null ? after : {...after, '_bundle': bundle},
     );
   }
 

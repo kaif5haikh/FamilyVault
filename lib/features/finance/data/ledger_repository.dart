@@ -350,6 +350,124 @@ final class LedgerRepository {
     }),
   );
 
+  Future<void> archiveAccount(String id, int expectedRevision) =>
+      storageBoundary(
+        () => db.transaction(() async {
+          await mutations.authorize();
+          final before = await account(id);
+          if (before.revision != expectedRevision ||
+              before.deletedAtUs != null ||
+              before.systemAccount) {
+            throw const AppFailure(
+              FailureCode.conflict,
+              'This account changed. Refresh before archiving.',
+            );
+          }
+          if (['asset', 'liability'].contains(before.kind)) {
+            final balance = (await snapshot()).balances()[id] ?? BigInt.zero;
+            if (balance != BigInt.zero) {
+              throw const AppFailure(
+                FailureCode.validation,
+                'An account with a balance cannot be archived. Reconcile or transfer its balance first.',
+              );
+            }
+          }
+          await (db.update(
+            db.ledgerAccounts,
+          )..where((t) => t.id.equals(id))).write(
+            LedgerAccountsCompanion(
+              deletedAtUs: Value(mutations.now),
+              revision: Value(before.revision + 1),
+              updatedBy: Value(identity.memberId),
+              updatedAtUs: Value(mutations.now),
+            ),
+          );
+          await mutations.record(
+            operationId: uuid.v4(),
+            entityType: 'account',
+            entityId: id,
+            action: 'delete',
+            baseRevision: before.revision,
+            before: accountJson(before),
+            after: accountJson(await account(id)),
+          );
+        }),
+      );
+
+  Future<void> restoreAccount(String id, int expectedRevision) =>
+      storageBoundary(
+        () => db.transaction(() async {
+          await mutations.authorize();
+          final before = await account(id);
+          if (before.revision != expectedRevision ||
+              before.deletedAtUs == null ||
+              before.systemAccount) {
+            throw const AppFailure(
+              FailureCode.conflict,
+              'This account changed. Refresh before restoring.',
+            );
+          }
+          await (db.update(
+            db.ledgerAccounts,
+          )..where((t) => t.id.equals(id))).write(
+            LedgerAccountsCompanion(
+              deletedAtUs: const Value(null),
+              revision: Value(before.revision + 1),
+              updatedBy: Value(identity.memberId),
+              updatedAtUs: Value(mutations.now),
+            ),
+          );
+          await mutations.record(
+            operationId: uuid.v4(),
+            entityType: 'account',
+            entityId: id,
+            action: 'restore',
+            baseRevision: before.revision,
+            before: accountJson(before),
+            after: accountJson(await account(id)),
+          );
+        }),
+      );
+
+  Future<void> deleteBudget(String id, int expectedRevision) => storageBoundary(
+    () => db.transaction(() async {
+      await mutations.authorize();
+      final before =
+          await (db.select(db.monthlyBudgets)..where(
+                (t) => t.familyId.equals(identity.familyId) & t.id.equals(id),
+              ))
+              .getSingleOrNull();
+      if (before == null ||
+          before.revision != expectedRevision ||
+          before.deletedAtUs != null) {
+        throw const AppFailure(
+          FailureCode.conflict,
+          'This budget changed. Refresh before deleting.',
+        );
+      }
+      await (db.update(db.monthlyBudgets)..where((t) => t.id.equals(id))).write(
+        MonthlyBudgetsCompanion(
+          deletedAtUs: Value(mutations.now),
+          revision: Value(before.revision + 1),
+          updatedBy: Value(identity.memberId),
+          updatedAtUs: Value(mutations.now),
+        ),
+      );
+      final after = await (db.select(
+        db.monthlyBudgets,
+      )..where((t) => t.id.equals(id))).getSingle();
+      await mutations.record(
+        operationId: uuid.v4(),
+        entityType: 'budget',
+        entityId: id,
+        action: 'delete',
+        baseRevision: before.revision,
+        before: budgetJson(before),
+        after: budgetJson(after),
+      );
+    }),
+  );
+
   Future<String> recordTransaction({
     required EntryKind kind,
     required String accountId,
@@ -810,6 +928,7 @@ final class LedgerRepository {
     required String accountId,
     required String month,
     required Money amount,
+    int? expectedRevision,
   }) => storageBoundary(
     () => db.transaction(() async {
       await mutations.authorize();
@@ -830,6 +949,13 @@ final class LedgerRepository {
                     t.deletedAtUs.isNull(),
               ))
               .getSingleOrNull();
+      if (expectedRevision != null &&
+          (old?.revision ?? 0) != expectedRevision) {
+        throw const AppFailure(
+          FailureCode.conflict,
+          'This budget changed. Refresh before saving.',
+        );
+      }
       final now = mutations.now, id = old?.id ?? uuid.v4();
       await db
           .into(db.monthlyBudgets)

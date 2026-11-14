@@ -45,11 +45,7 @@ void main() {
       });
       await app(tester);
       await tester.pumpAndSettle();
-      await tester.ensureVisible(
-        find.widgetWithText(FilledButton, 'Family access'),
-      );
-      await tester.tap(find.widgetWithText(FilledButton, 'Family access'));
-      await tester.pumpAndSettle();
+      // Returning vaults show the opaque lock screen immediately.
       expect(find.text('Your vault is locked'), findsOneWidget);
       expect(find.text('Unlock vault'), findsOneWidget);
       expect(find.byType(TextField), findsNothing);
@@ -94,7 +90,7 @@ void main() {
       );
       await app(tester);
       await tester.pump();
-      expect(find.text('Overview'), findsOneWidget);
+      expect(find.widgetWithText(AppBar, 'Overview'), findsOneWidget);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       await tester.pump();
       expect(find.byIcon(Icons.shield_outlined), findsOneWidget);

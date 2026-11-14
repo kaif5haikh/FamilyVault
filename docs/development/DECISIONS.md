@@ -45,3 +45,19 @@ database and its in-memory key bundle. Android screenshot protection and iOS
 snapshot masking supplement the Flutter privacy cover. Key zeroization is best
 effort, not a VM/hardware guarantee. Framework/platform error logs are constant,
 curated messages. The working offline overview is labelled "On this device".
+
+## M04 — finance UI and reporting
+
+- Overview balances stop at today's accounting date; monthly/yearly reports clearly
+  identify their period end. Yearly means January–December calendar year, not an
+  implied Indian tax return or fiscal-year computation.
+- Charts consume dimensionless ratios only. Labels, tooltips, totals, budgets and
+  percentages are calculated with integer/BigInt arithmetic. Exact figures remain
+  available alongside charts; no floating-point financial arithmetic is adopted.
+- Archive/restore retains account history; nonzero balance accounts must be
+  reconciled/transferred before archival. Budget edits check the displayed revision
+  and removal creates a tombstone. No financial rows are physically deleted.
+- Audited correction bundles are retained in append-only local audit JSON, preserving
+  original/reversal/replacement association if acknowledged outbox rows are pruned.
+- Appearance is a private device preference in the encrypted database. The Hindi
+  setting currently labels navigation; it does not claim full Hindi translation.

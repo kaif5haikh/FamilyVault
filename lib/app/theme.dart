@@ -17,6 +17,23 @@ abstract final class VaultTheme {
       useMaterial3: true,
       colorScheme: colors,
       scaffoldBackgroundColor: colors.surface,
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: colors.surfaceContainerLowest,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 18,
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colors.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: colors.primary, width: 2),
+        ),
+      ),
       appBarTheme: AppBarTheme(
         centerTitle: false,
         backgroundColor: colors.surface,

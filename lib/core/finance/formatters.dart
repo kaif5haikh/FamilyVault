@@ -27,3 +27,14 @@ String formatPercentage(BigInt numerator, BigInt denominator) {
   final result = (scaled.abs() + denominator ~/ BigInt.two) ~/ denominator;
   return '${scaled.isNegative ? '-' : ''}${result ~/ BigInt.from(100)}.${(result % BigInt.from(100)).toString().padLeft(2, '0')}%';
 }
+
+/// Dimensionless chart geometry only; labels and all financial totals stay exact.
+double chartRatio(BigInt numerator, BigInt denominator) {
+  if (denominator <= BigInt.zero || numerator <= BigInt.zero) {
+    return 0;
+  }
+  if (numerator >= denominator) {
+    return 1;
+  }
+  return ((numerator * BigInt.from(1000000)) ~/ denominator).toInt() / 1000000;
+}

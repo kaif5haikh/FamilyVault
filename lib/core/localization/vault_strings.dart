@@ -25,6 +25,8 @@ final class VaultStrings {
     'search': 'Search',
     'lock': 'Lock vault',
     'reports': 'Reports',
+    'budgets': 'Budgets & planning',
+    'more': 'More',
   };
   static const _hi = <String, String>{
     'dashboard': 'सारांश',
@@ -45,5 +47,7 @@ final class VaultStrings {
     'search': 'खोजें',
     'lock': 'वॉल्ट लॉक करें',
     'reports': 'रिपोर्ट',
+    'budgets': 'बजट और योजना',
+    'more': 'और',
   };
 }

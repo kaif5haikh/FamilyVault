@@ -1,6 +1,6 @@
 # Verified test results
 
-No new mission tests run yet. Prior baseline evidence: 9 Flutter host tests,
+Historical baseline evidence: 9 Flutter host tests,
 51 PostgreSQL/50 future-SQLite design probes and Android debug build. Those do not
 establish working auth, finance, sync, documents, backups or production readiness.
 Record exact command, date, outcome and material platform/provider limits below.
@@ -43,3 +43,22 @@ Record exact command, date, outcome and material platform/provider limits below.
   of FragmentActivity/local_auth/secure-storage/privacy changes, not physical
   biometric/key-store security or distribution signing. No physical device used.
 - iOS scene masking/Face ID configuration added; **not compiled on Linux**.
+
+## M04 — 2026-11-14 native finance workflows
+
+- `bash tool/check.sh`: **passed, 41 tests**, clean analyzer/formatter/generator,
+  145 resolved Pub advisory queries (no matches), 50 SQLite/51 PostgreSQL design
+  probes. Final isolated transcript: `.cache/checks/m04-final-check-20261114-a.txt`.
+- New encrypted database tests cover soft archive/restore, stale budget rejection /
+  removal preservation and exact month/calendar-year reports excluding transfers.
+- UI workflow uses real encrypted Drift: account/opening → expense → correction →
+  budget; asserts exact persisted amounts, four retained journal facts and budget
+  remaining value. Native authentication is replaced by an explicit test gate only.
+- Responsive UI test covers main screens **and** financial forms at 320px/1200px
+  with 2x text, then checks persisted dark theme and locked route denial. Fixed
+  dropdown/ink/navigator issues; no accessibility scale/assertions were removed.
+- `flutter build apk --debug --no-pub`: **passed, 34.8s**. Transcript:
+  `.cache/checks/m04-android-20261114-a.txt`. Still a debug artifact, not distribution
+  signing or physical hardware validation. iOS remains uncompiled on Linux.
+- Synthetic dashboard image rendered with SDK fonts and visually inspected in the
+  ignored screenshot cache. No family records/documents or credentials used.

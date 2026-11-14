@@ -7,6 +7,7 @@ import 'package:familyvault/core/finance/money.dart';
 import 'package:familyvault/core/security/vault_identity.dart';
 import 'package:familyvault/core/sync/canonical_json.dart';
 import 'package:familyvault/features/finance/data/ledger_repository.dart';
+import 'package:familyvault/features/finance/domain/finance_report.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uuid/uuid.dart';
 
@@ -455,5 +456,115 @@ void main() {
       ),
       throwsA(validation),
     );
+  });
+  test(
+    'account archive is soft, balance-aware, revision checked and reversible',
+    () async {
+      await income();
+      await expectLater(
+        ledger.archiveAccount(bank.id, bank.revision),
+        throwsA(validation),
+      );
+      await ledger.archiveAccount(cash.id, cash.revision);
+      final archived = await ledger.account(cash.id);
+      expect(archived.deletedAtUs, isNotNull);
+      expect(archived.createdBy, cash.createdBy);
+      await expectLater(
+        ledger.restoreAccount(cash.id, cash.revision),
+        throwsA(
+          isA<AppFailure>().having((e) => e.code, 'code', FailureCode.conflict),
+        ),
+      );
+      await ledger.restoreAccount(cash.id, archived.revision);
+      final restored = await ledger.account(cash.id);
+      expect(restored.deletedAtUs, isNull);
+      expect(restored.revision, 3);
+      expect(
+        (await ledger.snapshot()).total(AccountKind.income),
+        BigInt.from(100000),
+      );
+    },
+  );
+  test('budget stale edits are rejected, removal retains history, and new periods remain unique', () async {
+    final category = ledger.chartId('groceries');
+    await ledger.setBudget(
+      accountId: category,
+      month: '2026-11',
+      amount: Money.fromMinor(10000),
+      expectedRevision: 0,
+    );
+    final old = (await ledger.snapshot()).budgets.single;
+    await expectLater(
+      ledger.setBudget(
+        accountId: category,
+        month: '2026-11',
+        amount: Money.fromMinor(20000),
+        expectedRevision: 0,
+      ),
+      throwsA(
+        isA<AppFailure>().having((e) => e.code, 'code', FailureCode.conflict),
+      ),
+    );
+    expect((await ledger.snapshot()).budgets.single.amountMinor, 10000);
+    await ledger.deleteBudget(old.id, old.revision);
+    expect((await ledger.snapshot()).budgets, isEmpty);
+    final tombstone = await (f.db.select(
+      f.db.monthlyBudgets,
+    )..where((t) => t.id.equals(old.id))).getSingle();
+    expect(tombstone.deletedAtUs, isNotNull);
+    expect(tombstone.revision, 2);
+    await ledger.setBudget(
+      accountId: category,
+      month: '2026-11',
+      amount: Money.fromMinor(5000),
+      expectedRevision: 0,
+    );
+    expect((await ledger.snapshot()).budgets.single.id, isNot(old.id));
+  });
+  test('monthly and calendar-year reports exclude transfers and retain reversed facts', () async {
+    await income();
+    Future<String> expense(int value, String date) => ledger.recordTransaction(
+      kind: EntryKind.expense,
+      accountId: bank.id,
+      counterAccountId: ledger.chartId('groceries'),
+      amount: Money.fromMinor(value),
+      occurredOn: date,
+      description: 'Synthetic report expense',
+    );
+    final cancelled = await expense(25000, '2026-11-01');
+    await ledger.reverse(cancelled, reason: 'Synthetic cancelled expense');
+    await expense(15000, '2026-11-02');
+    await expense(7000, '2026-10-01');
+    await ledger.recordTransaction(
+      kind: EntryKind.income,
+      accountId: bank.id,
+      counterAccountId: ledger.chartId('salary'),
+      amount: Money.fromMinor(200000),
+      occurredOn: '2026-12-01',
+      description: 'Synthetic December income',
+    );
+    await ledger.recordTransaction(
+      kind: EntryKind.transfer,
+      accountId: bank.id,
+      counterAccountId: cash.id,
+      amount: Money.fromMinor(10000),
+      occurredOn: '2026-11-03',
+      description: 'Synthetic report transfer',
+    );
+    final snapshot = await ledger.snapshot();
+    final monthly = FinanceReport(snapshot, ReportPeriod.month(2026, 11));
+    expect(monthly.income, BigInt.from(100000));
+    expect(monthly.expenses, BigInt.from(15000));
+    expect(monthly.savings, BigInt.from(85000));
+    expect(monthly.netWorth, BigInt.from(78000));
+    expect(
+      monthly.positiveAssetAllocation.values.fold(BigInt.zero, (a, b) => a + b),
+      monthly.assets,
+    );
+    final yearly = FinanceReport(snapshot, ReportPeriod.year(2026));
+    expect(yearly.income, BigInt.from(300000));
+    expect(yearly.expenses, BigInt.from(22000));
+    expect(yearly.netWorth, BigInt.from(278000));
+    expect(() => ReportPeriod.month(2026, 13), throwsA(validation));
   });
 }

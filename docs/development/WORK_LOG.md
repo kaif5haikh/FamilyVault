@@ -48,3 +48,46 @@ Full checks passed (36 tests/analyzer/generator/dependency/proposal checks).
 Android debug build succeeded in 142.2s. Documented native-device and iOS limits in
 ADR 0006; production/cloud credentials remain unused. Verified private-origin push
 of M02 (61e3574). M03 is being committed; continue directly to M04 finance UI.
+
+## M04 in progress
+
+- Verified M03 private push: cd5c275. Implemented finance navigation, account /
+  category forms and balances, dated opening entries, transactions, corrections,
+  reversal/audit detail, reconciliation, monthly budgets and reports/charts.
+- Added soft account archive/restore and revision-checked budget edit/removal.
+  Corrections retain their bundle in immutable audit, independent of outbox pruning.
+- Added persisted light/dark/system appearance and English/Hindi navigation choice.
+- Analyzer was clean before the final test harness additions. Existing ledger and
+  app tests plus three new accounting/report cases pass (16 targeted cases).
+- New end-to-end widget tests exercise encrypted persistence through the real
+  forms, exact totals, navigation, layouts and theme settings. Investigating the
+  harness's fake-clock/real-SQLite scheduling before accepting this milestone;
+  no tests weakened and no integration success claimed yet.
+- M05 next: additive wealth/property/metal, debt and business tables, exact
+  valuation/interest/inventory math, atomic ledger-linked operations and native UI.
+  Restricted billing stays unspecified/unimplemented.
+
+## 2026-11-14 — M04 final verification
+
+- Full form workflow now passes against encrypted SQLite: create account/opening,
+  expense, immutable correction and monthly budget, with exact remaining balance.
+- Broad responsive tests cover main screens plus account/transaction/budget/
+  reconciliation forms at 320px and 1200px, with 2x text. Fixed a settings dropdown
+  overflow and Material ink background issue without reducing accessibility checks.
+- Switched the new shared frame to a single root navigator after rapid route/size
+  tests exposed nested-navigator key reuse. Five targeted app/flow cases passed
+  against the final flat router. Added opaque lock gate over offstage route content.
+- Earlier overwritten scratch test transcripts had overlapping stale writers after
+  interrupted experiments; they are not final verification evidence. Confirmed no
+  project test processes remained, then started a uniquely named full-check/build
+  run: `.cache/checks/m04-final-check-20261114-a.txt` and Android counterpart.
+- Synthetic dashboard render inspected; only ignored cache images were written.
+  No real data or credentials used. Next: complete milestone commit and M05.
+
+## M04 complete
+
+The isolated full check passed: 41 tests, clean static/generation checks, advisory
+scan and existing design probes. Android debug rebuild passed in 34.8s. README and
+ADR 0007 now describe actual local finance functionality and remaining cloud/
+document/backup work. Next M05 is split into tested units: additive schema/exact
+math; wealth/valuation; debt/repayment; business/inventory/salary and their UI.

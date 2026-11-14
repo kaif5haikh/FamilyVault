@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../core/security/vault_lifecycle.dart';
+import '../features/foundation/foundation_pages.dart';
 import 'vault_providers.dart';
 
 class PrivacyBoundary extends ConsumerStatefulWidget {
@@ -61,26 +62,31 @@ class _PrivacyBoundaryState extends ConsumerState<PrivacyBoundary>
   }
 
   @override
-  Widget build(BuildContext context) => Listener(
-    onPointerDown: (_) => _touch(),
-    child: Stack(
-      fit: StackFit.expand,
-      children: [
-        widget.child,
-        if (_obscured)
-          const Positioned.fill(
-            child: ColoredBox(
-              color: Color(0xFF102E2B),
-              child: Center(
-                child: Icon(
-                  Icons.shield_outlined,
-                  color: Colors.white,
-                  size: 64,
+  Widget build(BuildContext context) {
+    final status = ref.watch(vaultProvider);
+    final locked = status.hasVault && status.phase != VaultPhase.open;
+    return Listener(
+      onPointerDown: (_) => _touch(),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Offstage(offstage: locked, child: widget.child),
+          if (locked) const Positioned.fill(child: AccessPage()),
+          if (_obscured)
+            const Positioned.fill(
+              child: ColoredBox(
+                color: Color(0xFF102E2B),
+                child: Center(
+                  child: Icon(
+                    Icons.shield_outlined,
+                    color: Colors.white,
+                    size: 64,
+                  ),
                 ),
               ),
             ),
-          ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }

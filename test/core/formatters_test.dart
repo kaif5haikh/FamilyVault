@@ -23,5 +23,9 @@ void main() {
     expect(formatPercentage(BigInt.one, BigInt.from(3)), '33.33%');
     expect(formatPercentage(-BigInt.one, BigInt.from(3)), '-33.33%');
     expect(formatPercentage(BigInt.one, BigInt.zero), '—');
+    final huge = BigInt.one << 150;
+    expect(chartRatio(huge, huge * BigInt.two), .5);
+    expect(chartRatio(huge * BigInt.two, huge), 1);
+    expect(chartRatio(-huge, huge), 0);
   });
 }
