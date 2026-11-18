@@ -175,3 +175,16 @@ separately. Continue with the business UI and executable backend policies.
   ephemeral credentials. No hosted infrastructure was changed.
 - Next: verify the mobile enrollment screens and open a separately scoped
   encrypted family cache for the durable sync protocol.
+
+## 2026-11-18 — mobile family access
+
+- Pushed and verified the family session/RLS migration in `c9a3ef2`. Bound the
+  existing Supabase secure-storage adapter to sign-in, invitation and device
+  enrollment, and added TOTP-gated administrator controls.
+- The initial widget trial hung while opening a test directory under the fake
+  clock. Moved that scratch I/O into the real async zone. Application behavior
+  tests and the full 85-test check passed. The Android debug APK rebuilt.
+- Shared workspace bootstrap and financial replication remain separate. An
+  initial ordinary-ledger server migration is drafted in the project cache.
+  Next validate its commands, atomic receipts, chart and feed against synthetic
+  multi-device clients and enable the scoped encrypted cloud cache.

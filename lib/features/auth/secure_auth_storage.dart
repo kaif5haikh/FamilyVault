@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/security/secure_store.dart';
 
-/// Build options for a future, explicitly configured Supabase composition root.
+/// Secure token and PKCE storage for the configured Supabase client.
 /// There is no implicit initialization or fallback to preferences.
 FlutterAuthClientOptions secureAuthOptions({
   required SecureStore store,

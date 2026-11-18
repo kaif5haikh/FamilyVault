@@ -18,8 +18,9 @@ No production deployment, real family data, paid services or destructive history
   - [x] M05d Business revenue/expenses, stock, workers/salaries and profit reporting.
 - [ ] M06 Executable PostgreSQL/Supabase migrations, membership/enrollment/session/RLS/RPC and security integration tests.
   - [x] M06a Membership, enrollment, TOTP and revocation migration verified with PostgreSQL, Auth and PostgREST.
-  - [ ] M06b Mobile family sign-in, device approval and protected workspace setup.
-  - [ ] M06c Typed finance mutations, shared ledger validation and cloud storage integration.
+  - [x] M06b Mobile family sign-in, device approval and administrator controls.
+  - [ ] M06c Typed finance mutations, shared ledger validation and ordered receipts.
+  - [ ] M06d Scoped encrypted cloud cache and live device session lifecycle.
 - [ ] M07 Durable multi-client sync, receipts/conflicts/retries/recovery and realistic fault simulations.
 - [ ] M08 Encrypted document/key engine, versions/import/camera scan/preview/search/reminders and audited gateway.
 - [ ] M09 Authenticated archive/local backup/export/restore, independent Drive adapter and complete clean-environment recovery tests.

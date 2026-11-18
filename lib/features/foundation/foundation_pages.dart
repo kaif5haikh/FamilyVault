@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../app/theme.dart';
 import '../../app/vault_providers.dart';
 import '../../core/security/vault_lifecycle.dart';
+import '../auth/cloud_access_panel.dart';
+import '../auth/cloud_providers.dart';
 
 class WelcomePage extends ConsumerWidget {
   const WelcomePage({super.key});
@@ -122,6 +124,7 @@ class AccessPage extends ConsumerStatefulWidget {
 
 class _AccessPageState extends ConsumerState<AccessPage> {
   bool _creating = false;
+  bool _cloud = false;
   final _form = GlobalKey<FormState>();
   final _family = TextEditingController();
   final _owner = TextEditingController();
@@ -139,6 +142,21 @@ class _AccessPageState extends ConsumerState<AccessPage> {
     final busy =
         status.phase == VaultPhase.opening ||
         status.phase == VaultPhase.loading;
+    final configured = ref.watch(cloudConfigProvider).cloudConfigured;
+    if (_cloud && configured) {
+      return VaultPage(
+        title: 'Family access',
+        children: [
+          TextButton.icon(
+            onPressed: () => setState(() => _cloud = false),
+            icon: const Icon(Icons.arrow_back),
+            label: const Text('Local vault'),
+          ),
+          const SizedBox(height: 16),
+          const CloudAccessPanel(),
+        ],
+      );
+    }
     return VaultPage(
       title: 'Family access',
       children: [
@@ -243,6 +261,14 @@ class _AccessPageState extends ConsumerState<AccessPage> {
             ),
           ),
         const SizedBox(height: 28),
+        if (configured && !busy) ...[
+          OutlinedButton.icon(
+            onPressed: () => setState(() => _cloud = true),
+            icon: const Icon(Icons.group_outlined),
+            label: const Text('Open family access'),
+          ),
+          const SizedBox(height: 16),
+        ],
         Text(
           'Each family member uses an independent account when connected. Keep an encrypted backup and its recovery key separately.',
           style: Theme.of(context).textTheme.bodySmall,

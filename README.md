@@ -14,7 +14,7 @@ FamilyVault is a Flutter app I am building to help a family keep track of money 
 
 ## What I am still building
 
-I am working on family login, sync between devices and the document vault. Encrypted backups for the device and Google Drive are also part of the project.
+Family sign-in and device approval can be tested with a Supabase setup. I am working on sync between devices and the document vault. Encrypted backups for the device and Google Drive are also part of the project.
 
 ## Run it
 

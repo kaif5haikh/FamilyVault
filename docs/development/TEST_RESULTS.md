@@ -147,3 +147,17 @@ Record exact command, date, outcome and material platform/provider limits below.
 - The provider test found a reserved role hook issue with `CURRENT_USER` and
   a missing Auth schema grant option for the migration role. Quoting the role
   identifier and using a minimal Auth bridge fixed both under the actual images.
+
+## M06b — 2026-11-18 mobile enrollment and administration
+
+- `bash tool/check.sh` passed with 85 tests, clean analysis, generation,
+  advisory checks and schema probes. Transcript `.cache/checks/m06b-full-20261118-b.txt`.
+- Device tests cover preservation after an interrupted request, stable proof
+  retries, blocking unapproved/revoked devices, identity changes during the
+  OS prompt, account/family/server key isolation and key release after use.
+- The widget test opens family access from the opaque vault lock screen,
+  registers an approved device and verifies a synthetic TOTP step to load
+  the administrator panel. The offline vault remains locked throughout.
+- `flutter build apk --debug --no-pub` passed in 18.2 seconds. Transcript
+  `.cache/checks/m06b-android-20261118-b.txt`. The loopback cleartext exception
+  is limited to debug builds and explicit Dart development configuration.

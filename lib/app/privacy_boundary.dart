@@ -71,7 +71,13 @@ class _PrivacyBoundaryState extends ConsumerState<PrivacyBoundary>
         fit: StackFit.expand,
         children: [
           Offstage(offstage: locked, child: widget.child),
-          if (locked) const Positioned.fill(child: AccessPage()),
+          if (locked)
+            Positioned.fill(
+              child: Navigator(
+                onGenerateRoute: (_) =>
+                    MaterialPageRoute<void>(builder: (_) => const AccessPage()),
+              ),
+            ),
           if (_obscured)
             const Positioned.fill(
               child: ColoredBox(
