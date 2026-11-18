@@ -10,5 +10,8 @@ flutter test --no-pub
 python3 tool/audit_dependencies.py
 bash tool/check_proposals.sh
 bash tool/check_backend.sh
+deno fmt --check supabase/functions/vault-object
+deno check supabase/functions/vault-object/index.ts
+deno test supabase/functions/vault-object/gateway_test.ts
 git diff --check
 # Also inspect staged content before committing; see .githooks/pre-commit.

@@ -256,3 +256,15 @@ separately. Continue with the business UI and executable backend policies.
 - The Android debug build passed. Native camera and OS picker hardware
   validation remain pending after the emulator crash. Next connect document
   keys and private Storage receipts, and continue encrypted recovery work.
+
+## 2026-11-19 — shared document receipt protocol
+
+- Verified `928e7f4` on the public origin. Added a reserved/finalized document
+  protocol, opaque metadata, device-addressed key grants, restrictive bucket
+  policy and an audited Deno gateway. It verifies full stored ciphertext before
+  the database can publish a version.
+- Installed checksummed Deno 2.9.8 inside the project. Native PostgreSQL,
+  genuine Auth/PostgREST, grant crypto and socket-free gateway fixtures passed.
+  The full check passed 106 Flutter and four Deno tests.
+- Next verify the gateway and PostgreSQL receipt together with the real local
+  Storage service, then connect the client queue, backfill and shared views.

@@ -1,0 +1,40 @@
+# ADR 0016 Shared document delivery
+
+The PostgreSQL receipt protocol, private bucket policy, Deno gateway and
+recipient key codec are implemented and tested in development. Flutter's
+foreground upload queue and shared document views are in progress.
+
+Documents belong to the family. The owner ID provides context while the enrolled
+member and device determine access. The server keeps a document revision, its
+creator and modifier, immutable versions and an append-only access history.
+Sensitive metadata and contents arrive encrypted. A version's key is addressed
+to each approved family device through ephemeral X25519, HKDF-SHA256 and
+XChaCha20-Poly1305. An Ed25519 signature binds its grant to the family, document,
+version, sender and recipient public key. Recipients verify the sender against
+the approved directory and reject a changed signature or context.
+
+The app reserves an opaque object path under the enrolled session. The gateway
+can issue a write-only Storage token after checking that reservation and the
+private bucket. An upload alone leaves the version pending. A trusted gateway
+reads back the full object, calculates its byte count and SHA-256, and records
+the result using a server-only database function. The final document revision,
+version, recipient grants and receipt then commit together under the app's live
+device authorization. A retry of the same reservation returns its original
+receipt. Partial or corrupted bytes cannot reach the finalized state.
+
+Ordinary user and anonymous Storage access is denied for the document bucket.
+Downloads stream ciphertext through the authenticated gateway after the database
+records authorization for the addressed device. This avoids a reusable download
+link. The client also verifies length, digest and the encrypted file before
+displaying it. Unconfirmed reservations expire after one hour. Provider upload
+tokens can outlive a reservation and any resulting orphan stays private.
+
+Approval trusts the authenticated directory and the administrator's device
+fingerprint check. Protection against an active compromise that replaces the
+server directory needs a pinned administrator trust anchor. Newly enrolled
+devices need historical key backfill from an approved holder. Instant removal
+of copies already received on a device is outside the revocation mechanism.
+
+The Data API test uses real Auth sessions and a synthetic worker receipt. Deno
+tests verify object bytes against a Storage transport fixture. Hosted Storage
+and a joined provider transfer remain pending. [Private Storage access](https://supabase.com/docs/guides/storage/security/access-control) · [Function secrets](https://supabase.com/docs/guides/functions/secrets)

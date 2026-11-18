@@ -105,3 +105,8 @@ outbox leases, receipt recovery and transactional feed replay.
 
 ADR 0015 records additive Drift v4, immutable document versions and links,
 authenticated file chunks and access audit boundaries.
+
+## 2026-11-19 — shared document delivery
+
+ADR 0016 records device-addressed signed key grants, isolated upload
+reservations, worker-only byte verification and authenticated ciphertext reads.

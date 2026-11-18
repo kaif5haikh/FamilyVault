@@ -19,6 +19,8 @@ psql "${psql_args[@]}" -f supabase/tests/auth_fixture.sql > "$scratch/setup.log"
 for migration in supabase/migrations/*.sql; do
   psql "${psql_args[@]}" -f "$migration" >> "$scratch/setup.log"
 done
+psql "${psql_args[@]}" -f supabase/tests/storage_fixture.sql >> "$scratch/setup.log"
+psql "${psql_args[@]}" -f supabase/storage/document_bucket.sql >> "$scratch/setup.log"
 for probe in supabase/tests/*_test.sql; do
   psql "${psql_args[@]}" -f "$probe"
 done

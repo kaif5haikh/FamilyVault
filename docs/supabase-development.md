@@ -57,3 +57,24 @@ use. [Supabase Auth sessions](https://supabase.com/docs/guides/auth/sessions)
 
 Current synchronization and document readiness is recorded in the
 [implementation status](development/IMPLEMENTATION_STATUS.md).
+
+## Document gateway development
+
+Run `deno test supabase/functions/vault-object/gateway_test.ts` with Deno 2.9.8.
+The test drives the actual handler with synthetic Auth and Storage replies. The
+local Data API check separately verifies the RPC boundary with genuine Auth
+sessions and a worker receipt fixture. [Deno release](https://github.com/denoland/deno/releases/tag/v2.9.8)
+
+The gateway is designed for an isolated Supabase development project with
+Storage enabled. Apply the app migrations, then apply
+`supabase/storage/document_bucket.sql` after Storage creates its schema. The
+script requires private settings for the FamilyVault bucket and rejects broad
+object grants through a restrictive policy. Serve the `vault-object` function
+through the same project API. The handler verifies the member JWT and device
+proof through the Data API. If using a gateway without legacy JWT verification,
+use the function's in-handler authorization for every request.
+
+Only the Edge runtime receives the privileged Storage/API key. The handler
+uses the project's injected Supabase URL and publishable/secret key groups or
+the legacy anonymous and server keys. Use generated development credentials
+and synthetic encrypted files for testing. [Supabase Edge Function secrets](https://supabase.com/docs/guides/functions/secrets)

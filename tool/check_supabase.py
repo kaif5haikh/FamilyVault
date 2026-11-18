@@ -176,6 +176,35 @@ def check_ledger(rpc, family: str, owner: dict, owner_session: str, member: dict
     print('Real Data API passed shared budgets, stale statement refusal and atomic reconciliation.')
 
 
+def check_document_access(rpc, family: str, owner: dict, owner_token: str, member: dict, member_token: str, worker: str):
+    """Drive document RPCs with genuine Auth. The dedicated gateway test measures bytes."""
+    owner_id = rpc('workspace', owner, owner_token)['member_id']
+    member_id = rpc('workspace', member, member_token)['member_id']
+    operation, doc, version = (str(uuid4()) for _ in range(3))
+    fixture_digest = hashlib.sha256(b'Synthetic stored object for the RPC receipt fixture').hexdigest()
+    reserved = rpc('document_reserve', {**member, 'p_operation': operation, 'p_document': doc,
+        'p_version': version, 'p_owner': owner_id, 'p_base': 0, 'p_mime': 'application/pdf',
+        'p_bytes': 100, 'p_digest': fixture_digest, 'p_metadata': base64.b64encode(secrets.token_bytes(72)).decode()}, member_token)
+    assert reserved == operation
+    readback = {'p_family': family, 'p_reservation': operation, 'p_size': 148, 'p_digest': fixture_digest}
+    rpc('document_mark_bytes', readback, member_token, status=403)
+    args = {**member, 'p_reservation': operation, 'p_grants': []}
+    rpc('document_finalize', args, member_token, status=409)
+    rpc('document_mark_bytes', readback, worker, status=204)
+    assert rpc('document_list', owner, owner_token) == []
+    args['p_grants'] = [{'version': 1, 'sender_device_id': member['p_device'], 'recipient_device_id': device['p_device'],
+                        'ephemeral_public': secrets.token_hex(32),
+                        'wrapped_key': base64.b64encode(secrets.token_bytes(72)).decode(),
+                        'signature': secrets.token_hex(64)} for device in (owner, member)]
+    receipt = rpc('document_finalize', args, member_token)
+    assert receipt['version_id'] == version and receipt == rpc('document_finalize', args, member_token)
+    summary = rpc('document_list', owner, owner_token)[0]
+    assert (summary['owner_id'], summary['created_by']) == (owner_id, member_id)
+    assert summary['key_grant']['recipient_device_id'] == owner['p_device']
+    assert rpc('document_download_plan', {**owner, 'p_version': version}, owner_token)['ciphertext_digest'] == fixture_digest
+    print('Real Data API passed document membership, worker-only verification and addressed key grants with a receipt fixture.')
+
+
 def check_mobile(scratch: Path, auth_url: str, rest_url: str, family: str, users: list[dict]):
     """Expose the two isolated services under the normal Supabase client paths."""
     class FixtureProxy(BaseHTTPRequestHandler):
@@ -333,6 +362,7 @@ def run(scratch: Path, *, mobile: bool):
         rpc('admin_access', member_fields, member_session, status=403)
         rpc('workspace', {**member_fields, 'p_proof': secrets.token_hex(32)}, member_session, status=403)
         check_ledger(rpc, family, owner_fields, owner_session, member_fields, member_session)
+        check_document_access(rpc, family, owner_fields, owner_session, member_fields, member_session, admin_token(signing_key))
         if mobile:
             check_mobile(scratch, auth_url, rest_url, family, [
                 {'email': 'owner@example.invalid', 'password': owner_password, **owner_fields},
@@ -341,6 +371,7 @@ def run(scratch: Path, *, mobile: bool):
         request(auth_url + '/logout?scope=local', {}, token=member_session, status=204)
         rpc('workspace', member_fields, member_session, status=403)
         rpc('sync_pull', {**member_fields, 'p_after': 0}, member_session, status=403)
+        rpc('document_list', member_fields, member_session, status=403)
         print('Real Supabase Auth and PostgREST passed sign-in, MFA, invitation, enrollment and stale-token denial.')
     except Exception:
         for service in (db, auth, rest):

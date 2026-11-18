@@ -19,6 +19,7 @@ export XDG_CONFIG_HOME="$FAMILYVAULT_ROOT/.cache/config"
 export FLUTTER_CONFIG_DIR="$FAMILYVAULT_ROOT/.cache/flutter-config"
 export FLUTTER_SUPPRESS_ANALYTICS=true
 export DART_SUPPRESS_ANALYTICS=true
+export DENO_DIR="$FAMILYVAULT_ROOT/.cache/deno"
 export CI=true
 for familyvault_jdk in "$FAMILYVAULT_ROOT"/.tools/jdk-21*; do
   if [[ -x "$familyvault_jdk/bin/javac" ]]; then
@@ -28,6 +29,13 @@ for familyvault_jdk in "$FAMILYVAULT_ROOT"/.tools/jdk-21*; do
 done
 unset familyvault_jdk
 export PATH="$FAMILYVAULT_ROOT/.tools/flutter/bin:${JAVA_HOME:+$JAVA_HOME/bin:}$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+for familyvault_deno in "$FAMILYVAULT_ROOT"/.tools/deno-*; do
+  if [[ -x "$familyvault_deno/deno" ]]; then
+    export PATH="$familyvault_deno:$PATH"
+    break
+  fi
+done
+unset familyvault_deno
 # The PDF native-asset hook also compiles a small host library during tests.
 if [[ "$(uname -sm)" = 'Linux x86_64' ]] && ! command -v clang >/dev/null; then
   for familyvault_llvm in "$ANDROID_HOME"/ndk/*/toolchains/llvm/prebuilt/linux-x86_64/bin; do

@@ -255,3 +255,19 @@ Record exact command, date, outcome and material platform/provider limits below.
   clang. The existing Android NDK clang compiled the host gate. The lifecycle
   test also needed Android's intermediate hidden and inactive transitions.
   Both corrections are reflected in the passing full check.
+
+## M08c1 — 2026-11-19 shared document receipts and gateway
+
+- `bash tool/check.sh` passed 106 Flutter tests, the PostgreSQL migrations,
+  the private Storage catalog contract, and four Deno gateway tests. One Dart
+  provider test was opt-in. Transcript `.cache/checks/m08-cloud-fundamentals-full-20261119-a.txt`.
+- The document key test verifies independent device keys, rejection on wrong
+  recipient, family or version, and signature and signing-key tampering.
+- PostgreSQL verified finalize only after the worker receipt, exactly one
+  key grant per enrolled recipient, owner and creator attribution and denial
+  after revocation. The Deno gateway rejected truncated, altered and oversized
+  fixture objects and streamed a permitted ciphertext download with no caching.
+- `python3 -B tool/check_supabase.py` passed with real local Auth and PostgREST.
+  Its document exercise wrote a synthetic worker receipt to test the database
+  role boundary. Transcript `.cache/checks/m08-cloud-provider-20261119-a.txt`.
+  A joined Storage service transfer and connected Flutter views remain pending.
