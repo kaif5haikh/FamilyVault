@@ -16,6 +16,7 @@ class VaultContent extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.all(
             MediaQuery.sizeOf(context).width < 400 ? 16 : 24,
           ),

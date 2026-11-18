@@ -12,6 +12,8 @@ import '../features/finance/presentation/transactions_pages.dart';
 import '../features/finance/presentation/transaction_editor.dart';
 import '../features/finance/presentation/planning_pages.dart';
 import '../features/finance/presentation/reports_page.dart';
+import '../features/liabilities/presentation/debt_editor.dart';
+import '../features/liabilities/presentation/debt_pages.dart';
 import '../features/settings/settings_pages.dart';
 import 'vault_providers.dart';
 import 'vault_shell.dart';
@@ -46,6 +48,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       _workspaceRoute('/transactions', const TransactionsPage()),
       _workspaceRoute('/accounts', const AccountsPage()),
       _workspaceRoute('/assets', const AssetsPage()),
+      _workspaceRoute('/loans', const DebtsPage()),
       _workspaceRoute('/planning', const PlanningPage()),
       _workspaceRoute('/reports', const ReportsPage()),
       _workspaceRoute('/settings', const SettingsPage()),
@@ -110,6 +113,36 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/asset/:id',
         builder: (_, state) => AssetDetailPage(id: state.pathParameters['id']!),
+      ),
+      GoRoute(path: '/loan/new', builder: (_, _) => const DebtEditor()),
+      GoRoute(
+        path: '/loan/:id/edit',
+        builder: (_, state) => DebtEditor(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/loan/:id/principal',
+        builder: (_, state) =>
+            DebtEditor(id: state.pathParameters['id']!, correctPrincipal: true),
+      ),
+      GoRoute(
+        path: '/loan/:id/repay',
+        builder: (_, state) => RepaymentEditor(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/loan/:id/repay/:payment',
+        builder: (_, state) => RepaymentEditor(
+          id: state.pathParameters['id']!,
+          repaymentId: state.pathParameters['payment']!,
+        ),
+      ),
+      GoRoute(
+        path: '/loan/:id/estimate',
+        builder: (_, state) =>
+            DebtEstimatePage(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/loan/:id',
+        builder: (_, state) => DebtDetailPage(id: state.pathParameters['id']!),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

@@ -20,6 +20,12 @@ class MorePage extends StatelessWidget {
           '/assets',
         ),
         (
+          'Loans & lending',
+          'Principal, interest and repayment history',
+          Icons.request_quote_outlined,
+          '/loans',
+        ),
+        (
           'Budgets & planning',
           'Plan monthly spending by category',
           Icons.savings_outlined,

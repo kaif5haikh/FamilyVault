@@ -216,6 +216,12 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
                 icon: const Icon(Icons.diamond_outlined),
                 label: const Text('View related holding'),
               ),
+            if (link?.aggregateType == 'debt')
+              TextButton.icon(
+                onPressed: () => context.push('/loan/${link!.aggregateId}'),
+                icon: const Icon(Icons.request_quote_outlined),
+                label: const Text('View related loan'),
+              ),
             if (link == null &&
                 journal.deletedAtUs == null &&
                 journal.kind != 'reversal')

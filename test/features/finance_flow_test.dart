@@ -10,6 +10,7 @@ import 'package:familyvault/core/finance/money.dart';
 import 'package:familyvault/core/security/vault_lifecycle.dart';
 import 'package:familyvault/features/assets/data/asset_repository.dart';
 import 'package:familyvault/features/finance/data/ledger_repository.dart';
+import 'package:familyvault/features/liabilities/data/debt_repository.dart';
 import 'package:familyvault/shared/widgets/vault_widgets.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -334,6 +335,88 @@ void main() {
           );
         }
       }
+      await databaseIO(tester, lifecycle.lock);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    },
+  );
+
+  testWidgets(
+    'loan forms record an actual split payment and retain the correction history',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final container = await app(tester);
+      await ready(tester, find.text('Net worth'));
+      final session = lifecycle.status.session!;
+      final cash = await databaseIO(
+        tester,
+        () => session.ledger.createAccount(
+          name: 'Synthetic loan cash',
+          kind: AccountKind.asset,
+          subtype: 'cash',
+          openingBalance: Money.fromMinor(100000),
+          openedOn: LedgerRepository.dateOnly(DateTime.now()),
+        ),
+      );
+      container.read(routerProvider).go('/loans');
+      await ready(tester, find.text('Add loan'));
+      await tapVisible(tester, find.text('Add loan'));
+      await ready(tester, field('Loan name'));
+      await tester.enterText(field('Loan name'), 'Synthetic loan');
+      await tester.enterText(field('Lender'), 'Synthetic lender');
+      await tester.enterText(field('Opening principal'), '1000');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump(const Duration(milliseconds: 350));
+      await tapVisible(tester, find.widgetWithText(FilledButton, 'Save loan'));
+      final repaymentButton = find.widgetWithText(
+        FilledButton,
+        'Record repayment',
+      );
+      await ready(tester, repaymentButton);
+      await tapVisible(tester, repaymentButton);
+      await ready(tester, field('Principal amount'));
+      await tester.enterText(field('Principal amount'), '250.01');
+      await tester.enterText(field('Interest amount'), '4.99');
+      await selectValue(tester, 'Paid from', 'Synthetic loan cash');
+      await tapVisible(
+        tester,
+        find.widgetWithText(FilledButton, 'Save repayment'),
+      );
+      await ready(tester, find.text('₹749.99'));
+      // A save notice can still cover the bottom of the next long form.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tapVisible(tester, find.text('Correct repayment'));
+      await ready(tester, field('Reason for correction'));
+      await tester.enterText(field('Principal amount'), '200');
+      await tester.enterText(field('Interest amount'), '2.01');
+      await tester.enterText(
+        field('Reason for correction'),
+        'Synthetic corrected repayment',
+      );
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 350));
+      await tapVisible(
+        tester,
+        find.widgetWithText(FilledButton, 'Save repayment correction'),
+      );
+      await ready(tester, find.text('₹800.00'));
+      final debt = await databaseIO(
+        tester,
+        DebtRepository(session.ledger).snapshot,
+      );
+      final loan = debt.contracts.single;
+      final finance = await databaseIO(tester, session.ledger.snapshot);
+      expect(finance.balances()[loan.accountId], BigInt.from(-80000));
+      expect(finance.balances()[cash.id], BigInt.from(79799));
+      expect(finance.total(AccountKind.expense), BigInt.from(201));
+      expect(debt.repayments, hasLength(2));
+      expect(finance.journals.where((j) => j.reversesId != null), hasLength(1));
+      expect(tester.takeException(), isNull);
       await databaseIO(tester, lifecycle.lock);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(Duration.zero);

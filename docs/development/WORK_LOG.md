@@ -139,3 +139,15 @@ Rewrote the README in plain English and checked it contains no em dashes.
 The push hook checks the same SSH destination, owner and expected visibility
 throughout the transition. Application data and sensitive local files remain
 excluded from the source repository. No history rewrite or repository replacement.
+
+Pushed the README and visibility guard in `2544915`, then ran `gh repo edit`
+against `kaif5haikh/FamilyVault` with public visibility. Both `gh repo view` and
+an unauthenticated GitHub API request confirmed public access. The SSH origin
+and commit history were preserved. The repository-local hook now expects PUBLIC.
+
+## 2026-11-18 — borrowing and lending
+
+Implemented loan terms, opening principal, actual split payments, correction
+and reversal history, settlement archive, and interest estimate screens.
+`bash tool/check.sh` passed with 74 tests. Business repository tests also passed
+separately. Continue with the business UI and executable backend policies.

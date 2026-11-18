@@ -74,3 +74,8 @@ remain the next unit. No actual family holdings, rates or loan terms are seeded.
 ADR 0009 records acquisition funding, separate equity reserve, family share and
 backdated valuation behavior. Generic finance cannot alter domain-owned entries.
 The asset module writes the complete command and its facts within one transaction.
+
+## 2026-11-18 — loans and repayments
+
+ADR 0010 specifies borrowed and lent principal, paid interest and immutable
+corrections. Estimate screens use recorded terms without posting accruals.

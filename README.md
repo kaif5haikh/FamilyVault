@@ -7,12 +7,13 @@ FamilyVault is a Flutter app I am building to help a family keep track of money 
 - Add cash and bank accounts, income, expenses and transfers.
 - Set monthly budgets and see where the money goes.
 - Record property, gold, silver and other assets with ownership details and a history of their values.
+- Record loans and repayments. See principal, interest paid and the amount still due.
 - Correct a transaction while keeping the original entry in its history.
 - Save records on the device without internet. The app encrypts the local database and uses your device lock to open it.
 
 ## What I am still building
 
-I am working on loans, business accounts, family login, sync between devices and the document vault. Encrypted backups for the device and Google Drive are also part of the project.
+I am working on business accounts, family login, sync between devices and the document vault. Encrypted backups for the device and Google Drive are also part of the project.
 
 ## Run it
 

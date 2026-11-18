@@ -100,3 +100,19 @@ Record exact command, date, outcome and material platform/provider limits below.
   and layout of each asset route at 320px and 1200px with doubled text.
 - `flutter build apk --debug --no-pub` passed in 252.7 seconds. Transcript
   `.cache/checks/m05b-android-20261118-a.txt`.
+
+## M05c — 2026-11-18 loan workflows
+
+- `bash tool/check.sh` passed with 74 tests, no analysis findings, clean
+  generation, and the advisory and design SQL checks. Transcript
+  `.cache/checks/m05c-full-20261118-a.txt`.
+- Six new encrypted repository tests cover borrower and lender signs, opening
+  funding, separate interest, partial payments, stale and concurrent commands,
+  duplicate retries, correction history, date and overpayment checks, archives
+  and rollback when the outbox insert fails.
+- A widget test records a loan and split repayment, corrects it and verifies
+  the exact cash, principal, interest and reversal in the encrypted database.
+  The test waits for the prior save notice to leave before pressing the next
+  form's bottom action. Targeted transcript `.cache/checks/m05c-widget-20261118-e.txt`.
+- `flutter build apk --debug --no-pub` passed in 292.2 seconds. Transcript
+  `.cache/checks/m05c-android-20261118-a.txt`.
