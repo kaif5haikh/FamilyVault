@@ -184,7 +184,16 @@ separately. Continue with the business UI and executable backend policies.
 - The initial widget trial hung while opening a test directory under the fake
   clock. Moved that scratch I/O into the real async zone. Application behavior
   tests and the full 85-test check passed. The Android debug APK rebuilt.
-- Shared workspace bootstrap and financial replication remain separate. An
-  initial ordinary-ledger server migration is drafted in the project cache.
+- Shared workspace bootstrap and financial replication remain separate.
   Next validate its commands, atomic receipts, chart and feed against synthetic
   multi-device clients and enable the scoped encrypted cloud cache.
+
+## 2026-11-18 — ordinary ledger receipts
+
+- Verified `3dd3b44` on the public SSH origin. Added typed ordinary ledger
+  tables and RPCs. Accounts with opening balances now emit one local bundle.
+- The first real concurrent Data API check timed out on the persistent `40001`
+  retries. Changed stale revisions to `PT409` and verified a single acceptance
+  and a single conflict. The full check and provider integration both passed.
+- Next implement and test budget and reconciliation commands, then connect
+  the encrypted client cache and queued delivery to the receipt protocol.

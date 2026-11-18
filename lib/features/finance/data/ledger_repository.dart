@@ -231,32 +231,50 @@ final class LedgerRepository {
     required String subtype,
     Money? openingBalance,
     String? openedOn,
+    String? operationId,
   }) => storageBoundary(
     () => db.transaction(() async {
       await mutations.authorize();
       if (kind == AccountKind.equity ||
+          subtype.trim().startsWith('managed_') ||
+          (openingBalance != null && openingBalance.currency != Currency.inr) ||
           (openingBalance != null &&
               kind != AccountKind.asset &&
               kind != AccountKind.liability)) {
         throw _invalid;
       }
+      final operation = operationId ?? uuid.v4();
+      final digest = payloadDigest(
+        canonicalJson({
+          'create_account': name.trim(),
+          'kind': kind.name,
+          'subtype': subtype.trim(),
+          'opening_minor': openingBalance?.minor,
+          'opened_on': openedOn,
+        }),
+      );
+      final prior = await mutations.existing(operation, digest);
+      if (prior != null) {
+        return account(prior.entityId);
+      }
       final a = await _insertAccount(
-        id: uuid.v4(),
+        id: aggregateId(operation, 'account'),
         name: name,
         kind: kind,
         subtype: _text(subtype, 40),
+        emitMutation: false,
       );
+      Map<String, Object?>? bundle;
       if (openingBalance != null && openingBalance.minor != 0) {
-        if (openingBalance.currency != Currency.inr) {
-          throw _invalid;
-        }
         final signed = kind == AccountKind.liability
             ? openingBalance.negate().minor
             : openingBalance.minor;
-        await _post(
+        final journal = await _post(
           kind: EntryKind.opening,
           occurredOn: openedOn ?? dateOnly(mutations.clock()),
           description: 'Opening balance',
+          operationId: aggregateId(operation, 'opening'),
+          emitMutation: false,
           postings: [
             PostingInput(a.id, signed),
             PostingInput(
@@ -265,7 +283,28 @@ final class LedgerRepository {
             ),
           ],
         );
+        final snapshot = await journalJson(journal);
+        bundle = {
+          'journals': [snapshot],
+        };
+        await mutations.audit(
+          operationId: operation,
+          entityType: 'journal',
+          entityId: journal,
+          action: 'post',
+          after: snapshot,
+        );
       }
+      await mutations.record(
+        operationId: operation,
+        entityType: 'account',
+        entityId: a.id,
+        action: 'create',
+        baseRevision: 0,
+        after: accountJson(a),
+        commandDigest: digest,
+        bundle: bundle,
+      );
       return a;
     }),
   );

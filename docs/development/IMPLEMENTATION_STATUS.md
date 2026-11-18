@@ -8,9 +8,9 @@ Baseline: b9a2705. Goal active; no financial features existed at baseline.
 | App | Locked welcome/access/about, theme, Riverpod/GoRouter | Device-authenticated local setup/unlock, encrypted overview and automatic privacy/locking wired/tested |
 | Persistence | Encrypted Drift v1: outbox/checkpoints/conflicts only | Encrypted v3 foundation implemented/tested; populated v1/v2 and immutable snapshots preserved |
 | Finance/wealth/debt/business | Architecture only | Local ledger + functional account/income/expense/transfer/correction/budget/reconciliation/report UI tested; v3 schema and exact calculations; asset, property, metal, rent, ownership and valuation screens tested with posted history; loans and repayment history; business revenue, operating costs, stock purchases, issues, wages and profit tested |
-| Auth/backend/sync | Secure storage adapters; proposal SQL | Membership/device control plane tested with local PostgreSQL and real Supabase Auth/PostgREST; mobile sign-in, invitation, device enrollment and admin controls wired and tested with fixtures; shared finance replication and hosted deployment are pending |
+| Auth/backend/sync | Secure storage adapters and proposal SQL | Local PostgreSQL and Supabase Auth/PostgREST verify family access, ordinary ledger writes and ordered receipts. Mobile enrollment is wired and tested. The encrypted cloud cache, client replication and other finance commands remain pending. |
 | Documents/backup/Drive | Design only | Engines/adapters/integration tests required |
-| Tests | 9 Flutter host tests; design probes | 85 host tests passed, including encrypted form workflows and responsive layouts; cloud/mobile hardware still pending |
+| Tests | 9 Flutter host tests and design probes | 86 Flutter host tests passed, including encrypted form workflows and atomic opening balances. Ordinary server commands passed PostgreSQL and concurrent Data API tests. |
 | Release | Prior Android debug APK | M06b Android debug build passed; release APK/AAB and complete UI still required; iOS needs macOS/Xcode |
 
 External constraints: no Supabase/Google OAuth/deployment credentials supplied;

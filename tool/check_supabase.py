@@ -2,6 +2,7 @@
 """Run real Auth/PostgREST against a disposable, loopback-only Supabase pod."""
 
 import base64
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import hmac
 import json
@@ -51,7 +52,7 @@ def admin_token(signing_key: str) -> str:
     return f'{head}.{body}.{base64url(signature)}'
 
 
-def request(url: str, body: dict | None = None, *, token: str | None = None, status: int = 200):
+def request(url: str, body: dict | None = None, *, token: str | None = None, status: int | tuple[int, ...] = 200):
     headers = {'Content-Type': 'application/json'}
     if token:
         headers['Authorization'] = f'Bearer {token}'
@@ -60,7 +61,7 @@ def request(url: str, body: dict | None = None, *, token: str | None = None, sta
             actual, raw = reply.status, reply.read()
     except HTTPError as e:
         actual, raw = e.code, e.read()
-    if actual != status:
+    if actual not in (status if isinstance(status, tuple) else (status,)):
         # Never print response details from login, MFA or database requests.
         raise AssertionError(f'{url.split("?")[0]} returned HTTP {actual}, expected {status}')
     return json.loads(raw) if raw else None
@@ -84,6 +85,63 @@ def otp(secret: str) -> str:
     offset = mac[-1] & 0x0f
     code = int.from_bytes(mac[offset:offset + 4], 'big') & 0x7fffffff
     return f'{code % 1_000_000:06d}'
+
+
+def check_ledger(rpc, family: str, owner: dict, owner_session: str, member: dict, member_session: str):
+    """Drive competing exact-integer operations through two signed Auth sessions."""
+    owner_member = rpc('workspace', owner, owner_session)['member_id']
+    member_id = rpc('workspace', member, member_session)['member_id']
+    categories = rpc('sync_chart', owner, owner_session)
+    opening = next(row['id'] for row in categories if row['subtype'] == 'opening')
+    cash, journal = str(uuid4()), str(uuid4())
+    provenance = {'family_id': family, 'created_by': owner_member, 'updated_by': owner_member,
+                  'created_at_us': 1, 'updated_at_us': 1, 'deleted_at_us': None, 'revision': 1}
+    account = {'id': cash, **provenance, 'name': 'Synthetic cash', 'kind': 'asset', 'subtype': 'cash',
+               'system_account': False, 'currency': 'INR'}
+    maximum = 2**63 - 1
+    posted = {'id': journal, **provenance, 'kind': 'opening', 'occurred_on': '2026-11-01',
+              'description': 'Synthetic exact opening', 'currency': 'INR', 'status': 'posted',
+              'reverses_id': None, 'business_id': None, 'related_entity_id': None,
+              'postings': [{'id': str(uuid4()), 'family_id': family, 'journal_id': journal,
+                            'account_id': account_id, 'position': position, 'amount_minor': amount}
+                           for position, (account_id, amount) in enumerate(((cash, maximum), (opening, -maximum)))]}
+
+    def envelope(record: dict, proof: dict, actor: str, revision: int):
+        return {'protocol_version': 1, 'operation_id': str(uuid4()), 'family_id': family,
+                'actor_id': actor, 'device_id': proof['p_device'], 'entity_type': 'account',
+                'entity_id': record['id'], 'mutation_kind': 'upsert', 'base_revision': revision, 'record': record}
+
+    def push(change: dict, proof: dict, token: str, status=200):
+        raw = json.dumps(change, sort_keys=True, separators=(',', ':'))
+        return rpc('sync_push', {**proof, 'p_envelope': raw}, token, status=status)
+
+    args = envelope(account, owner, owner_member, 0)
+    args['bundle'] = {'journals': [posted]}
+    receipt = push(args, owner, owner_session)
+    assert receipt['sequence'] == 1
+    assert receipt == push(args, owner, owner_session)
+    first_page = rpc('sync_pull', {**member, 'p_after': 0, 'p_limit': 1}, member_session)
+    event = first_page['changes'][0]
+    assert event['payload_digest'] == receipt['payload_digest']
+    raw = event['payload_json']
+    assert hashlib.sha256(raw.encode()).hexdigest() == receipt['payload_digest']
+    assert json.loads(raw)['bundle']['journals'][0]['postings'][0]['amount_minor'] == maximum
+
+    def rename(proof, token, actor, label):
+        after = {**account, 'name': label, 'updated_at_us': 2, 'updated_by': actor, 'revision': 2}
+        return push(envelope(after, proof, actor, 1), proof, token, status=(200, 409))
+
+    with ThreadPoolExecutor(max_workers=2) as workers:
+        futures = [workers.submit(rename, owner, owner_session, owner_member, 'Synthetic owner edit'),
+                   workers.submit(rename, member, member_session, member_id, 'Synthetic member edit')]
+        results = [future.result() for future in futures]
+
+    assert sum(result.get('sequence') == 2 for result in results) == 1
+    assert sum(result.get('code') == 'PT409' for result in results) == 1
+    latest = rpc('sync_pull', {**member, 'p_after': 1}, member_session)
+    assert latest['watermark'] == 2 and len(latest['changes']) == 1
+    assert json.loads(latest['changes'][0]['payload_json'])['record']['created_by'] == owner_member
+    print('Real Data API passed exact paise, atomic opening, receipt replay and concurrent revision checks.')
 
 
 def run(scratch: Path):
@@ -149,7 +207,7 @@ def run(scratch: Path):
             access = request(auth_url + '/token?grant_type=password', {'email': email, 'password': pw})
             return user['id'], access['access_token']
 
-        def rpc(endpoint: str, fields: dict, token: str, status: int = 200):
+        def rpc(endpoint: str, fields: dict, token: str, status: int | tuple[int, ...] = 200):
             return request(rest_url + '/rpc/fv_' + endpoint, fields, token=token, status=status)
 
         admin = admin_token(signing_key)
@@ -188,8 +246,10 @@ def run(scratch: Path):
         assert rpc('workspace', member_fields, member_session)['role'] == 'member'
         rpc('admin_access', member_fields, member_session, status=403)
         rpc('workspace', {**member_fields, 'p_proof': secrets.token_hex(32)}, member_session, status=403)
+        check_ledger(rpc, family, owner_fields, owner_session, member_fields, member_session)
         request(auth_url + '/logout?scope=local', {}, token=member_session, status=204)
         rpc('workspace', member_fields, member_session, status=403)
+        rpc('sync_pull', {**member_fields, 'p_after': 0}, member_session, status=403)
         print('Real Supabase Auth and PostgREST passed sign-in, MFA, invitation, enrollment and stale-token denial.')
     except Exception:
         for service in (db, auth, rest):

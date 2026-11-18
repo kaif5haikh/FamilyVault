@@ -90,3 +90,8 @@ weighted cost, actual wage payments and reporting scope. Billing remains open.
 ADR 0012 records verified-email invitations, device-key enrollment, live Auth
 session checks and recent TOTP controls. Local provider integration confirmed
 the private Auth helper and permission boundaries.
+
+## 2026-11-18 — shared ledger receipts
+
+ADR 0013 records the exact-byte operation envelope, family-scoped transaction
+sequence, atomic opening and corrections, and revision conflict response.

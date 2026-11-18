@@ -161,3 +161,18 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `flutter build apk --debug --no-pub` passed in 18.2 seconds. Transcript
   `.cache/checks/m06b-android-20261118-b.txt`. The loopback cleartext exception
   is limited to debug builds and explicit Dart development configuration.
+
+## M06c1 — 2026-11-18 shared ordinary ledger
+
+- `bash tool/check.sh` passed with 86 Flutter tests, clean analysis,
+  dependency and schema checks, and native PostgreSQL migration tests.
+  Transcript `.cache/checks/m06c-ledger-full-20261118-b.txt`.
+- The local opening test checks rollback on invalid input, one outbox
+  operation for account plus opening entry and idempotent retry. The
+  native SQL suite checks strict integers, immutable history, exact reversal,
+  stale revisions and a failed correction leaving no partial posts or gap.
+- `python3 -B tool/check_supabase.py` passed with two genuine Auth sessions.
+  It verified a 64-bit opening amount, the feed digest, duplicate receipts,
+  two simultaneous edits returning one acceptance and one HTTP 409, and
+  feed denial after Auth sign-out. Transcript
+  `.cache/checks/m06c-rest-ledger-20261118-c.txt`.

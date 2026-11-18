@@ -49,6 +49,42 @@ void main() {
         operationId: operation,
       );
 
+  test(
+    'opening balance and account share one retryable outbox operation',
+    () async {
+      final operation = uuid.v4();
+      Future<LedgerAccount> create(String date) => ledger.createAccount(
+        name: 'Synthetic opening account',
+        kind: AccountKind.asset,
+        subtype: 'bank',
+        openingBalance: Money.fromMinor(9007199254740993),
+        openedOn: date,
+        operationId: operation,
+      );
+
+      final startingAccounts = (await ledger.snapshot()).accounts.length;
+      final startingOutbox =
+          (await f.db.select(f.db.pendingMutations).get()).length;
+      await expectLater(create('2026-02-30'), throwsA(validation));
+      expect((await ledger.snapshot()).accounts, hasLength(startingAccounts));
+      expect(
+        await f.db.select(f.db.pendingMutations).get(),
+        hasLength(startingOutbox),
+      );
+
+      final opened = await create('2026-11-01');
+      expect((await create('2026-11-01')).id, opened.id);
+      final outbox = await f.db.select(f.db.pendingMutations).get();
+      expect(outbox, hasLength(startingOutbox + 1));
+      final payload = jsonDecode(
+        outbox.singleWhere((row) => row.operationId == operation).payloadJson,
+      ) as Map<String, dynamic>;
+      final opening = (payload['bundle']['journals'] as List).single;
+      expect(opening['postings'][0]['amount_minor'], 9007199254740993);
+      expect((await ledger.snapshot()).journals, hasLength(1));
+    },
+  );
+
   test('metadata starts empty; income, expense, transfer and reports balance exactly', () async {
     expect((await ledger.snapshot()).journals, isEmpty);
     await income();

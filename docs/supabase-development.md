@@ -19,6 +19,11 @@ its own pod, publishes to localhost ports chosen by Podman, generates only
 synthetic credentials and removes the test pod on exit. The commands and image
 versions come from the [Supabase self-hosted stack](https://github.com/supabase/supabase/blob/master/docker/docker-compose.yml).
 
+The provider check drives an ordinary ledger opening and concurrent edits
+with two signed-in, approved devices. It verifies the exact paise amount in
+the feed and confirms that the losing edit gets HTTP 409. It also checks that
+the previous member token loses access after Auth sign-out.
+
 ## Provision a development family
 
 1. Use a dedicated development project and apply `supabase/migrations/` in
