@@ -53,6 +53,7 @@ final class MutationWriter {
     )..where((t) => t.operationId.equals(operationId))).getSingleOrNull();
     if (row != null &&
         (row.familyId != identity.familyId ||
+            row.deviceId != identity.deviceId ||
             row.payloadJson.isEmpty ||
             (jsonDecode(row.payloadJson)
                     as Map<String, Object?>)['command_digest'] !=

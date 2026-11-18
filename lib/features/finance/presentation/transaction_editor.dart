@@ -86,6 +86,7 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
         final originals = data.journals.where((j) => j.id == widget.journalId);
         if (widget.journalId != null &&
             (originals.isEmpty ||
+                data.journalLinks.containsKey(widget.journalId) ||
                 originals.single.deletedAtUs != null ||
                 ![
                   'income',
@@ -104,7 +105,12 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
           );
         }
         final assets = data.accounts
-            .where((a) => a.kind == 'asset' && a.deletedAtUs == null)
+            .where(
+              (a) =>
+                  a.kind == 'asset' &&
+                  a.deletedAtUs == null &&
+                  !data.managedAccountIds.contains(a.id),
+            )
             .toList();
         final counterKind = _kind == EntryKind.income
             ? 'income'
@@ -116,6 +122,7 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
               (a) =>
                   a.kind == counterKind &&
                   a.deletedAtUs == null &&
+                  !data.managedAccountIds.contains(a.id) &&
                   a.id != _account,
             )
             .toList();

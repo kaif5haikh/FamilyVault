@@ -13,6 +13,7 @@ class VaultShell extends ConsumerWidget {
     ('/home', 'dashboard', Icons.dashboard_outlined),
     ('/transactions', 'transactions', Icons.swap_vert),
     ('/accounts', 'accounts', Icons.account_balance_outlined),
+    ('/assets', 'assets', Icons.diamond_outlined),
     ('/planning', 'budgets', Icons.savings_outlined),
     ('/reports', 'reports', Icons.insights_outlined),
     ('/settings', 'settings', Icons.tune),

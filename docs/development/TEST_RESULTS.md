@@ -82,3 +82,21 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `flutter build apk --debug --no-pub`: passed, 18.8s; final transcript
   `.cache/checks/m05a-final-history-android-20261115-a.txt`. Android compilation
   only; physical security, release signing and iOS remain unvalidated.
+
+## M05b — 2026-11-18 assets and atomic module changes
+
+- `bash tool/check.sh` passed with 67 tests and clean generation, formatting and
+  analysis. The 145-package OSV query returned no matches. Existing proposal SQL
+  probes passed. Transcript `.cache/checks/m05b-full-20261118-b.txt`.
+- Encrypted repository tests cover ownership rounding and history, funded and
+  opening acquisitions, exact metal estimates, past-date and same-day valuation
+  corrections, rent reversals, shared edits, stale commands, duplicate retries,
+  managed account denial and rollback on outbox failure.
+- The closure test found a doubled book value on undo after a past-date quote.
+  The fix values the holding before active disposal entries. The regression
+  verifies both a zero closed balance and the original value after undo.
+- The property widget test uses the live encrypted Drift repository. It saves
+  and revalues a synthetic holding and checks audit, related entry navigation
+  and layout of each asset route at 320px and 1200px with doubled text.
+- `flutter build apk --debug --no-pub` passed in 252.7 seconds. Transcript
+  `.cache/checks/m05b-android-20261118-a.txt`.

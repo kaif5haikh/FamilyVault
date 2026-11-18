@@ -5,9 +5,10 @@ business records and encrypted documents. This is an independent project.
 
 **Status: active implementation.** The encrypted offline finance workspace now
 supports accounts, income, expenses, transfers, corrections, budgets,
-reconciliation, dashboards and reports. Device-authenticated unlock and automatic
-locking are connected. Wealth, loans, business, cloud membership/sync, documents
-and backup/recovery are the next milestones. No production backend or paid service
+reconciliation, dashboards and reports. Assets include property and metal details,
+dated valuations, ownership, rent and closure history. Device-authenticated unlock
+and automatic locking are connected. Loans, business, cloud membership/sync,
+documents and backup/recovery are in development. No production backend or paid service
 has been provisioned. See the [verified implementation status](docs/development/IMPLEMENTATION_STATUS.md).
 
 ## Product

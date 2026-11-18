@@ -113,3 +113,15 @@ math; wealth/valuation; debt/repayment; business/inventory/salary and their UI.
 - Android debug rebuild passed in 18.8s. Indexed-content/policy/redacted secret
   checks precede the milestone commit and the private-origin push hook verifies
   repository identity/privacy. No production infrastructure is touched.
+
+## 2026-11-18 — assets and aggregate accounting
+
+- Confirmed the previous `f940ac1` commit on the designated private SSH origin.
+  Resumed the paused worktree. Added the atomic module writer and completed asset
+  creation, edits, date-based valuation history, nominal and assayed metal details,
+  family ownership changes, rental receipts, closure and undo.
+- Targeted repo and widget checks found and corrected the sale undo accounting
+  issue and an ambiguous widget test selector. The full `tool/check.sh` run then
+  passed with 67 tests. See TEST_RESULTS for the exact transcript.
+- Loan contract and repayment repository work started separately. Next verify
+  independent server-relevant invariants and finish native loan workflows.

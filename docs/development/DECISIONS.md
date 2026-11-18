@@ -68,3 +68,9 @@ ADR 0008 specifies additive v3, exact ownership/metal calculations, explicitly
 labelled loan estimates and weighted-average stock. Root revision/event indexes
 and immutable journal-purpose links support atomic domain changes; module services
 remain the next unit. No actual family holdings, rates or loan terms are seeded.
+
+## 2026-11-18 — asset accounting
+
+ADR 0009 records acquisition funding, separate equity reserve, family share and
+backdated valuation behavior. Generic finance cannot alter domain-owned entries.
+The asset module writes the complete command and its facts within one transaction.

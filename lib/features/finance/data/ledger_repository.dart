@@ -8,6 +8,8 @@ import '../../../core/finance/money.dart';
 import '../../../core/security/vault_identity.dart';
 import '../../../core/sync/canonical_json.dart';
 
+part 'ledger_aggregate.dart';
+
 enum AccountKind { asset, liability, equity, income, expense }
 
 enum EntryKind {
@@ -47,12 +49,16 @@ final class FinanceSnapshot {
     required this.postings,
     required this.budgets,
     required this.reconciliations,
+    required this.managedAccountIds,
+    required this.journalLinks,
   });
   final List<LedgerAccount> accounts;
   final List<LedgerJournal> journals;
   final List<LedgerPosting> postings;
   final List<MonthlyBudget> budgets;
   final List<ReconciliationCheck> reconciliations;
+  final Set<String> managedAccountIds;
+  final Map<String, AggregateJournalLink> journalLinks;
 
   Map<String, BigInt> balances({String? through, String? from}) {
     final allowed = {
@@ -270,6 +276,7 @@ final class LedgerRepository {
     required AccountKind kind,
     required String subtype,
     bool system = false,
+    bool emitMutation = true,
   }) async {
     final now = mutations.now;
     await db
@@ -289,14 +296,16 @@ final class LedgerRepository {
           ),
         );
     final a = await account(id);
-    await mutations.record(
-      operationId: uuid.v4(),
-      entityType: 'account',
-      entityId: id,
-      action: 'create',
-      baseRevision: 0,
-      after: accountJson(a),
-    );
+    if (emitMutation) {
+      await mutations.record(
+        operationId: uuid.v4(),
+        entityType: 'account',
+        entityId: id,
+        action: 'create',
+        baseRevision: 0,
+        after: accountJson(a),
+      );
+    }
     return a;
   }
 
@@ -320,6 +329,7 @@ final class LedgerRepository {
     () => db.transaction(() async {
       await mutations.authorize();
       final before = await account(id);
+      await ensureUnmanagedAccount(id);
       if (before.revision != expectedRevision ||
           before.deletedAtUs != null ||
           before.systemAccount) {
@@ -355,6 +365,7 @@ final class LedgerRepository {
         () => db.transaction(() async {
           await mutations.authorize();
           final before = await account(id);
+          await ensureUnmanagedAccount(id);
           if (before.revision != expectedRevision ||
               before.deletedAtUs != null ||
               before.systemAccount) {
@@ -399,6 +410,7 @@ final class LedgerRepository {
         () => db.transaction(() async {
           await mutations.authorize();
           final before = await account(id);
+          await ensureUnmanagedAccount(id);
           if (before.revision != expectedRevision ||
               before.deletedAtUs == null ||
               before.systemAccount) {
@@ -507,6 +519,8 @@ final class LedgerRepository {
   ) async {
     final a = await account(accountId),
         counter = await account(counterAccountId);
+    await ensureUnmanagedAccount(a.id);
+    await ensureUnmanagedAccount(counter.id);
     if (amount.minor <= 0 ||
         amount.currency != Currency.inr ||
         a.kind != 'asset' ||
@@ -558,6 +572,9 @@ final class LedgerRepository {
       await mutations.authorize();
       if (kind == EntryKind.reversal) {
         throw _invalid;
+      }
+      for (final p in postings) {
+        await ensureUnmanagedAccount(p.accountId);
       }
       return _post(
         kind: kind,
@@ -716,6 +733,7 @@ final class LedgerRepository {
       if (prior != null) {
         return prior.entityId;
       }
+      await ensureUnmanagedJournal(id);
       return _cancel(id, reason: reason, operationId: op, command: command);
     }),
   );
@@ -828,6 +846,7 @@ final class LedgerRepository {
       if (prior != null) {
         return prior.entityId;
       }
+      await ensureUnmanagedJournal(id);
       final original = await detail(id);
       final postings = await _transactionPostings(
         kind,
@@ -904,6 +923,13 @@ final class LedgerRepository {
         reconciliations: await (db.select(
           db.reconciliationChecks,
         )..where((t) => t.familyId.equals(identity.familyId))).get(),
+        managedAccountIds: await managedAccounts(),
+        journalLinks: {
+          for (final link in await (db.select(
+            db.aggregateJournalLinks,
+          )..where((t) => t.familyId.equals(identity.familyId))).get())
+            link.journalId: link,
+        },
       );
     }),
   );
@@ -919,6 +945,10 @@ final class LedgerRepository {
           db.reconciliationChecks,
           db.familyMembers,
           db.vaultDevices,
+          db.wealthAssets,
+          db.debtContracts,
+          db.businesses,
+          db.aggregateJournalLinks,
         },
       )
       .watch()

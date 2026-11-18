@@ -184,6 +184,7 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
         final reversed = data.journals
             .where((j) => j.reversesId == journal.id)
             .firstOrNull;
+        final link = data.journalLinks[journal.id];
         return VaultContent(
           maxWidth: 800,
           children: [
@@ -208,7 +209,16 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
                 'Last modified by ${members[journal.updatedBy] ?? 'family member'}',
               ),
             const SizedBox(height: 20),
-            if (journal.deletedAtUs == null && journal.kind != 'reversal')
+            if (link?.aggregateType == 'asset' ||
+                link?.aggregateType == 'asset_rent')
+              TextButton.icon(
+                onPressed: () => context.push('/asset/${link!.aggregateId}'),
+                icon: const Icon(Icons.diamond_outlined),
+                label: const Text('View related holding'),
+              ),
+            if (link == null &&
+                journal.deletedAtUs == null &&
+                journal.kind != 'reversal')
               Wrap(
                 spacing: 12,
                 runSpacing: 12,

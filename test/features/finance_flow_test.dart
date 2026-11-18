@@ -8,6 +8,7 @@ import 'package:familyvault/app/router.dart';
 import 'package:familyvault/app/vault_providers.dart';
 import 'package:familyvault/core/finance/money.dart';
 import 'package:familyvault/core/security/vault_lifecycle.dart';
+import 'package:familyvault/features/assets/data/asset_repository.dart';
 import 'package:familyvault/features/finance/data/ledger_repository.dart';
 import 'package:familyvault/shared/widgets/vault_widgets.dart';
 import 'package:flutter/rendering.dart';
@@ -237,6 +238,102 @@ void main() {
       ))!;
       expect(snapshot.budgets.single.amountMinor, 10000);
       expect(tester.takeException(), isNull);
+      await databaseIO(tester, lifecycle.lock);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    },
+  );
+
+  testWidgets(
+    'holding forms create, revalue and audit an encrypted property record',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      final container = await app(tester);
+      await ready(tester, find.text('Net worth'));
+      await tapVisible(tester, find.text('More'));
+      await tapVisible(tester, find.text('Assets'));
+      await ready(tester, find.text('Add holding'));
+      await tapVisible(tester, find.text('Add holding'));
+      await ready(tester, field('Holding name'));
+      await tester.enterText(field('Holding name'), 'Synthetic property');
+      await tester.enterText(field('Family ownership (%)'), '50');
+      await tapVisible(tester, find.text('Mumbai'));
+      await tester.enterText(
+        field('Current whole-holding value (optional)'),
+        '12345.67',
+      );
+      await tapVisible(tester, find.text('Save holding'));
+      await ready(tester, find.widgetWithText(AppBar, 'Holding details'));
+      final session = lifecycle.status.session!,
+          repo = AssetRepository(session.ledger);
+      final asset = (await databaseIO(tester, repo.snapshot)).assets.single;
+      expect(asset.familyOwnershipBps, 5000);
+      expect(
+        (await databaseIO(tester, repo.snapshot)).properties.single.city,
+        'Mumbai',
+      );
+      expect(
+        (await databaseIO(
+          tester,
+          repo.snapshot,
+        )).valuations.single.familyValueMinor,
+        617284,
+      );
+      await tapVisible(tester, find.text('Record valuation'));
+      await ready(tester, field('Whole-holding value'));
+      await tester.enterText(field('Whole-holding value'), '15000');
+      await tester.enterText(
+        field('Valuation source or reason'),
+        'Synthetic appraisal',
+      );
+      await tapVisible(
+        tester,
+        find.widgetWithText(FilledButton, 'Record valuation'),
+      );
+      await ready(tester, find.text('₹7,500.00'));
+      final snapshot = await databaseIO(tester, session.ledger.snapshot);
+      expect(snapshot.balances()[asset.accountId], BigInt.from(750000));
+      expect(
+        (await databaseIO(tester, repo.snapshot)).valuations,
+        hasLength(2),
+      );
+      final managed = snapshot.journals.firstWhere(
+        (j) => j.relatedEntityId == asset.id,
+      );
+      container.read(routerProvider).go('/transaction/${managed.id}');
+      await ready(tester, find.text('View related holding'));
+      expect(find.text('Reverse entry'), findsNothing);
+      await tapVisible(tester, find.text('View related holding'));
+      await ready(tester, find.text('Change audit'));
+      await tapVisible(tester, find.text('Change audit'));
+      expect(find.text('Synthetic owner · create'), findsOneWidget);
+      expect(find.text('Synthetic owner · update'), findsOneWidget);
+      for (final size in [const Size(320, 568), const Size(1200, 900)]) {
+        tester.view.physicalSize = size;
+        tester.platformDispatcher.textScaleFactorTestValue = 2;
+        for (final (path, title) in [
+          ('/assets', 'Add holding'),
+          ('/asset/new', 'Add a holding'),
+          ('/asset/${asset.id}', 'Holding details'),
+          ('/asset/${asset.id}/edit', 'Edit holding details'),
+          ('/asset/${asset.id}/value', 'Record valuation'),
+          ('/asset/${asset.id}/ownership', 'Change family share'),
+          ('/asset/${asset.id}/close', 'Close holding'),
+          ('/asset/${asset.id}/rent', 'Record rental income'),
+        ]) {
+          container.read(routerProvider).go(path);
+          await ready(tester, find.text(title));
+          expect(
+            tester.takeException(),
+            isNull,
+            reason: 'Holding layout at $path / $size with 2x text',
+          );
+        }
+      }
       await databaseIO(tester, lifecycle.lock);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pump(Duration.zero);

@@ -2,6 +2,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/assets/presentation/asset_action_editor.dart';
+import '../features/assets/presentation/asset_editor.dart';
+import '../features/assets/presentation/assets_pages.dart';
 import '../features/foundation/foundation_pages.dart';
 import '../features/finance/presentation/finance_home_page.dart';
 import '../features/finance/presentation/accounts_pages.dart';
@@ -42,6 +45,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       _workspaceRoute('/home', const FinanceHomePage()),
       _workspaceRoute('/transactions', const TransactionsPage()),
       _workspaceRoute('/accounts', const AccountsPage()),
+      _workspaceRoute('/assets', const AssetsPage()),
       _workspaceRoute('/planning', const PlanningPage()),
       _workspaceRoute('/reports', const ReportsPage()),
       _workspaceRoute('/settings', const SettingsPage()),
@@ -89,6 +93,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/budget/:id/edit',
         builder: (_, state) => BudgetEditor(id: state.pathParameters['id']!),
+      ),
+      GoRoute(path: '/asset/new', builder: (_, _) => const AssetEditor()),
+      GoRoute(
+        path: '/asset/:id/edit',
+        builder: (_, state) => AssetEditor(id: state.pathParameters['id']!),
+      ),
+      for (final action in ['value', 'rent', 'close', 'ownership'])
+        GoRoute(
+          path: '/asset/:id/$action',
+          builder: (_, state) => AssetActionEditor(
+            id: state.pathParameters['id']!,
+            action: action,
+          ),
+        ),
+      GoRoute(
+        path: '/asset/:id',
+        builder: (_, state) => AssetDetailPage(id: state.pathParameters['id']!),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

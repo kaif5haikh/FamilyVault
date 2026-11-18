@@ -148,7 +148,10 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
           final row = data.accounts
               .where((a) => a.id == widget.accountId)
               .firstOrNull;
-          if (row == null || row.systemAccount || row.deletedAtUs != null) {
+          if (row == null ||
+              row.systemAccount ||
+              row.deletedAtUs != null ||
+              data.managedAccountIds.contains(row.id)) {
             return const VaultContent(
               children: [Text('This account is unavailable for editing.')],
             );
@@ -358,6 +361,7 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
           return const VaultContent(children: [Text('Account unavailable.')]);
         }
         final balance = data.balances()[a.id] ?? BigInt.zero;
+        final managed = data.managedAccountIds.contains(a.id);
         final journalIds = data.postings
             .where((p) => p.accountId == a.id)
             .map((p) => p.journalId)
@@ -383,7 +387,7 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
               spacing: 12,
               runSpacing: 12,
               children: [
-                if (!a.systemAccount && a.deletedAtUs == null)
+                if (!managed && !a.systemAccount && a.deletedAtUs == null)
                   OutlinedButton.icon(
                     onPressed: () => context.push('/account/${a.id}/edit'),
                     icon: const Icon(Icons.edit_outlined),
@@ -397,7 +401,7 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
                     icon: const Icon(Icons.fact_check_outlined),
                     label: const Text('Reconcile'),
                   ),
-                if (!a.systemAccount)
+                if (!managed && !a.systemAccount)
                   OutlinedButton.icon(
                     onPressed: _busy ? null : () => _archive(a),
                     icon: Icon(
@@ -411,6 +415,10 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
                   ),
               ],
             ),
+            if (managed)
+              const Text(
+                'This account is maintained by its holding, loan or business record.',
+              ),
             if (_error != null) ...[
               const SizedBox(height: 16),
               FailureNotice(_error!),

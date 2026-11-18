@@ -1,17 +1,17 @@
 # Implementation status
 
-Current task: **M05 additive wealth, debt and business implementation**. M01–M04 passed.
+Current task: **M05c loans, repayments and interest estimates**. Local wealth workflows passed.
 Baseline: b9a2705. Goal active; no financial features existed at baseline.
 
 | Area | Actual baseline | Current result |
 | --- | --- | --- |
 | App | Locked welcome/access/about, theme, Riverpod/GoRouter | Device-authenticated local setup/unlock, encrypted overview and automatic privacy/locking wired/tested |
 | Persistence | Encrypted Drift v1: outbox/checkpoints/conflicts only | Encrypted v3 foundation implemented/tested; populated v1/v2 and immutable snapshots preserved |
-| Finance/wealth/debt/business | Architecture only | Local ledger + functional account/income/expense/transfer/correction/budget/reconciliation/report UI tested; v3 wealth/debt/business schema and exact math tested; their services/UI next |
+| Finance/wealth/debt/business | Architecture only | Local ledger + functional account/income/expense/transfer/correction/budget/reconciliation/report UI tested; v3 schema and exact calculations; asset, property, metal, rent, ownership and valuation screens tested with posted history; loans and business workflows in progress |
 | Auth/backend/sync | Secure storage adapters; proposal SQL | No live backend; executable local integration required |
 | Documents/backup/Drive | Design only | Engines/adapters/integration tests required |
-| Tests | 9 Flutter host tests; design probes | 55 host tests passed, including encrypted form workflows and responsive layouts; cloud/mobile hardware still pending |
-| Release | Prior Android debug APK | M05a Android debug build passed; release APK/AAB and complete UI still required; iOS needs macOS/Xcode |
+| Tests | 9 Flutter host tests; design probes | 67 host tests passed, including encrypted form workflows and responsive layouts; cloud/mobile hardware still pending |
+| Release | Prior Android debug APK | M05b Android debug build passed; release APK/AAB and complete UI still required; iOS needs macOS/Xcode |
 
 External constraints: no Supabase/Google OAuth/deployment credentials supplied;
 Linux host cannot validate iOS binaries. Implement local/mocked equivalents and

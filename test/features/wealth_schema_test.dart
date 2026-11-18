@@ -79,6 +79,56 @@ void main() {
     return (id: id, inventory: inventory.id, cost: cost.id, salary: salary.id);
   }
 
+  // SQL guard fixtures intentionally use the module aggregate interface. Generic
+  // finance commands now reject module-owned accounts and journals.
+  Future<String> fixturePost({
+    required EntryKind kind,
+    required String occurredOn,
+    required String description,
+    required List<PostingInput> postings,
+    String? businessId,
+    required String relatedEntityId,
+  }) async {
+    late String journal;
+    await f.ledger.runAggregate(
+      operationId: uuid.v4(),
+      entityType: businessId == null ? 'asset' : 'stock',
+      entityId: relatedEntityId,
+      baseRevision: 0,
+      command: {'schema_fixture': true},
+      change: (tx) async {
+        journal = await tx.post(
+          kind: kind,
+          occurredOn: occurredOn,
+          description: description,
+          postings: postings,
+          businessId: businessId,
+          relatedEntityId: relatedEntityId,
+          purpose: 'other',
+        );
+        return {'id': relatedEntityId};
+      },
+    );
+    return journal;
+  }
+
+  Future<String> fixtureReverse(String id, {required String reason}) async {
+    final original = await f.ledger.detail(id);
+    late String reversal;
+    await f.ledger.runAggregate(
+      operationId: uuid.v4(),
+      entityType: 'stock',
+      entityId: original.journal.relatedEntityId!,
+      baseRevision: 0,
+      command: {'schema_reversal_fixture': id},
+      change: (tx) async {
+        reversal = await tx.reverse(id, reason);
+        return {'id': original.journal.relatedEntityId};
+      },
+    );
+    return reversal;
+  }
+
   test('ownership cannot exceed the family share and valuation rounding stays exact', () async {
     final id = await asset('property', share: 5000), i = f.identity;
     Future<void> owner(int share) async => f.db
@@ -112,7 +162,7 @@ void main() {
       f.db.wealthAssets,
     )..where((t) => t.id.equals(id))).getSingle();
     expect(holding.familyOwnershipBps, 5000);
-    final journal = await f.ledger.postJournal(
+    final journal = await fixturePost(
       kind: EntryKind.adjustment,
       occurredOn: '2026-11-01',
       description: 'Synthetic valuation',
@@ -234,7 +284,7 @@ void main() {
           .write(StockItemsCompanion(revision: Value(revision)));
       String? journal;
       if (cost != 0) {
-        journal = await f.ledger.postJournal(
+        journal = await fixturePost(
           kind: EntryKind.business,
           occurredOn: '2026-11-01',
           description: 'Synthetic stock event',
@@ -426,7 +476,7 @@ void main() {
       final revision = before.revision + 1;
       await (f.db.update(f.db.stockItems)..where((t) => t.id.equals(item)))
           .write(StockItemsCompanion(revision: Value(revision)));
-      final journal = await f.ledger.postJournal(
+      final journal = await fixturePost(
         kind: EntryKind.business,
         occurredOn: '2026-11-01',
         description: 'Synthetic stock correction fixture',
@@ -470,7 +520,7 @@ void main() {
       final revision = before.revision + 1;
       await (f.db.update(f.db.stockItems)..where((t) => t.id.equals(item)))
           .write(StockItemsCompanion(revision: Value(revision)));
-      final journal = await f.ledger.reverse(
+      final journal = await fixtureReverse(
         original.journalId!,
         reason: 'Synthetic inventory correction',
       );

@@ -13,7 +13,7 @@ No production deployment, real family data, paid services or destructive history
 - [x] M04 Native responsive dashboard, income/expense/transfer/accounts/budgets/reports and transaction corrections/reconciliation.
 - [ ] M05 Wealth/property/metals/valuations, liabilities/interest/repayments and business accounting/inventory.
   - [x] M05a Additive v3 schema, guarded histories, exact valuation/interest/stock math.
-  - [ ] M05b Atomic module writer and wealth/property/metals services/screens.
+  - [x] M05b Atomic module writer and wealth/property/metals services/screens.
   - [ ] M05c Contracts, actual repayments, interest estimates and native workflows.
   - [ ] M05d Business revenue/expenses, stock, workers/salaries and profit reporting.
 - [ ] M06 Executable PostgreSQL/Supabase migrations, membership/enrollment/session/RLS/RPC and security integration tests.

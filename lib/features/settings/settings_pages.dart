@@ -14,6 +14,12 @@ class MorePage extends StatelessWidget {
       const SectionHeading('More for your family'),
       for (final entry in <(String, String, IconData, String)>[
         (
+          'Assets',
+          'Property, metals, investments and valuations',
+          Icons.diamond_outlined,
+          '/assets',
+        ),
+        (
           'Budgets & planning',
           'Plan monthly spending by category',
           Icons.savings_outlined,

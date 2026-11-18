@@ -36,6 +36,8 @@ class FinanceView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => ref
       .watch(financeProvider)
       .when(
+        skipLoadingOnRefresh: false,
+        skipLoadingOnReload: false,
         loading: () => const Center(
           child: Padding(
             padding: EdgeInsets.all(48),
