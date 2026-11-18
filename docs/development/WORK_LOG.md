@@ -163,3 +163,15 @@ separately. Continue with the business UI and executable backend policies.
   loan and audit pages independently. The business form regression passed.
 - The full check passed with 80 tests and the Android debug APK built. Next:
   executable backend access and mobile enrollment.
+
+## 2026-11-18 — executable family access policies
+
+- Verified `0ce02a9` on the public SSH origin. Added the membership, invitation,
+  session/device and audit migration. Native PostgreSQL and the isolated real
+  Auth/PostgREST pod passed authorized and denied access flows.
+- Pulled the reviewed upstream images into the project-local Podman store and
+  pinned observed digests. Corrected the provider's reserved-role and Auth
+  schema permissions before accepting the result. Used synthetic accounts and
+  ephemeral credentials. No hosted infrastructure was changed.
+- Next: verify the mobile enrollment screens and open a separately scoped
+  encrypted family cache for the durable sync protocol.

@@ -131,3 +131,19 @@ Record exact command, date, outcome and material platform/provider limits below.
   the ledger and another module were both watching.
 - `flutter build apk --debug --no-pub` passed in 263.1 seconds. Transcript
   `.cache/checks/m05d-android-20261118-a.txt`.
+
+## M06a — 2026-11-18 server family access
+
+- `bash tool/check_backend.sh` passed. The isolated native PostgreSQL 18 cluster
+  covered four independent family accounts, a separate family, forced RLS,
+  matching invite email, fingerprint approval, proof/session scope, stale MFA,
+  member and device revocation, cross-family denial and immutable audit.
+  Transcript `.cache/checks/m06a-postgres-20261118-d.txt`.
+- `python3 -B tool/check_supabase.py` passed against local Supabase PostgreSQL
+  17.6, GoTrue v2.197.0 and PostgREST v14.18 in a rootless Podman pod. A genuine
+  Auth JWT and TOTP enabled the admin flow. Pending devices, outside accounts,
+  member admin access, incorrect device proof and old JWTs after Auth sign-out
+  were denied. Transcript `.cache/checks/m06a-real-supabase-20261118-h.txt`.
+- The provider test found a reserved role hook issue with `CURRENT_USER` and
+  a missing Auth schema grant option for the migration role. Quoting the role
+  identifier and using a minimal Auth bridge fixed both under the actual images.

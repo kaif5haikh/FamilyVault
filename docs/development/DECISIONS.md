@@ -84,3 +84,9 @@ corrections. Estimate screens use recorded terms without posting accruals.
 
 ADR 0011 records cash-based revenue and operating expenses, inventory at
 weighted cost, actual wage payments and reporting scope. Billing remains open.
+
+## 2026-11-18 — server family access
+
+ADR 0012 records verified-email invitations, device-key enrollment, live Auth
+session checks and recent TOTP controls. Local provider integration confirmed
+the private Auth helper and permission boundaries.

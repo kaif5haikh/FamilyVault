@@ -44,3 +44,4 @@ jobs:
       - name: Expose installed PostgreSQL server tools
         run: echo "$(pg_config --bindir)" >> "$GITHUB_PATH"
       - run: bash tool/check_proposals.sh
+      - run: bash tool/check_backend.sh

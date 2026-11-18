@@ -129,3 +129,7 @@ Thumbs.db
 !android/app/src/main/res/mipmap-*/ic_launcher.png
 !ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png
 !ios/Runner/Assets.xcassets/LaunchImage.imageset/*.png
+
+# Python helper artifacts
+__pycache__/
+*.py[cod]
