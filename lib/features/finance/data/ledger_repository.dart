@@ -1065,22 +1065,39 @@ final class LedgerRepository {
     required Money statementBalance,
     required String notes,
     bool postAdjustment = false,
+    String? operationId,
   }) => storageBoundary(
     () => db.transaction(() async {
       await mutations.authorize();
       validateDate(statementDate);
+      final summary = _text(notes, 500);
+      final operation = operationId ?? uuid.v4();
+      final command = payloadDigest(
+        canonicalJson({
+          'reconcile': accountId,
+          'statement_date': statementDate,
+          'statement_minor': statementBalance.minor,
+          'notes': summary,
+          'post_adjustment': postAdjustment,
+        }),
+      );
       final a = await account(accountId);
+      if (statementBalance.currency != Currency.inr) {
+        throw _invalid;
+      }
+      if (await mutations.existing(operation, command) != null) {
+        return;
+      }
       if (a.kind != 'asset' ||
           !['cash', 'bank'].contains(a.subtype) ||
-          a.deletedAtUs != null ||
-          statementBalance.currency != Currency.inr) {
+          a.deletedAtUs != null) {
         throw _invalid;
       }
       final snap = await snapshot();
       final ledger = checkedMinor(
         snap.balances(through: statementDate)[a.id] ?? BigInt.zero,
       );
-      final id = uuid.v4(), now = mutations.now;
+      final id = aggregateId(operation, 'reconciliation'), now = mutations.now;
       await db
           .into(db.reconciliationChecks)
           .insert(
@@ -1095,7 +1112,7 @@ final class LedgerRepository {
               statementDate: statementDate,
               statementMinor: statementBalance.minor,
               ledgerMinor: ledger,
-              notes: _text(notes, 500),
+              notes: summary,
             ),
           );
       final record = {
@@ -1111,29 +1128,43 @@ final class LedgerRepository {
         'statement_date': statementDate,
         'statement_minor': statementBalance.minor,
         'ledger_minor': ledger,
-        'notes': notes.trim(),
+        'notes': summary,
       };
-      await mutations.record(
-        operationId: uuid.v4(),
-        entityType: 'reconciliation',
-        entityId: id,
-        action: 'create',
-        baseRevision: 0,
-        after: record,
-      );
-      final difference = statementBalance - Money.fromMinor(ledger);
-      if (postAdjustment && difference.minor != 0) {
-        await _post(
+      Map<String, Object?>? bundle;
+      if (postAdjustment && statementBalance.minor != ledger) {
+        final difference = statementBalance - Money.fromMinor(ledger);
+        final journal = await _post(
           kind: EntryKind.adjustment,
           occurredOn: statementDate,
-          description: 'Reconciliation: ${notes.trim()}',
+          description: 'Statement reconciliation',
+          operationId: aggregateId(operation, 'adjustment'),
           postings: [
             PostingInput(a.id, difference.minor),
             PostingInput(chartId('reconciliation'), difference.negate().minor),
           ],
           relatedEntityId: id,
+          emitMutation: false,
+        );
+        final adjustment = await journalJson(journal);
+        bundle = {'adjustment': adjustment};
+        await mutations.audit(
+          operationId: operation,
+          entityType: 'journal',
+          entityId: journal,
+          action: 'post',
+          after: adjustment,
         );
       }
+      await mutations.record(
+        operationId: operation,
+        entityType: 'reconciliation',
+        entityId: id,
+        action: 'create',
+        baseRevision: 0,
+        after: record,
+        commandDigest: command,
+        bundle: bundle,
+      );
     }),
   );
 

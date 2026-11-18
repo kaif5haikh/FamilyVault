@@ -106,9 +106,9 @@ def check_ledger(rpc, family: str, owner: dict, owner_session: str, member: dict
                             'account_id': account_id, 'position': position, 'amount_minor': amount}
                            for position, (account_id, amount) in enumerate(((cash, maximum), (opening, -maximum)))]}
 
-    def envelope(record: dict, proof: dict, actor: str, revision: int):
+    def envelope(record: dict, proof: dict, actor: str, revision: int, entity: str = 'account'):
         return {'protocol_version': 1, 'operation_id': str(uuid4()), 'family_id': family,
-                'actor_id': actor, 'device_id': proof['p_device'], 'entity_type': 'account',
+                'actor_id': actor, 'device_id': proof['p_device'], 'entity_type': entity,
                 'entity_id': record['id'], 'mutation_kind': 'upsert', 'base_revision': revision, 'record': record}
 
     def push(change: dict, proof: dict, token: str, status=200):
@@ -142,6 +142,35 @@ def check_ledger(rpc, family: str, owner: dict, owner_session: str, member: dict
     assert latest['watermark'] == 2 and len(latest['changes']) == 1
     assert json.loads(latest['changes'][0]['payload_json'])['record']['created_by'] == owner_member
     print('Real Data API passed exact paise, atomic opening, receipt replay and concurrent revision checks.')
+
+    member_provenance = {**provenance, 'created_by': member_id, 'updated_by': member_id,
+                         'created_at_us': 3, 'updated_at_us': 3}
+    grocery = next(row['id'] for row in categories if row['subtype'] == 'groceries')
+    budget = {'id': str(uuid4()), **member_provenance, 'account_id': grocery,
+              'month': '2026-11', 'amount_minor': 150000}
+    assert push(envelope(budget, member, member_id, 0, 'budget'), member, member_session)['sequence'] == 3
+    duplicate = {**budget, 'id': str(uuid4())}
+    assert push(envelope(duplicate, member, member_id, 0, 'budget'), member, member_session, status=409)['code'] == 'PT409'
+
+    check_id, adjustment_id = str(uuid4()), str(uuid4())
+    statement = {'id': check_id, **member_provenance, 'account_id': cash, 'statement_date': '2026-11-01',
+                 'statement_minor': maximum - 1, 'ledger_minor': maximum, 'notes': 'Synthetic statement'}
+    stale = {**statement, 'ledger_minor': maximum - 1}
+    assert push(envelope(stale, member, member_id, 0, 'reconciliation'), member, member_session, status=409)['code'] == 'PT409'
+    equity = next(row['id'] for row in categories if row['subtype'] == 'reconciliation')
+    adjustment = {**posted, **member_provenance, 'id': adjustment_id, 'kind': 'adjustment',
+                  'description': 'Synthetic reconciliation', 'related_entity_id': check_id,
+                  'postings': [{'id': str(uuid4()), 'family_id': family, 'journal_id': adjustment_id,
+                                'account_id': account_id, 'position': position, 'amount_minor': amount}
+                               for position, (account_id, amount) in enumerate(((cash, -1), (equity, 1)))]}
+    args = envelope(statement, member, member_id, 0, 'reconciliation')
+    args['bundle'] = {'adjustment': adjustment}
+    receipt = push(args, member, member_session)
+    assert receipt['sequence'] == 4 and receipt == push(args, member, member_session)
+    latest = rpc('sync_pull', {**owner, 'p_after': 2}, owner_session)
+    assert [event['sequence'] for event in latest['changes']] == [3, 4]
+    assert json.loads(latest['changes'][1]['payload_json']) == args
+    print('Real Data API passed shared budgets, stale statement refusal and atomic reconciliation.')
 
 
 def run(scratch: Path):

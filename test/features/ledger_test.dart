@@ -474,14 +474,28 @@ void main() {
     expect(snap.budgets.single.revision, 2);
     expect(snap.reconciliations.single.ledgerMinor, 100000);
     expect(snap.balances()[bank.id], BigInt.from(100000));
-    await ledger.reconcile(
+    final operation = uuid.v4();
+    Future<void> adjust() => ledger.reconcile(
       accountId: bank.id,
       statementDate: '2026-11-02',
       statementBalance: Money.fromMinor(99900),
       notes: 'Explicit adjustment',
       postAdjustment: true,
+      operationId: operation,
     );
+    final startingOutbox =
+        (await f.db.select(f.db.pendingMutations).get()).length;
+    await adjust();
+    await adjust();
     snap = await ledger.snapshot();
+    expect(snap.reconciliations, hasLength(2));
+    expect(snap.journals, hasLength(2));
+    final outbox = await f.db.select(f.db.pendingMutations).get();
+    expect(outbox, hasLength(startingOutbox + 1));
+    final bundle = jsonDecode(
+      outbox.singleWhere((row) => row.operationId == operation).payloadJson,
+    )['bundle'];
+    expect(bundle['adjustment']['postings'][0]['amount_minor'], -100);
     expect(snap.balances()[bank.id], BigInt.from(99900));
     expect(snap.total(AccountKind.income), BigInt.from(100000));
     await expectLater(

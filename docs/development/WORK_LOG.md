@@ -197,3 +197,13 @@ separately. Continue with the business UI and executable backend policies.
   and a single conflict. The full check and provider integration both passed.
 - Next implement and test budget and reconciliation commands, then connect
   the encrypted client cache and queued delivery to the receipt protocol.
+
+## 2026-11-18 — shared budgets and statement checks
+
+- Verified `1feb3dc` on the SSH origin. Implemented planning RPC validation and
+  bundled each optional adjustment with its statement check. Stale totals and
+  duplicate active months return a conflict before committing facts.
+- The 14-test local ledger suite, executable PostgreSQL tests and two-device
+  Supabase Data API test passed. Continue with a scoped cache and client
+  replay for the tested finance commands. Wealth, loans and business remain
+  local while their typed cloud commands are developed.

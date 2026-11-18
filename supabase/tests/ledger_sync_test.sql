@@ -44,6 +44,11 @@ DECLARE
   operation jsonb;
   receipt jsonb;
   page jsonb;
+  budget jsonb;
+  reconciliation jsonb;
+  adjustment jsonb;
+  grocery uuid;
+  reconciliation_equity uuid;
 BEGIN
   INSERT INTO auth.users VALUES (owner_user,'ledger-owner@example.invalid',now()), (writer_user,'ledger-writer@example.invalid',now());
   INSERT INTO auth.sessions(id,user_id) VALUES (owner_session,owner_user),(writer_session,writer_user);
@@ -158,12 +163,59 @@ BEGIN
     jsonb_build_object('original',original_after,'reversal',reversal_row));
   ASSERT public.fv_sync_push(writer_device,writer_proof,operation::text)->>'sequence'='4';
   ASSERT public.fv_sync_push(writer_device,writer_proof,operation::text)->>'sequence'='4';
+
+  SELECT (row->>'id')::uuid INTO grocery FROM jsonb_array_elements(public.fv_sync_chart(writer_device,writer_proof)) row
+    WHERE row->>'subtype'='groceries';
+  SELECT (row->>'id')::uuid INTO reconciliation_equity FROM jsonb_array_elements(public.fv_sync_chart(writer_device,writer_proof)) row
+    WHERE row->>'subtype'='reconciliation';
+  budget := jsonb_build_object('id',gen_random_uuid(),'family_id',family,'revision',1,'created_by',writer_member,'updated_by',writer_member,
+    'created_at_us',5,'updated_at_us',5,'deleted_at_us',NULL,'account_id',grocery,'month','2026-11','amount_minor',35000);
+  operation := pg_temp.change_for(family,writer_member,writer_device,gen_random_uuid(),'budget',0,budget);
+  ASSERT public.fv_sync_push(writer_device,writer_proof,operation::text)->>'sequence'='5';
+  BEGIN
+    PERFORM public.fv_sync_push(writer_device,writer_proof,pg_temp.change_for(family,writer_member,writer_device,
+      gen_random_uuid(),'budget',0,budget||jsonb_build_object('id',gen_random_uuid()))::text);
+    RAISE EXCEPTION 'Two active budgets cover the same category and month';
+  EXCEPTION WHEN SQLSTATE 'PT409' THEN NULL;
+  END;
+  operation := pg_temp.change_for(family,writer_member,writer_device,gen_random_uuid(),'budget',1,
+    budget||jsonb_build_object('revision',2,'deleted_at_us',6,'updated_at_us',6))||jsonb_build_object('mutation_kind','delete');
+  ASSERT public.fv_sync_push(writer_device,writer_proof,operation::text)->>'sequence'='6';
+  operation := pg_temp.change_for(family,writer_member,writer_device,gen_random_uuid(),'budget',0,budget||jsonb_build_object('id',gen_random_uuid()));
+  ASSERT public.fv_sync_push(writer_device,writer_proof,operation::text)->>'sequence'='7';
+
+  reconciliation := (budget - ARRAY['month','amount_minor']) || jsonb_build_object('id',gen_random_uuid(),
+    'account_id',cash,'statement_date','2026-11-02','statement_minor',98,'ledger_minor',100,'notes','Synthetic statement');
+  BEGIN
+    PERFORM public.fv_sync_push(writer_device,writer_proof,pg_temp.change_for(family,writer_member,writer_device,
+      gen_random_uuid(),'reconciliation',0,jsonb_set(reconciliation,'{ledger_minor}','101'))::text);
+    RAISE EXCEPTION 'A stale statement balance was accepted';
+  EXCEPTION WHEN SQLSTATE 'PT409' THEN NULL;
+  END;
+  adjustment := replacement_row || jsonb_build_object('id',gen_random_uuid(),'kind','adjustment','occurred_on','2026-11-02',
+    'description','Synthetic statement adjustment','related_entity_id',reconciliation->>'id');
+  adjustment := adjustment || jsonb_build_object('postings',jsonb_build_array(
+      jsonb_build_object('id',gen_random_uuid(),'family_id',family,'journal_id',adjustment->>'id','account_id',cash,'position',0,'amount_minor',-2),
+      jsonb_build_object('id',gen_random_uuid(),'family_id',family,'journal_id',adjustment->>'id','account_id',reconciliation_equity,'position',1,'amount_minor',2)));
+  BEGIN
+    PERFORM public.fv_sync_push(writer_device,writer_proof,pg_temp.change_for(family,writer_member,writer_device,
+      gen_random_uuid(),'reconciliation',0,reconciliation,
+      jsonb_build_object('adjustment',jsonb_set(adjustment,'{postings,1,account_id}',to_jsonb(revenue))))::text);
+    RAISE EXCEPTION 'An unrelated balanced adjustment was accepted';
+  EXCEPTION WHEN invalid_parameter_value THEN NULL;
+  END;
+  operation := pg_temp.change_for(family,writer_member,writer_device,gen_random_uuid(),'reconciliation',0,reconciliation,
+    jsonb_build_object('adjustment',adjustment));
+  ASSERT public.fv_sync_push(writer_device,writer_proof,operation::text)->>'sequence'='8';
+  ASSERT public.fv_sync_push(writer_device,writer_proof,operation::text)->>'sequence'='8';
   RESET ROLE;
-  ASSERT (SELECT count(*) FROM fv_data.ledger_journals WHERE family_id=family)=3;
-  ASSERT (SELECT sum(amount_minor) FROM fv_data.ledger_postings WHERE family_id=family AND account_id=cash)=100;
+  ASSERT (SELECT count(*) FROM fv_data.ledger_journals WHERE family_id=family)=4;
+  ASSERT (SELECT sum(amount_minor) FROM fv_data.ledger_postings WHERE family_id=family AND account_id=cash)=98;
+  ASSERT (SELECT count(*) FROM fv_data.reconciliation_checks WHERE family_id=family)=1;
+  ASSERT (SELECT count(*) FROM fv_data.monthly_budgets WHERE family_id=family)=2;
   ASSERT (SELECT created_by FROM fv_data.ledger_accounts WHERE family_id=family AND id=cash)=owner_member;
   ASSERT (SELECT updated_by FROM fv_data.ledger_accounts WHERE family_id=family AND id=cash)=writer_member;
-  ASSERT (SELECT count(*) FROM fv_data.sync_changes WHERE family_id=family)=4;
+  ASSERT (SELECT count(*) FROM fv_data.sync_changes WHERE family_id=family)=8;
 END;
 $$;
 ROLLBACK;

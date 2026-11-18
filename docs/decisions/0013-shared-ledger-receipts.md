@@ -31,8 +31,13 @@ the family and category code, returned by `fv_sync_chart`. Existing offline
 vaults retain their chart IDs and outboxes.
 
 The ordinary endpoint reserves managed accounts and module journals for their
-typed domain commands. Budget and reconciliation commands and the typed
-wealth, loan and business aggregates need their own validation. A separate
+typed domain commands. The planning migration adds one active budget per
+category and month, with preserved tombstones. A statement check compares the
+recorded ledger total with the accepted total at its statement date. If the
+total changed offline, the server refuses the check. An explicitly requested
+adjustment posts in the same transaction and must exactly match the difference.
+
+Typed wealth, loan and business aggregates need their own validation. A separate
 encrypted cloud cache and mobile delivery, replay and user conflict handling
 remain implementation work. Server tests exercise real receipts and competing
 edits but do not establish mobile replication.

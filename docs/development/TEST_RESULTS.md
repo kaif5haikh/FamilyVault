@@ -176,3 +176,15 @@ Record exact command, date, outcome and material platform/provider limits below.
   two simultaneous edits returning one acceptance and one HTTP 409, and
   feed denial after Auth sign-out. Transcript
   `.cache/checks/m06c-rest-ledger-20261118-c.txt`.
+
+## M06c2 — 2026-11-18 budgeting and statement checks
+
+- `flutter test --no-pub test/features/ledger_test.dart` passed 14 tests.
+  The statement adjustment test retries one operation, checks one outbox
+  bundle, and confirms that balances include only one adjustment.
+- `bash tool/check_backend.sh` passed. It checks budget uniqueness across
+  tombstones, stale statement totals, atomic rollback for an unrelated posting
+  and an exact adjustment. Transcript `.cache/checks/m06c-planning-pg-20261118-a.txt`.
+- The real provider check passed a two-device budget and reconciliation flow.
+  It verified a one-paise adjustment to an opening beyond JavaScript's safe
+  integer range. Transcript `.cache/checks/m06c-planning-rest-20261118-a.txt`.

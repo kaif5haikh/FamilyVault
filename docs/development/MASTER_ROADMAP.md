@@ -21,7 +21,8 @@ No production deployment, real family data, paid services or destructive history
   - [x] M06b Mobile family sign-in, device approval and administrator controls.
   - [ ] M06c Typed finance mutations, shared ledger validation and ordered receipts.
     - [x] M06c1 Ordinary accounts and balanced journal commands with atomic receipts.
-    - [ ] M06c2 Budgets, reconciliations and typed wealth, loan and business commands.
+    - [x] M06c2 Budgets and reconciliation bundles.
+    - [ ] M06c3 Typed wealth, loan and business commands.
   - [ ] M06d Scoped encrypted cloud cache and live device session lifecycle.
 - [ ] M07 Durable multi-client sync, receipts/conflicts/retries/recovery and realistic fault simulations.
 - [ ] M08 Encrypted document/key engine, versions/import/camera scan/preview/search/reminders and audited gateway.
