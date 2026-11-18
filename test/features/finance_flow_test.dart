@@ -9,6 +9,7 @@ import 'package:familyvault/app/vault_providers.dart';
 import 'package:familyvault/core/finance/money.dart';
 import 'package:familyvault/core/security/vault_lifecycle.dart';
 import 'package:familyvault/features/assets/data/asset_repository.dart';
+import 'package:familyvault/features/business/data/business_repository.dart';
 import 'package:familyvault/features/finance/data/ledger_repository.dart';
 import 'package:familyvault/features/liabilities/data/debt_repository.dart';
 import 'package:familyvault/shared/widgets/vault_widgets.dart';
@@ -416,6 +417,111 @@ void main() {
       expect(finance.total(AccountKind.expense), BigInt.from(201));
       expect(debt.repayments, hasLength(2));
       expect(finance.journals.where((j) => j.reversesId != null), hasLength(1));
+      expect(tester.takeException(), isNull);
+      await databaseIO(tester, lifecycle.lock);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(Duration.zero);
+    },
+  );
+
+  testWidgets(
+    'business forms connect revenue, weighted stock cost and profit to the same ledger',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final container = await app(tester);
+      await ready(tester, find.text('Net worth'));
+      final session = lifecycle.status.session!;
+      final repo = BusinessRepository(session.ledger);
+      await databaseIO(
+        tester,
+        () => session.ledger.createAccount(
+          name: 'Synthetic business cash',
+          kind: AccountKind.asset,
+          subtype: 'cash',
+        ),
+      );
+      final router = container.read(routerProvider);
+      router.go('/businesses');
+      await ready(tester, find.text('Add business'));
+      await tapVisible(tester, find.text('Add business'));
+      await ready(tester, field('Business name'));
+      await tester.enterText(field('Business name'), 'Synthetic business');
+      await tapVisible(
+        tester,
+        find.widgetWithText(FilledButton, 'Save business'),
+      );
+      await ready(tester, find.widgetWithText(FilledButton, 'Record revenue'));
+      final business = (await databaseIO(
+        tester,
+        repo.snapshot,
+      )).businesses.single;
+      await tapVisible(
+        tester,
+        find.widgetWithText(FilledButton, 'Record revenue'),
+      );
+      await ready(tester, field('Amount'));
+      await tester.enterText(field('Amount'), '100');
+      await selectValue(tester, 'Received into', 'Synthetic business cash');
+      await tester.enterText(field('Description'), 'Synthetic proceeds');
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tapVisible(tester, find.widgetWithText(FilledButton, 'Save entry'));
+      await ready(tester, find.text('₹100.00'));
+      await tapVisible(tester, find.text('Add stock item'));
+      await ready(tester, field('Stock item name'));
+      await tester.enterText(field('Stock item name'), 'Synthetic tyre');
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tapVisible(
+        tester,
+        find.widgetWithText(FilledButton, 'Save stock item'),
+      );
+      final savedStock = await databaseIO(tester, repo.snapshot);
+      final formError = find
+          .byType(FailureNotice)
+          .evaluate()
+          .firstOrNull
+          ?.widget;
+      expect(
+        savedStock.items,
+        hasLength(1),
+        reason: formError is FailureNotice
+            ? '${formError.error}'
+            : 'The form persisted the stock item.',
+      );
+      final movementButton = find.widgetWithText(
+        FilledButton,
+        'Record stock movement',
+      );
+      await ready(tester, movementButton);
+      await tapVisible(tester, movementButton);
+      await ready(tester, field('Quantity in pieces'));
+      await tester.enterText(field('Quantity in pieces'), '3');
+      await tester.enterText(field('Total stock cost'), '12.34');
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tapVisible(tester, find.widgetWithText(FilledButton, 'Save entry'));
+      await ready(tester, find.text('3 pieces'));
+      await tapVisible(tester, movementButton);
+      await ready(tester, field('Quantity in pieces'));
+      await tapVisible(
+        tester,
+        find.byType(DropdownButtonFormField<StockEntryKind>),
+      );
+      await tapVisible(tester, find.text('Stock issued').last);
+      await tester.enterText(field('Quantity in pieces'), '1');
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump(const Duration(milliseconds: 350));
+      await tapVisible(tester, find.widgetWithText(FilledButton, 'Save entry'));
+      await ready(tester, find.text('2 pieces'));
+      final data = await databaseIO(tester, repo.snapshot);
+      expect(data.positions.values.single.costPoolMinor, 823);
+      expect(data.movements, hasLength(2));
+      router.go('/business/${business.id}');
+      await ready(tester, find.text('₹95.89'));
       expect(tester.takeException(), isNull);
       await databaseIO(tester, lifecycle.lock);
       await tester.pumpWidget(const SizedBox.shrink());

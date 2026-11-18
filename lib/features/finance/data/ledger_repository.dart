@@ -934,9 +934,11 @@ final class LedgerRepository {
     }),
   );
 
+  // Drift keys streams by SQL and parameters. Each projection uses a distinct
+  // query label so its table subscriptions are not reused by another module.
   Stream<FinanceSnapshot> watch() => db
       .customSelect(
-        'SELECT 1',
+        'SELECT 1 /* ledger projection */',
         readsFrom: {
           db.ledgerAccounts,
           db.ledgerJournals,

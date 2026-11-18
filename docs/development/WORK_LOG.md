@@ -151,3 +151,15 @@ Implemented loan terms, opening principal, actual split payments, correction
 and reversal history, settlement archive, and interest estimate screens.
 `bash tool/check.sh` passed with 74 tests. Business repository tests also passed
 separately. Continue with the business UI and executable backend policies.
+
+## 2026-11-18 — business records and inventory
+
+- Verified the loan commit `0a61270` on the public SSH origin, with the
+  74-test check and Android debug build passing.
+- Built business accounting screens, worker and salary records, inventory
+  movements and period profit. Reused the shared ledger and atomic outbox.
+- Fixed identical Drift query keys sharing a watcher with the wrong table
+  dependencies. Distinct projection queries now update the business, assets,
+  loan and audit pages independently. The business form regression passed.
+- The full check passed with 80 tests and the Android debug APK built. Next:
+  executable backend access and mobile enrollment.

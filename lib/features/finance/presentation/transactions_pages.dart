@@ -222,6 +222,25 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
                 icon: const Icon(Icons.request_quote_outlined),
                 label: const Text('View related loan'),
               ),
+            if (link?.aggregateType == 'stock')
+              TextButton.icon(
+                onPressed: () => context.push('/stock/${link!.aggregateId}'),
+                icon: const Icon(Icons.inventory_2_outlined),
+                label: const Text('View stock item'),
+              ),
+            if (link?.aggregateType == 'salary')
+              TextButton.icon(
+                onPressed: () => context.push('/worker/${link!.aggregateId}'),
+                icon: const Icon(Icons.person_outline),
+                label: const Text('View worker'),
+              ),
+            if (journal.businessId != null)
+              TextButton.icon(
+                onPressed: () =>
+                    context.push('/business/${journal.businessId}'),
+                icon: const Icon(Icons.storefront_outlined),
+                label: const Text('View business'),
+              ),
             if (link == null &&
                 journal.deletedAtUs == null &&
                 journal.kind != 'reversal')

@@ -116,3 +116,18 @@ Record exact command, date, outcome and material platform/provider limits below.
   form's bottom action. Targeted transcript `.cache/checks/m05c-widget-20261118-e.txt`.
 - `flutter build apk --debug --no-pub` passed in 292.2 seconds. Transcript
   `.cache/checks/m05c-android-20261118-a.txt`.
+
+## M05d — 2026-11-18 business accounts, stock and wages
+
+- `bash tool/check.sh` passed with 80 tests, clean analysis and formatting,
+  dependency advisory scan and SQL design probes. Transcript
+  `.cache/checks/m05d-full-20261118-a.txt`.
+- Five encrypted repository tests cover scoped profit, stock costing, zero-cost
+  movements, worker payment corrections, archive/restore, idempotency,
+  concurrent stock issues, and rollback when writing the outbox fails.
+- A widget test records business revenue, three pieces of opening stock and a
+  one-piece issue. It verifies 823 paise of remaining stock and 9,589 paise of
+  profit. Fixed a Drift stream cache key collision that hid stock updates when
+  the ledger and another module were both watching.
+- `flutter build apk --debug --no-pub` passed in 263.1 seconds. Transcript
+  `.cache/checks/m05d-android-20261118-a.txt`.

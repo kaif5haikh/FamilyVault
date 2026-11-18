@@ -26,6 +26,12 @@ class MorePage extends StatelessWidget {
           '/loans',
         ),
         (
+          'Business',
+          'Revenue, expenses, stock and worker payments',
+          Icons.storefront_outlined,
+          '/businesses',
+        ),
+        (
           'Budgets & planning',
           'Plan monthly spending by category',
           Icons.savings_outlined,

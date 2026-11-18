@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/finance/formatters.dart';
 import '../../../shared/widgets/vault_widgets.dart';
+import '../../business/presentation/business_pages.dart';
 import '../data/ledger_repository.dart';
 import '../domain/finance_report.dart';
 import 'finance_charts.dart';
@@ -128,6 +129,7 @@ class FinanceHomePage extends ConsumerWidget {
               ),
             ],
           ),
+          BusinessOverview(finance: snapshot, from: first, through: today),
           const SizedBox(height: 28),
           if (snapshot.accounts.every((a) => a.systemAccount)) ...[
             EmptyNotice(

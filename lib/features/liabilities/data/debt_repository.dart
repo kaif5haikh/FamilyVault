@@ -534,7 +534,7 @@ final class DebtRepository {
 
   Stream<DebtSnapshot> watch() => db
       .customSelect(
-        'SELECT 1',
+        'SELECT 1 /* debt projection */',
         readsFrom: {
           db.debtContracts,
           db.debtRepayments,

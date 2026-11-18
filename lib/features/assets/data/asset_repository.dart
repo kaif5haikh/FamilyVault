@@ -1133,7 +1133,7 @@ final class AssetRepository {
   );
   Stream<AssetSnapshot> watch() => db
       .customSelect(
-        'SELECT 1',
+        'SELECT 1 /* asset projection */',
         readsFrom: {
           db.wealthAssets,
           db.propertyDetails,

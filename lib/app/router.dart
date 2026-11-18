@@ -5,6 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../features/assets/presentation/asset_action_editor.dart';
 import '../features/assets/presentation/asset_editor.dart';
 import '../features/assets/presentation/assets_pages.dart';
+import '../features/business/presentation/business_detail_pages.dart';
+import '../features/business/presentation/business_entry_editor.dart';
+import '../features/business/presentation/business_pages.dart';
+import '../features/business/presentation/business_record_editor.dart';
 import '../features/foundation/foundation_pages.dart';
 import '../features/finance/presentation/finance_home_page.dart';
 import '../features/finance/presentation/accounts_pages.dart';
@@ -49,6 +53,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       _workspaceRoute('/accounts', const AccountsPage()),
       _workspaceRoute('/assets', const AssetsPage()),
       _workspaceRoute('/loans', const DebtsPage()),
+      _workspaceRoute('/businesses', const BusinessesPage()),
       _workspaceRoute('/planning', const PlanningPage()),
       _workspaceRoute('/reports', const ReportsPage()),
       _workspaceRoute('/settings', const SettingsPage()),
@@ -143,6 +148,96 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/loan/:id',
         builder: (_, state) => DebtDetailPage(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/business/new',
+        builder: (_, _) =>
+            const BusinessRecordEditor(kind: BusinessRecordKind.business),
+      ),
+      GoRoute(
+        path: '/business/:id/edit',
+        builder: (_, state) => BusinessRecordEditor(
+          kind: BusinessRecordKind.business,
+          id: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/business/:id/item',
+        builder: (_, state) => BusinessRecordEditor(
+          kind: BusinessRecordKind.stock,
+          businessId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/business/:id/worker',
+        builder: (_, state) => BusinessRecordEditor(
+          kind: BusinessRecordKind.worker,
+          businessId: state.pathParameters['id']!,
+        ),
+      ),
+      for (final mode in [BusinessEntryMode.revenue, BusinessEntryMode.expense])
+        GoRoute(
+          path: '/business/:id/${mode.name}',
+          builder: (_, state) =>
+              BusinessEntryEditor(id: state.pathParameters['id']!, mode: mode),
+        ),
+      GoRoute(
+        path: '/business/:id',
+        builder: (_, state) => BusinessPage(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/stock/:id/edit',
+        builder: (_, state) => BusinessRecordEditor(
+          kind: BusinessRecordKind.stock,
+          id: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/stock/:id/move',
+        builder: (_, state) => BusinessEntryEditor(
+          id: state.pathParameters['id']!,
+          mode: BusinessEntryMode.stock,
+        ),
+      ),
+      GoRoute(
+        path: '/stock/:id/move/:entry',
+        builder: (_, state) => BusinessEntryEditor(
+          id: state.pathParameters['id']!,
+          mode: BusinessEntryMode.stock,
+          originalId: state.pathParameters['entry']!,
+        ),
+      ),
+      GoRoute(
+        path: '/stock/:id',
+        builder: (_, state) =>
+            WorkRecordPage(id: state.pathParameters['id']!, isStock: true),
+      ),
+      GoRoute(
+        path: '/worker/:id/edit',
+        builder: (_, state) => BusinessRecordEditor(
+          kind: BusinessRecordKind.worker,
+          id: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/worker/:id/pay',
+        builder: (_, state) => BusinessEntryEditor(
+          id: state.pathParameters['id']!,
+          mode: BusinessEntryMode.salary,
+        ),
+      ),
+      GoRoute(
+        path: '/worker/:id/pay/:entry',
+        builder: (_, state) => BusinessEntryEditor(
+          id: state.pathParameters['id']!,
+          mode: BusinessEntryMode.salary,
+          originalId: state.pathParameters['entry']!,
+        ),
+      ),
+      GoRoute(
+        path: '/worker/:id',
+        builder: (_, state) =>
+            WorkRecordPage(id: state.pathParameters['id']!, isStock: false),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

@@ -17,7 +17,7 @@ final _auditProvider = StreamProvider.autoDispose
       final db = session.db, family = session.identity.familyId;
       return db
           .customSelect(
-            'SELECT 1',
+            'SELECT 1 /* record audit projection */',
             readsFrom: {db.localAuditEvents, db.familyMembers, db.vaultDevices},
           )
           .watch()

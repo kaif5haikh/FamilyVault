@@ -79,3 +79,8 @@ The asset module writes the complete command and its facts within one transactio
 
 ADR 0010 specifies borrowed and lent principal, paid interest and immutable
 corrections. Estimate screens use recorded terms without posting accruals.
+
+## 2026-11-18 — business accounts
+
+ADR 0011 records cash-based revenue and operating expenses, inventory at
+weighted cost, actual wage payments and reporting scope. Billing remains open.
