@@ -205,3 +205,18 @@ Record exact command, date, outcome and material platform/provider limits below.
   paise value above the JavaScript safe integer range, retrieves it on another
   account, edits it there and verifies creator and editor on the first device.
   Transcript `.cache/checks/m07-real-mobile-20261118-a.txt`.
+- `flutter build apk --debug --no-pub` built the Android APK in 15.1 seconds.
+  Transcript `.cache/checks/m07-live-android-20261118-a.txt`.
+
+## M07c — 2026-11-18 conflict recovery
+
+- Eleven cache and sync tests passed with `flutter test --no-pub`
+  against `test/features/cloud_cache_test.dart` and
+  `test/features/shared_ledger_sync_test.dart`. An interrupted rebuild keeps
+  the original active cache. A valid replay activates a separate encrypted file,
+  exposes the pending device edit for review and preserves the accepted balance.
+  Transcript `.cache/checks/m07-recovery-tests-20261118-a.txt`.
+- Targeted analyzer passed on the recovery path and its UI.
+  Transcript `.cache/checks/m07-recovery-analyze-20261118-b.txt`.
+- The cache, sync, enrollment and application widget suites passed 15 tests
+  together. Transcript `.cache/checks/m07-recovery-app-20261118-a.txt`.

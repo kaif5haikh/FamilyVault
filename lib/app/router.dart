@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../features/assets/presentation/asset_action_editor.dart';
 import '../features/assets/presentation/asset_editor.dart';
 import '../features/assets/presentation/assets_pages.dart';
+import '../features/auth/sync_recovery_page.dart';
 import '../features/business/presentation/business_detail_pages.dart';
 import '../features/business/presentation/business_entry_editor.dart';
 import '../features/business/presentation/business_pages.dart';
@@ -58,6 +59,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       _workspaceRoute('/reports', const ReportsPage()),
       _workspaceRoute('/settings', const SettingsPage()),
       _workspaceRoute('/more', const MorePage()),
+      GoRoute(
+        path: '/family-recovery',
+        builder: (_, _) => const SyncRecoveryPage(),
+      ),
       GoRoute(
         path: '/transaction/new',
         builder: (_, _) => const TransactionEditor(),

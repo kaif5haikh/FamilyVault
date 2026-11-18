@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:drift/drift.dart' hide isNull, isNotNull;
+import 'package:familyvault/core/database/app_database.dart';
 import 'package:familyvault/core/errors/app_failure.dart';
 import 'package:familyvault/core/finance/money.dart';
 import 'package:familyvault/core/security/vault_lifecycle.dart';
@@ -29,12 +31,14 @@ class _WorkspaceGateway extends EnrollmentGateway {
   @override
   String? sessionId = const Uuid().v4();
   final accounts = StreamController<String?>.broadcast(sync: true);
+  final feed = <SyncJson>[];
+  bool skipSequence = false;
 
   @override
   Stream<String?> get identityChanges => accounts.stream;
 
   @override
-  SyncTransport syncTransport(DeviceProof device) => _EmptyFeed();
+  SyncTransport syncTransport(DeviceProof device) => _RebuildFeed(this);
 
   @override
   Future<String> requestDevice({
@@ -153,14 +157,24 @@ class _WorkspaceGateway extends EnrollmentGateway {
   ];
 }
 
-class _EmptyFeed implements SyncTransport {
+class _RebuildFeed implements SyncTransport {
+  _RebuildFeed(this.gateway);
+  final _WorkspaceGateway gateway;
   @override
   Future<SyncReceipt> push(SyncEnvelope envelope) async =>
       throw StateError('Unexpected fixture upload');
 
   @override
-  Future<SyncPage> pull(int after) async =>
-      SyncPage.fromJson({'watermark': 0, 'changes': []});
+  Future<SyncPage> pull(int after) async => SyncPage.fromJson({
+    'watermark': gateway.feed.length,
+    'changes': [
+      for (final row in gateway.feed.skip(after))
+        if (gateway.skipSequence)
+          {...row, 'sequence': (row['sequence']! as int) + 1}
+        else
+          row,
+    ],
+  });
 }
 
 String _chartId(String family, String code) {
@@ -370,6 +384,94 @@ void main() {
       await expectLater(open(cache, gateway), throwsA(code));
     },
   );
+
+  test('failed recovery keeps the active file and successful recovery retains pending records', () async {
+    final originalWarning = driftRuntimeOptions.dontWarnAboutMultipleDatabases;
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+    addTearDown(
+      () =>
+          driftRuntimeOptions.dontWarnAboutMultipleDatabases = originalWarning,
+    );
+    final original = await open(cache, gateway);
+    final local = await original.ledger.createAccount(
+      name: 'Synthetic accepted name',
+      kind: AccountKind.asset,
+      subtype: 'cash',
+      openingBalance: Money.fromMinor(175),
+    );
+    final db = original.db;
+    final posted = await db.select(db.pendingMutations).getSingle();
+    gateway.feed.add({
+      'operation_id': posted.operationId,
+      'sequence': 1,
+      'payload_digest': posted.payloadDigest,
+      'payload_json': posted.payloadJson,
+      'accepted_at_us': 2,
+    });
+    await (db.update(
+      db.pendingMutations,
+    )..where((t) => t.operationId.equals(posted.operationId))).write(
+      const PendingMutationsCompanion(
+        state: Value('acknowledged'),
+        acceptedRevision: Value(1),
+      ),
+    );
+    await original.ledger.renameAccount(
+      local.id,
+      'Synthetic disconnected edit',
+      local.revision,
+    );
+    await original.close();
+
+    gateway.skipSequence = true;
+    await expectLater(
+      cache.open(familyId, gateway.memberId, rebuild: true),
+      throwsA(
+        isA<AppFailure>().having((e) => e.code, 'code', FailureCode.integrity),
+      ),
+    );
+    final stillActive = await open(cache, gateway);
+    expect(
+      (await stillActive.ledger.account(local.id)).name,
+      'Synthetic disconnected edit',
+    );
+    await stillActive.close();
+
+    gateway.skipSequence = false;
+    final recovered = await cache.open(
+      familyId,
+      gateway.memberId,
+      rebuild: true,
+    );
+    sessions.add(recovered);
+    expect(
+      (await recovered.ledger.account(local.id)).name,
+      'Synthetic accepted name',
+    );
+    expect(
+      (await recovered.ledger.snapshot()).balances()[local.id],
+      BigInt.from(175),
+    );
+    expect(
+      await recovered.db.select(recovered.db.pendingMutations).get(),
+      isEmpty,
+    );
+    final kept = await cache.savedChanges(recovered);
+    expect(
+      kept.single.local.payloadJson,
+      contains('Synthetic disconnected edit'),
+    );
+    expect(
+      await File('${original.directory.path}/vault.sqlite3').exists(),
+      isTrue,
+    );
+    await recovered.close();
+    final reopened = await open(cache, gateway);
+    expect(
+      (await reopened.ledger.account(local.id)).name,
+      'Synthetic accepted name',
+    );
+  });
 
   test('switching the auth account locks the shared cache and preserves the local vault', () async {
     final lifecycle = VaultLifecycle(

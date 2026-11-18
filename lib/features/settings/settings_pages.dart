@@ -265,6 +265,11 @@ class _SyncSection extends ConsumerWidget {
                     label: const Text('Check sync'),
                   ),
                   TextButton.icon(
+                    onPressed: () => context.push('/family-recovery'),
+                    icon: const Icon(Icons.history),
+                    label: const Text('Saved device changes'),
+                  ),
+                  TextButton.icon(
                     onPressed: () => _signOut(ref),
                     icon: const Icon(Icons.logout),
                     label: const Text('Sign out on this device'),

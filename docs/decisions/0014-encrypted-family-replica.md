@@ -1,7 +1,7 @@
 # ADR 0014 Encrypted family cache and receipt replay
 
-Status: connected ordinary finance implemented and tested on 2026-11-18.
-User-directed conflict recovery and shared module commands remain in progress.
+Status: connected ordinary finance and conflict recovery implemented and tested
+on 2026-11-18. Shared wealth, loan and business commands remain in progress.
 
 A device passcode or biometric prompt protects local key access. The cloud
 cache first binds the enrolled device to the live account, verifies the family
@@ -30,9 +30,12 @@ The worker checks a complete page for contiguous ordering, the family scope
 and exact payload digests. The page's SQL writes, immutable audit and cursor
 share a local transaction. A rejection or bad receipt cannot silently advance
 confirmation. Overlapping optimistic account, budget or journal changes stop
-replay and retain the competing snapshots. Retrying a different transaction
-without the user's input would mutate posted history. The resolution workflow
-must preserve those pending records while bringing the accepted ledger current.
+replay and retain the competing snapshots. Settings lets the user inspect these
+changes and choose the family's accepted records. A fresh encrypted cache replays
+the complete feed and verifies current access and file integrity. One secure
+catalog update activates it and retains the previous file. Failed rebuilds leave
+the original active. Saved device changes exposes the retained pending records
+for review and manual re-entry. Re-entry creates a new transaction via its module.
 
 The simulation runs two separate encrypted caches and tests disconnected writes,
 lost or invalid receipts, restart after server commit, concurrent account edits,

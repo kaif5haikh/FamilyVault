@@ -12,6 +12,7 @@ Future<VaultSession> connectFamily({
   required String memberId,
   required Future<void> Function(AppFailure) onRevoked,
   String? expectedDevice,
+  bool rebuild = false,
 }) async {
   final gateway = cache.registration.gateway;
   final user = gateway.userId;
@@ -25,6 +26,7 @@ Future<VaultSession> connectFamily({
     familyId,
     memberId,
     expectedDevice: expectedDevice,
+    rebuild: rebuild,
   );
   try {
     final access = cache.access;

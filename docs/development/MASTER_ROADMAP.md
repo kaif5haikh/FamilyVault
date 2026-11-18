@@ -26,10 +26,10 @@ No production deployment, real family data, paid services or destructive history
   - [x] M06d Scoped encrypted cloud cache and live device session lifecycle.
     - [x] M06d1 Verified directory and chart import into isolated encrypted caches.
     - [x] M06d2 Connected app lifecycle, bounded offline unlock and revocation.
-- [ ] M07 Durable multi-client sync, receipts/conflicts/retries/recovery and realistic fault simulations.
+- [x] M07 Durable multi-client sync, receipts/conflicts/retries/recovery and realistic fault simulations for connected ordinary finance.
   - [x] M07a Durable worker, ordered ledger replay and two-cache fault simulations.
   - [x] M07b Real Dart provider round trip and foreground sync status.
-  - [ ] M07c User-directed conflict recovery with prior device history retained.
+  - [x] M07c User-directed conflict recovery with prior device history retained.
 - [ ] M08 Encrypted document/key engine, versions/import/camera scan/preview/search/reminders and audited gateway.
 - [ ] M09 Authenticated archive/local backup/export/restore, independent Drive adapter and complete clean-environment recovery tests.
 - [ ] M10 Integrated UI/security/accessibility regression, Android emulator/device-independent integration and dependency/secret review.

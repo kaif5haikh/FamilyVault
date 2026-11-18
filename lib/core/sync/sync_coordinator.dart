@@ -35,6 +35,11 @@ final class SyncCoordinator {
   Future<void> run() =>
       _running ??= _synchronize().whenComplete(() => _running = null);
 
+  /// Populate a fresh projection from accepted history before publishing it.
+  Future<void> replayAll() =>
+      _running ??= _synchronize(rebuild: true)
+          .whenComplete(() => _running = null);
+
   Future<void> stop() async {
     _stopped = true;
     try {
@@ -53,13 +58,13 @@ final class SyncCoordinator {
     }
   }
 
-  Future<void> _synchronize() async {
+  Future<void> _synchronize({bool rebuild = false}) async {
     _checkLive();
     try {
       await refreshAccess?.call();
       _checkLive();
       AppFailure? blocked;
-      for (var count = 0; count < 64; count++) {
+      for (var count = 0; !rebuild && count < 64; count++) {
         try {
           final row = await _claim();
           if (row == null) break;
@@ -75,7 +80,7 @@ final class SyncCoordinator {
           break;
         }
       }
-      await _pull();
+      await _pull(maxPages: rebuild ? null : 10);
       if (blocked != null) throw blocked;
     } on SyncReplayConflict catch (error) {
       await _recordConflict(error.localEntityId, error.serverRecord);
@@ -176,8 +181,12 @@ final class SyncCoordinator {
           ?.lastSequence ??
       0;
 
-  Future<void> _pull() async {
-    for (var pageIndex = 0; pageIndex < 10; pageIndex++) {
+  Future<void> _pull({required int? maxPages}) async {
+    for (
+      var pageIndex = 0;
+      maxPages == null || pageIndex < maxPages;
+      pageIndex++
+    ) {
       _checkLive();
       final cursor = await _cursor();
       final page = await transport.pull(cursor);

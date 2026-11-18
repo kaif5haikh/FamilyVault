@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -10,6 +11,8 @@ import '../../core/errors/app_failure.dart';
 import '../../core/security/vault_identity.dart';
 import '../../core/security/vault_lifecycle.dart';
 import '../../core/sync/database_record.dart';
+import '../../core/sync/sync_coordinator.dart';
+import '../finance/data/ledger_replay.dart';
 import 'cloud_access_gateway.dart';
 import 'cloud_cache_access.dart';
 import 'cloud_device_registration.dart';
@@ -18,6 +21,44 @@ const _invalid = AppFailure(
   FailureCode.integrity,
   'Family cache verification failed. Existing files have been preserved.',
 );
+
+final _fileName = RegExp(
+  r'^vault(?:-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})?\.sqlite3$',
+);
+
+final class _CacheCatalog {
+  const _CacheCatalog(this.ready, this.file, this.retained);
+  factory _CacheCatalog.decode(String? raw) {
+    if (raw == null || raw == 'initializing' || raw == 'ready') {
+      return _CacheCatalog(raw == 'ready', 'vault.sqlite3', const []);
+    }
+    try {
+      final json = jsonDecode(raw) as CloudJson;
+      final file = json['file']! as String;
+      final retained = (json['retained']! as List<Object?>).cast<String>();
+      if (json['version'] == 1 &&
+          _fileName.hasMatch(file) &&
+          retained.every(_fileName.hasMatch) &&
+          !retained.contains(file) &&
+          retained.toSet().length == retained.length) {
+        return _CacheCatalog(true, file, retained);
+      }
+    } catch (_) {
+      // A corrupt manifest must leave every file available for recovery.
+    }
+    throw _invalid;
+  }
+
+  final bool ready;
+  final String file;
+  final List<String> retained;
+
+  String replace(String next) => jsonEncode({
+    'version': 1,
+    'file': next,
+    'retained': [...retained, file],
+  });
+}
 
 /// Server-owned metadata needed for provenance and local foreign keys.
 final class CloudDirectory {
@@ -143,6 +184,7 @@ final class CloudWorkspaceCache {
     String familyId,
     String memberId, {
     String? expectedDevice,
+    bool rebuild = false,
   }) async {
     final gateway = registration.gateway;
     final user = gateway.userId;
@@ -179,10 +221,18 @@ final class CloudWorkspaceCache {
               await access.revoke(user, identity);
             }
             if (failure.code != FailureCode.network) rethrow;
+            if (rebuild) rethrow;
             await access.allowOffline(user, authSession, identity);
           }
           access.requireSession(user, authSession);
-          vault = await _open(device, user, metadata, chart);
+          vault = await _open(
+            device,
+            user,
+            authSession,
+            metadata,
+            chart,
+            rebuild: rebuild,
+          );
           if (chart != null) {
             await access.confirm(user, authSession, identity, remember: true);
           }
@@ -199,29 +249,35 @@ final class CloudWorkspaceCache {
   Future<VaultSession> _open(
     CloudDevice device,
     String user,
+    String authSession,
     CloudDirectory? metadata,
-    List<CloudJson>? rows,
-  ) => storageBoundary(() async {
+    List<CloudJson>? rows, {
+    required bool rebuild,
+  }) => storageBoundary(() async {
     final identity = device.identity;
     final scope = access.scope(user, identity);
     final directory = Directory(
       p.join((await root()).path, 'cloud-vaults', scope),
     );
-    final file = File(p.join(directory.path, 'vault.sqlite3'));
     final catalog = 'familyvault.cache.$scope.v1';
-    final state = await registration.store.read(catalog);
-    if (rows == null && state != 'ready') throw cloudAccessExpired;
-    if (state == null) {
+    final raw = await registration.store.read(catalog);
+    final slots = _CacheCatalog.decode(raw);
+    if (!slots.ready && (rows == null || rebuild)) {
+      throw cloudAccessExpired;
+    }
+    final existing = File(p.join(directory.path, slots.file));
+    if (slots.ready && !await existing.exists()) throw _invalid;
+    if (raw == null) {
       if (await directory.exists() && !await directory.list().isEmpty) {
         throw _invalid;
       }
       await registration.store.write(catalog, 'initializing');
-    } else if (state == 'ready') {
-      if (!await file.exists()) throw _invalid;
-    } else if (state != 'initializing') {
-      throw _invalid;
     }
     await directory.create(recursive: true);
+    final replacement = rebuild
+        ? 'vault-${const Uuid().v4()}.sqlite3'
+        : slots.file;
+    final file = File(p.join(directory.path, replacement));
     final keys = device.keys.copy();
     final db = AppDatabase.encrypted(
       file: file,
@@ -263,13 +319,93 @@ final class CloudWorkspaceCache {
         }
         await session.ledger.mutations.authorize();
       });
+      if (rebuild) {
+        final gateway = registration.gateway;
+        final proof = device.proof;
+        final replay = LedgerReplay(db, identity.familyId);
+        final worker = SyncCoordinator(
+          db: db,
+          identity: identity,
+          transport: gateway.syncTransport(proof),
+          apply: replay.apply,
+        );
+        try {
+          await worker.replayAll();
+        } finally {
+          await worker.stop();
+        }
+        final directory = CloudDirectory.verify(
+          await gateway.workspace(proof),
+          identity,
+        );
+        await db.transaction(() => directory.apply(db));
+        await session.ledger.mutations.audit(
+          operationId: const Uuid().v4(),
+          entityType: 'sync_recovery',
+          entityId: identity.familyId,
+          action: 'restore',
+          after: {'retained_device_history': true},
+        );
+      }
       final check = await db.customSelect('PRAGMA quick_check').getSingle();
       if (check.read<String>('quick_check') != 'ok') throw _invalid;
-      if (state != 'ready') await registration.store.write(catalog, 'ready');
+      access.requireSession(user, authSession);
+      if (rebuild) {
+        await registration.store.write(catalog, slots.replace(replacement));
+      } else if (!slots.ready) {
+        await registration.store.write(catalog, 'ready');
+      }
       return session;
     } catch (_) {
       await session.close();
       rethrow;
     }
+  });
+
+  Future<List<({PendingMutation local, SyncConflict? competing})>> savedChanges(
+    VaultSession session,
+  ) => storageBoundary(() async {
+    final user = registration.gateway.userId,
+        authSession = registration.gateway.sessionId;
+    if (user == null ||
+        authSession == null ||
+        session.closed ||
+        !session.identity.isCloud) {
+      throw cloudAccessExpired;
+    }
+    final scope = access.scope(user, session.identity);
+    if (p.basename(session.directory.path) != scope) throw cloudAccessExpired;
+    final raw = await registration.store.read('familyvault.cache.$scope.v1');
+    final slots = _CacheCatalog.decode(raw);
+    final saved = <({PendingMutation local, SyncConflict? competing})>[];
+    for (final file in slots.retained) {
+      access.requireSession(user, authSession);
+      final path = File(p.join(session.directory.path, file));
+      if (!await path.exists()) throw _invalid;
+      final db = AppDatabase.encrypted(
+        file: path,
+        key: VaultDatabaseKey.fromBytes(session.keys.database),
+      );
+      try {
+        await db.customStatement('PRAGMA query_only = ON');
+        final outbox = await db.select(db.pendingMutations).get();
+        final conflicts = {
+          for (final row in await db.select(db.syncConflicts).get())
+            row.operationId: row,
+        };
+        for (final row in outbox.where(
+          (row) =>
+              row.familyId == session.identity.familyId &&
+              row.state != 'acknowledged',
+        )) {
+          saved.add((local: row, competing: conflicts[row.operationId]));
+        }
+      } finally {
+        await db.close();
+      }
+    }
+    access.requireSession(user, authSession);
+    if (session.closed) throw cloudAccessExpired;
+    return saved;
   });
 }

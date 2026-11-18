@@ -221,3 +221,14 @@ separately. Continue with the business UI and executable backend policies.
   Started the API 36 system image installation inside the project SDK.
 - Next implement conflict recovery that preserves the outgoing encrypted cache,
   followed by the document engine and extended typed domain integration.
+
+## 2026-11-18 — conflict recovery and Android setup
+
+- Verified `8bece15` on the public origin. Built the Android debug APK in
+  15.1 seconds. Installed the API 36 system image and created a FamilyVault AVD
+  inside the project SDK. The first emulator process segfaulted during startup.
+  Retrying with isolated emulator settings and a different graphics backend.
+- Implemented user choice of the accepted family state, atomic secure catalog
+  switch and read-only review of pending changes from the prior device file.
+  Targeted analyzer and 11 encrypted sync/cache tests passed.
+- Next implement the additive local document store and encrypted file engine.
