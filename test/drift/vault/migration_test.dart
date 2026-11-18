@@ -8,6 +8,7 @@ import '../../support/vault_fixture.dart';
 import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
+import 'generated/schema_v3.dart' as v3;
 
 import 'package:familyvault/core/database/ledger_guards.dart';
 
@@ -18,12 +19,12 @@ void main() {
   test('fresh encrypted database matches the versioned schema', () async {
     final f = await VaultFixture.create(bootstrap: false);
     try {
-      await verifier.migrateAndValidate(f.db, 3);
+      await verifier.migrateAndValidate(f.db, 4);
     } finally {
       await f.dispose();
     }
   });
-  test('generated v1 snapshot migrates to v3 with operations, conflicts and checkpoints intact', () async {
+  test('generated v1 snapshot migrates to v4 with operations, conflicts and checkpoints intact', () async {
     final f = await VaultFixture.create(bootstrap: false);
     await f.db.close();
     final old = v1.DatabaseAtV1(
@@ -73,7 +74,7 @@ void main() {
     }
     f.db = AppDatabase.encrypted(file: f.file, key: f.key);
     try {
-      await verifier.migrateAndValidate(f.db, 3);
+      await verifier.migrateAndValidate(f.db, 4);
       final pending = (await f.db.select(f.db.pendingMutations).get()).single;
       expect(pending.state, 'conflicted');
       expect(pending.baseRevision, 3);
@@ -90,7 +91,7 @@ void main() {
       await f.dispose();
     }
   });
-  test('populated encrypted v2 ledger migrates to v3 with posted facts and audit intact', () async {
+  test('populated encrypted v2 ledger migrates to v4 with posted facts and audit intact', () async {
     final f = await VaultFixture.create(bootstrap: false);
     await f.db.close();
     final old = v2.DatabaseAtV2(
@@ -206,7 +207,7 @@ void main() {
     }
     f.db = AppDatabase.encrypted(file: f.file, key: f.key);
     try {
-      await verifier.migrateAndValidate(f.db, 3);
+      await verifier.migrateAndValidate(f.db, 4);
       expect(
         (await f.db.select(f.db.ledgerJournals).get()).single.status,
         'posted',
@@ -242,6 +243,53 @@ void main() {
       await f.dispose();
     }
   });
+  test(
+    'encrypted v3 wealth records are kept during the v4 document migration',
+    () async {
+      final f = await VaultFixture.create(bootstrap: false);
+      await f.db.close();
+      final old = v3.DatabaseAtV3(
+        openEncryptedConnection(file: f.file, key: f.key),
+      );
+      final identity = f.identity;
+      try {
+        await old.customStatement(
+          "INSERT INTO family_spaces(id,name,mode,created_at_us) VALUES (?, 'Synthetic v3 vault', 'offline', 1)",
+          [identity.familyId],
+        );
+        await old.customStatement(
+          "INSERT INTO family_members(id,family_id,display_name,relationship,role,created_at_us) VALUES (?, ?, 'Synthetic owner', 'administrator', 'administrator', 1)",
+          [identity.memberId, identity.familyId],
+        );
+        await old.customStatement(
+          "INSERT INTO ledger_accounts(id,family_id,created_by,updated_by,created_at_us,updated_at_us,name,kind,subtype) VALUES ('asset-account', ?, ?, ?, 1, 1, 'Synthetic asset', 'asset', 'managed_asset')",
+          [identity.familyId, identity.memberId, identity.memberId],
+        );
+        await old.customStatement(
+          "INSERT INTO wealth_assets(id,family_id,created_by,updated_by,created_at_us,updated_at_us,name,kind,account_id,family_ownership_bps,purchase_total_minor,purchase_ownership_bps) VALUES ('prior-asset', ?, ?, ?, 1, 1, 'Synthetic holding', 'other', 'asset-account', 10000, 9007199254740993, 10000)",
+          [identity.familyId, identity.memberId, identity.memberId],
+        );
+      } finally {
+        await old.close();
+      }
+      f.db = AppDatabase.encrypted(file: f.file, key: f.key);
+      try {
+        await verifier.migrateAndValidate(f.db, 4);
+        expect(
+          (await f.db.select(f.db.wealthAssets).getSingle()).purchaseTotalMinor,
+          9007199254740993,
+        );
+        expect(await f.db.select(f.db.vaultDocuments).get(), isEmpty);
+        expect(
+          await f.db.customSelect('PRAGMA foreign_key_check').get(),
+          isEmpty,
+        );
+      } finally {
+        await f.dispose();
+      }
+    },
+  );
+
   test('failed v3 DDL rolls back all additions and retains the v2 version and user table', () async {
     final f = await VaultFixture.create(bootstrap: false);
     await f.db.close();

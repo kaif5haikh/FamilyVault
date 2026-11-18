@@ -100,3 +100,8 @@ sequence, atomic opening and corrections, and revision conflict response.
 
 ADR 0014 records verified chart and directory bootstrap, isolated cache paths,
 outbox leases, receipt recovery and transactional feed replay.
+
+## 2026-11-18 — local document versions
+
+ADR 0015 records additive Drift v4, immutable document versions and links,
+authenticated file chunks and access audit boundaries.

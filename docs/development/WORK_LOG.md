@@ -232,3 +232,15 @@ separately. Continue with the business UI and executable backend policies.
   switch and read-only review of pending changes from the prior device file.
   Targeted analyzer and 11 encrypted sync/cache tests passed.
 - Next implement the additive local document store and encrypted file engine.
+
+## 2026-11-18 — encrypted local documents
+
+- Verified `7480800` on the public origin. Added Drift v4, authenticated
+  file chunks, document metadata and links, immutable versions and access audit.
+- Drift rejected a draft v4 snapshot with dynamic constraints. Replaced the
+  uncommitted draft after using SQL literals, and preserved v1 through v3.
+  The eleven targeted tests and the full 103-test check passed.
+- Tried software emulation and the checksummed 36.6.11 emulator from the
+  official Android archive after 37.2.13 crashed. Both exited 139 before boot.
+  Continue with document screens, camera and Files integration using host tests
+  and Android builds. [Android Emulator downloads](https://developer.android.com/studio/emulator_archive)

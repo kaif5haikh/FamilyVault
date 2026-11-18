@@ -7,7 +7,7 @@ import 'package:sqlite3/sqlite3.dart';
 import '../support/vault_fixture.dart';
 
 void main() {
-  test('encrypted v1 to v3 migration preserves existing operations and checkpoints', () async {
+  test('encrypted v1 to v4 migration preserves existing operations and checkpoints', () async {
     final f = await VaultFixture.create(bootstrap: false);
     await f.db.close();
     final raw = sqlite3.open(f.file.path);
@@ -41,7 +41,7 @@ void main() {
         (await f.db.customSelect('PRAGMA user_version').getSingle()).read<int>(
           'user_version',
         ),
-        3,
+        4,
       );
       expect(
         await f.db.customSelect('PRAGMA foreign_key_check').get(),

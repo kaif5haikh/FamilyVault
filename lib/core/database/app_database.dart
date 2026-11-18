@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 
+import 'document_tables.dart';
 import 'encrypted_connection.dart';
 import 'finance_tables.dart';
 import 'ledger_guards.dart';
@@ -9,6 +10,7 @@ import 'wealth_tables.dart';
 import 'wealth_guards.dart';
 
 export 'finance_tables.dart';
+export 'document_tables.dart';
 export 'wealth_tables.dart';
 
 part 'app_database.g.dart';
@@ -118,6 +120,9 @@ class SyncConflicts extends Table {
     Workers,
     SalaryPayments,
     AggregateJournalLinks,
+    VaultDocuments,
+    VaultDocumentVersions,
+    VaultDocumentLinks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -129,7 +134,7 @@ class AppDatabase extends _$AppDatabase {
   }) => AppDatabase._(openEncryptedConnection(file: file, key: key));
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -137,10 +142,11 @@ class AppDatabase extends _$AppDatabase {
       await migrator.createAll();
       await _installLedgerGuards();
       await _installWealthGuards();
+      await _installDocumentGuards();
       await customStatement('PRAGMA user_version = $schemaVersion');
     }),
     onUpgrade: (migrator, from, to) async {
-      if ((from != 1 && from != 2) || to != 3) {
+      if (from < 1 || from >= 4 || to != 4) {
         throw StateError('An explicit database migration is required');
       }
       await transaction(() async {
@@ -160,27 +166,33 @@ class AppDatabase extends _$AppDatabase {
             await migrator.createTable(table);
           }
         }
-        for (final table in <TableInfo<Table, dynamic>>[
-          wealthAssets,
-          propertyDetails,
-          metalDetails,
-          investmentDetails,
-          assetOwnerships,
-          assetValuations,
-          debtContracts,
-          debtRepayments,
-          businesses,
-          stockItems,
-          stockPositions,
-          stockMovements,
-          workers,
-          salaryPayments,
-          aggregateJournalLinks,
-        ]) {
-          await migrator.createTable(table);
+        if (from < 3) {
+          for (final table in <TableInfo<Table, dynamic>>[
+            wealthAssets,
+            propertyDetails,
+            metalDetails,
+            investmentDetails,
+            assetOwnerships,
+            assetValuations,
+            debtContracts,
+            debtRepayments,
+            businesses,
+            stockItems,
+            stockPositions,
+            stockMovements,
+            workers,
+            salaryPayments,
+            aggregateJournalLinks,
+          ]) {
+            await migrator.createTable(table);
+          }
         }
+        await migrator.createTable(vaultDocuments);
+        await migrator.createTable(vaultDocumentVersions);
+        await migrator.createTable(vaultDocumentLinks);
         await _installLedgerGuards();
         await _installWealthGuards();
+        await _installDocumentGuards();
         // Keep the version stamp in the same transaction as its DDL. Drift's
         // subsequent version write is idempotent if the process stops after this.
         await customStatement('PRAGMA user_version = $schemaVersion');
@@ -199,6 +211,12 @@ class AppDatabase extends _$AppDatabase {
 
   Future<void> _installWealthGuards() async {
     for (final statement in wealthGuards()) {
+      await customStatement(statement);
+    }
+  }
+
+  Future<void> _installDocumentGuards() async {
+    for (final statement in documentGuards) {
       await customStatement(statement);
     }
   }

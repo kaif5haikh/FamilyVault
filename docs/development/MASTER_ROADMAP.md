@@ -31,6 +31,9 @@ No production deployment, real family data, paid services or destructive history
   - [x] M07b Real Dart provider round trip and foreground sync status.
   - [x] M07c User-directed conflict recovery with prior device history retained.
 - [ ] M08 Encrypted document/key engine, versions/import/camera scan/preview/search/reminders and audited gateway.
+  - [x] M08a Additive v4 migration, encrypted version files, metadata, links and local audit.
+  - [ ] M08b Document screens, native file and camera input, preview, expiry and export.
+  - [ ] M08c Shared device keys, confirmed private Storage delivery and access audit.
 - [ ] M09 Authenticated archive/local backup/export/restore, independent Drive adapter and complete clean-environment recovery tests.
 - [ ] M10 Integrated UI/security/accessibility regression, Android emulator/device-independent integration and dependency/secret review.
 - [ ] M11 Release APK/AAB/signing setup, iOS configuration, installation/user/migration/recovery guides and release notes.

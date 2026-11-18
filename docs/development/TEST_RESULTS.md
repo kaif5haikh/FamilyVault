@@ -220,3 +220,19 @@ Record exact command, date, outcome and material platform/provider limits below.
   Transcript `.cache/checks/m07-recovery-analyze-20261118-b.txt`.
 - The cache, sync, enrollment and application widget suites passed 15 tests
   together. Transcript `.cache/checks/m07-recovery-app-20261118-a.txt`.
+
+## M08a — 2026-11-18 encrypted document repository
+
+- `bash tool/check.sh` passed with 103 tests and one opt-in provider test
+  skipped. Analysis, the advisory query, proposal checks and real PostgreSQL
+  migration tests also passed. Transcript `.cache/checks/m08-doc-engine-full-20261118-b.txt`.
+- The 11 targeted tests verified encrypted metadata and content, actor and
+  version audit, authentication with the wrong key or context, tampered and
+  truncated files, concurrent version saves, archive/restore and journal links.
+  The upgraded test fixtures start with populated encrypted v1, v2 and v3.
+  Transcript `.cache/checks/m08-doc-engine-tests-20261118-a.txt`.
+- Android emulator 37.2.13 exited 139 before boot with KVM and without it.
+  The checksummed official 36.6.11 archive also exited 139. The SDK and AVD
+  are project-local. Android installation and physical device checks remain
+  pending. Transcripts `.cache/checks/android-avd-boot-20261118-b.txt` through
+  `.cache/checks/android-avd-boot-20261118-d.txt`.

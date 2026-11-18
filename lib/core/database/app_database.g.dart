@@ -18458,6 +18458,2090 @@ class AggregateJournalLinksCompanion
   }
 }
 
+class $VaultDocumentsTable extends VaultDocuments
+    with TableInfo<$VaultDocumentsTable, VaultDocument> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VaultDocumentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _familyIdMeta = const VerificationMeta(
+    'familyId',
+  );
+  @override
+  late final GeneratedColumn<String> familyId = GeneratedColumn<String>(
+    'family_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES family_spaces (id)',
+    ),
+  );
+  static const VerificationMeta _revisionMeta = const VerificationMeta(
+    'revision',
+  );
+  @override
+  late final GeneratedColumn<int> revision = GeneratedColumn<int>(
+    'revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByMeta = const VerificationMeta(
+    'updatedBy',
+  );
+  @override
+  late final GeneratedColumn<String> updatedBy = GeneratedColumn<String>(
+    'updated_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtUsMeta = const VerificationMeta(
+    'createdAtUs',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtUs = GeneratedColumn<int>(
+    'created_at_us',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtUsMeta = const VerificationMeta(
+    'updatedAtUs',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtUs = GeneratedColumn<int>(
+    'updated_at_us',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtUsMeta = const VerificationMeta(
+    'deletedAtUs',
+  );
+  @override
+  late final GeneratedColumn<int> deletedAtUs = GeneratedColumn<int>(
+    'deleted_at_us',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
+    'ownerId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+    'owner_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expiryOnMeta = const VerificationMeta(
+    'expiryOn',
+  );
+  @override
+  late final GeneratedColumn<String> expiryOn = GeneratedColumn<String>(
+    'expiry_on',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    familyId,
+    revision,
+    createdBy,
+    updatedBy,
+    createdAtUs,
+    updatedAtUs,
+    deletedAtUs,
+    title,
+    category,
+    ownerId,
+    expiryOn,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vault_documents';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VaultDocument> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('family_id')) {
+      context.handle(
+        _familyIdMeta,
+        familyId.isAcceptableOrUnknown(data['family_id']!, _familyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_familyIdMeta);
+    }
+    if (data.containsKey('revision')) {
+      context.handle(
+        _revisionMeta,
+        revision.isAcceptableOrUnknown(data['revision']!, _revisionMeta),
+      );
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdByMeta);
+    }
+    if (data.containsKey('updated_by')) {
+      context.handle(
+        _updatedByMeta,
+        updatedBy.isAcceptableOrUnknown(data['updated_by']!, _updatedByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByMeta);
+    }
+    if (data.containsKey('created_at_us')) {
+      context.handle(
+        _createdAtUsMeta,
+        createdAtUs.isAcceptableOrUnknown(
+          data['created_at_us']!,
+          _createdAtUsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtUsMeta);
+    }
+    if (data.containsKey('updated_at_us')) {
+      context.handle(
+        _updatedAtUsMeta,
+        updatedAtUs.isAcceptableOrUnknown(
+          data['updated_at_us']!,
+          _updatedAtUsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtUsMeta);
+    }
+    if (data.containsKey('deleted_at_us')) {
+      context.handle(
+        _deletedAtUsMeta,
+        deletedAtUs.isAcceptableOrUnknown(
+          data['deleted_at_us']!,
+          _deletedAtUsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_categoryMeta);
+    }
+    if (data.containsKey('owner_id')) {
+      context.handle(
+        _ownerIdMeta,
+        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerIdMeta);
+    }
+    if (data.containsKey('expiry_on')) {
+      context.handle(
+        _expiryOnMeta,
+        expiryOn.isAcceptableOrUnknown(data['expiry_on']!, _expiryOnMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  VaultDocument map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VaultDocument(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      familyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}family_id'],
+      )!,
+      revision: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}revision'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      )!,
+      updatedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by'],
+      )!,
+      createdAtUs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_us'],
+      )!,
+      updatedAtUs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_us'],
+      )!,
+      deletedAtUs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted_at_us'],
+      ),
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      )!,
+      ownerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_id'],
+      )!,
+      expiryOn: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}expiry_on'],
+      ),
+    );
+  }
+
+  @override
+  $VaultDocumentsTable createAlias(String alias) {
+    return $VaultDocumentsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+}
+
+class VaultDocument extends DataClass implements Insertable<VaultDocument> {
+  final String id;
+  final String familyId;
+  final int revision;
+  final String createdBy;
+  final String updatedBy;
+  final int createdAtUs;
+  final int updatedAtUs;
+  final int? deletedAtUs;
+  final String title;
+  final String category;
+  final String ownerId;
+  final String? expiryOn;
+  const VaultDocument({
+    required this.id,
+    required this.familyId,
+    required this.revision,
+    required this.createdBy,
+    required this.updatedBy,
+    required this.createdAtUs,
+    required this.updatedAtUs,
+    this.deletedAtUs,
+    required this.title,
+    required this.category,
+    required this.ownerId,
+    this.expiryOn,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['family_id'] = Variable<String>(familyId);
+    map['revision'] = Variable<int>(revision);
+    map['created_by'] = Variable<String>(createdBy);
+    map['updated_by'] = Variable<String>(updatedBy);
+    map['created_at_us'] = Variable<int>(createdAtUs);
+    map['updated_at_us'] = Variable<int>(updatedAtUs);
+    if (!nullToAbsent || deletedAtUs != null) {
+      map['deleted_at_us'] = Variable<int>(deletedAtUs);
+    }
+    map['title'] = Variable<String>(title);
+    map['category'] = Variable<String>(category);
+    map['owner_id'] = Variable<String>(ownerId);
+    if (!nullToAbsent || expiryOn != null) {
+      map['expiry_on'] = Variable<String>(expiryOn);
+    }
+    return map;
+  }
+
+  VaultDocumentsCompanion toCompanion(bool nullToAbsent) {
+    return VaultDocumentsCompanion(
+      id: Value(id),
+      familyId: Value(familyId),
+      revision: Value(revision),
+      createdBy: Value(createdBy),
+      updatedBy: Value(updatedBy),
+      createdAtUs: Value(createdAtUs),
+      updatedAtUs: Value(updatedAtUs),
+      deletedAtUs: deletedAtUs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAtUs),
+      title: Value(title),
+      category: Value(category),
+      ownerId: Value(ownerId),
+      expiryOn: expiryOn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(expiryOn),
+    );
+  }
+
+  factory VaultDocument.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VaultDocument(
+      id: serializer.fromJson<String>(json['id']),
+      familyId: serializer.fromJson<String>(json['familyId']),
+      revision: serializer.fromJson<int>(json['revision']),
+      createdBy: serializer.fromJson<String>(json['createdBy']),
+      updatedBy: serializer.fromJson<String>(json['updatedBy']),
+      createdAtUs: serializer.fromJson<int>(json['createdAtUs']),
+      updatedAtUs: serializer.fromJson<int>(json['updatedAtUs']),
+      deletedAtUs: serializer.fromJson<int?>(json['deletedAtUs']),
+      title: serializer.fromJson<String>(json['title']),
+      category: serializer.fromJson<String>(json['category']),
+      ownerId: serializer.fromJson<String>(json['ownerId']),
+      expiryOn: serializer.fromJson<String?>(json['expiryOn']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'familyId': serializer.toJson<String>(familyId),
+      'revision': serializer.toJson<int>(revision),
+      'createdBy': serializer.toJson<String>(createdBy),
+      'updatedBy': serializer.toJson<String>(updatedBy),
+      'createdAtUs': serializer.toJson<int>(createdAtUs),
+      'updatedAtUs': serializer.toJson<int>(updatedAtUs),
+      'deletedAtUs': serializer.toJson<int?>(deletedAtUs),
+      'title': serializer.toJson<String>(title),
+      'category': serializer.toJson<String>(category),
+      'ownerId': serializer.toJson<String>(ownerId),
+      'expiryOn': serializer.toJson<String?>(expiryOn),
+    };
+  }
+
+  VaultDocument copyWith({
+    String? id,
+    String? familyId,
+    int? revision,
+    String? createdBy,
+    String? updatedBy,
+    int? createdAtUs,
+    int? updatedAtUs,
+    Value<int?> deletedAtUs = const Value.absent(),
+    String? title,
+    String? category,
+    String? ownerId,
+    Value<String?> expiryOn = const Value.absent(),
+  }) => VaultDocument(
+    id: id ?? this.id,
+    familyId: familyId ?? this.familyId,
+    revision: revision ?? this.revision,
+    createdBy: createdBy ?? this.createdBy,
+    updatedBy: updatedBy ?? this.updatedBy,
+    createdAtUs: createdAtUs ?? this.createdAtUs,
+    updatedAtUs: updatedAtUs ?? this.updatedAtUs,
+    deletedAtUs: deletedAtUs.present ? deletedAtUs.value : this.deletedAtUs,
+    title: title ?? this.title,
+    category: category ?? this.category,
+    ownerId: ownerId ?? this.ownerId,
+    expiryOn: expiryOn.present ? expiryOn.value : this.expiryOn,
+  );
+  VaultDocument copyWithCompanion(VaultDocumentsCompanion data) {
+    return VaultDocument(
+      id: data.id.present ? data.id.value : this.id,
+      familyId: data.familyId.present ? data.familyId.value : this.familyId,
+      revision: data.revision.present ? data.revision.value : this.revision,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      updatedBy: data.updatedBy.present ? data.updatedBy.value : this.updatedBy,
+      createdAtUs: data.createdAtUs.present
+          ? data.createdAtUs.value
+          : this.createdAtUs,
+      updatedAtUs: data.updatedAtUs.present
+          ? data.updatedAtUs.value
+          : this.updatedAtUs,
+      deletedAtUs: data.deletedAtUs.present
+          ? data.deletedAtUs.value
+          : this.deletedAtUs,
+      title: data.title.present ? data.title.value : this.title,
+      category: data.category.present ? data.category.value : this.category,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      expiryOn: data.expiryOn.present ? data.expiryOn.value : this.expiryOn,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultDocument(')
+          ..write('id: $id, ')
+          ..write('familyId: $familyId, ')
+          ..write('revision: $revision, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('updatedBy: $updatedBy, ')
+          ..write('createdAtUs: $createdAtUs, ')
+          ..write('updatedAtUs: $updatedAtUs, ')
+          ..write('deletedAtUs: $deletedAtUs, ')
+          ..write('title: $title, ')
+          ..write('category: $category, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('expiryOn: $expiryOn')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    familyId,
+    revision,
+    createdBy,
+    updatedBy,
+    createdAtUs,
+    updatedAtUs,
+    deletedAtUs,
+    title,
+    category,
+    ownerId,
+    expiryOn,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VaultDocument &&
+          other.id == this.id &&
+          other.familyId == this.familyId &&
+          other.revision == this.revision &&
+          other.createdBy == this.createdBy &&
+          other.updatedBy == this.updatedBy &&
+          other.createdAtUs == this.createdAtUs &&
+          other.updatedAtUs == this.updatedAtUs &&
+          other.deletedAtUs == this.deletedAtUs &&
+          other.title == this.title &&
+          other.category == this.category &&
+          other.ownerId == this.ownerId &&
+          other.expiryOn == this.expiryOn);
+}
+
+class VaultDocumentsCompanion extends UpdateCompanion<VaultDocument> {
+  final Value<String> id;
+  final Value<String> familyId;
+  final Value<int> revision;
+  final Value<String> createdBy;
+  final Value<String> updatedBy;
+  final Value<int> createdAtUs;
+  final Value<int> updatedAtUs;
+  final Value<int?> deletedAtUs;
+  final Value<String> title;
+  final Value<String> category;
+  final Value<String> ownerId;
+  final Value<String?> expiryOn;
+  final Value<int> rowid;
+  const VaultDocumentsCompanion({
+    this.id = const Value.absent(),
+    this.familyId = const Value.absent(),
+    this.revision = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.updatedBy = const Value.absent(),
+    this.createdAtUs = const Value.absent(),
+    this.updatedAtUs = const Value.absent(),
+    this.deletedAtUs = const Value.absent(),
+    this.title = const Value.absent(),
+    this.category = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.expiryOn = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VaultDocumentsCompanion.insert({
+    required String id,
+    required String familyId,
+    this.revision = const Value.absent(),
+    required String createdBy,
+    required String updatedBy,
+    required int createdAtUs,
+    required int updatedAtUs,
+    this.deletedAtUs = const Value.absent(),
+    required String title,
+    required String category,
+    required String ownerId,
+    this.expiryOn = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       familyId = Value(familyId),
+       createdBy = Value(createdBy),
+       updatedBy = Value(updatedBy),
+       createdAtUs = Value(createdAtUs),
+       updatedAtUs = Value(updatedAtUs),
+       title = Value(title),
+       category = Value(category),
+       ownerId = Value(ownerId);
+  static Insertable<VaultDocument> custom({
+    Expression<String>? id,
+    Expression<String>? familyId,
+    Expression<int>? revision,
+    Expression<String>? createdBy,
+    Expression<String>? updatedBy,
+    Expression<int>? createdAtUs,
+    Expression<int>? updatedAtUs,
+    Expression<int>? deletedAtUs,
+    Expression<String>? title,
+    Expression<String>? category,
+    Expression<String>? ownerId,
+    Expression<String>? expiryOn,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (familyId != null) 'family_id': familyId,
+      if (revision != null) 'revision': revision,
+      if (createdBy != null) 'created_by': createdBy,
+      if (updatedBy != null) 'updated_by': updatedBy,
+      if (createdAtUs != null) 'created_at_us': createdAtUs,
+      if (updatedAtUs != null) 'updated_at_us': updatedAtUs,
+      if (deletedAtUs != null) 'deleted_at_us': deletedAtUs,
+      if (title != null) 'title': title,
+      if (category != null) 'category': category,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (expiryOn != null) 'expiry_on': expiryOn,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VaultDocumentsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? familyId,
+    Value<int>? revision,
+    Value<String>? createdBy,
+    Value<String>? updatedBy,
+    Value<int>? createdAtUs,
+    Value<int>? updatedAtUs,
+    Value<int?>? deletedAtUs,
+    Value<String>? title,
+    Value<String>? category,
+    Value<String>? ownerId,
+    Value<String?>? expiryOn,
+    Value<int>? rowid,
+  }) {
+    return VaultDocumentsCompanion(
+      id: id ?? this.id,
+      familyId: familyId ?? this.familyId,
+      revision: revision ?? this.revision,
+      createdBy: createdBy ?? this.createdBy,
+      updatedBy: updatedBy ?? this.updatedBy,
+      createdAtUs: createdAtUs ?? this.createdAtUs,
+      updatedAtUs: updatedAtUs ?? this.updatedAtUs,
+      deletedAtUs: deletedAtUs ?? this.deletedAtUs,
+      title: title ?? this.title,
+      category: category ?? this.category,
+      ownerId: ownerId ?? this.ownerId,
+      expiryOn: expiryOn ?? this.expiryOn,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (familyId.present) {
+      map['family_id'] = Variable<String>(familyId.value);
+    }
+    if (revision.present) {
+      map['revision'] = Variable<int>(revision.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (updatedBy.present) {
+      map['updated_by'] = Variable<String>(updatedBy.value);
+    }
+    if (createdAtUs.present) {
+      map['created_at_us'] = Variable<int>(createdAtUs.value);
+    }
+    if (updatedAtUs.present) {
+      map['updated_at_us'] = Variable<int>(updatedAtUs.value);
+    }
+    if (deletedAtUs.present) {
+      map['deleted_at_us'] = Variable<int>(deletedAtUs.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (expiryOn.present) {
+      map['expiry_on'] = Variable<String>(expiryOn.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultDocumentsCompanion(')
+          ..write('id: $id, ')
+          ..write('familyId: $familyId, ')
+          ..write('revision: $revision, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('updatedBy: $updatedBy, ')
+          ..write('createdAtUs: $createdAtUs, ')
+          ..write('updatedAtUs: $updatedAtUs, ')
+          ..write('deletedAtUs: $deletedAtUs, ')
+          ..write('title: $title, ')
+          ..write('category: $category, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('expiryOn: $expiryOn, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $VaultDocumentVersionsTable extends VaultDocumentVersions
+    with TableInfo<$VaultDocumentVersionsTable, VaultDocumentVersion> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VaultDocumentVersionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _familyIdMeta = const VerificationMeta(
+    'familyId',
+  );
+  @override
+  late final GeneratedColumn<String> familyId = GeneratedColumn<String>(
+    'family_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _documentIdMeta = const VerificationMeta(
+    'documentId',
+  );
+  @override
+  late final GeneratedColumn<String> documentId = GeneratedColumn<String>(
+    'document_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mimeTypeMeta = const VerificationMeta(
+    'mimeType',
+  );
+  @override
+  late final GeneratedColumn<String> mimeType = GeneratedColumn<String>(
+    'mime_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _plaintextBytesMeta = const VerificationMeta(
+    'plaintextBytes',
+  );
+  @override
+  late final GeneratedColumn<int> plaintextBytes = GeneratedColumn<int>(
+    'plaintext_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ciphertextDigestMeta = const VerificationMeta(
+    'ciphertextDigest',
+  );
+  @override
+  late final GeneratedColumn<String> ciphertextDigest = GeneratedColumn<String>(
+    'ciphertext_digest',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _wrappedKeyMeta = const VerificationMeta(
+    'wrappedKey',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> wrappedKey = GeneratedColumn<Uint8List>(
+    'wrapped_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.blob,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  @override
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'device_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtUsMeta = const VerificationMeta(
+    'createdAtUs',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtUs = GeneratedColumn<int>(
+    'created_at_us',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    familyId,
+    documentId,
+    version,
+    mimeType,
+    plaintextBytes,
+    ciphertextDigest,
+    wrappedKey,
+    createdBy,
+    deviceId,
+    createdAtUs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vault_document_versions';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VaultDocumentVersion> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('family_id')) {
+      context.handle(
+        _familyIdMeta,
+        familyId.isAcceptableOrUnknown(data['family_id']!, _familyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_familyIdMeta);
+    }
+    if (data.containsKey('document_id')) {
+      context.handle(
+        _documentIdMeta,
+        documentId.isAcceptableOrUnknown(data['document_id']!, _documentIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_documentIdMeta);
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_versionMeta);
+    }
+    if (data.containsKey('mime_type')) {
+      context.handle(
+        _mimeTypeMeta,
+        mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mimeTypeMeta);
+    }
+    if (data.containsKey('plaintext_bytes')) {
+      context.handle(
+        _plaintextBytesMeta,
+        plaintextBytes.isAcceptableOrUnknown(
+          data['plaintext_bytes']!,
+          _plaintextBytesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_plaintextBytesMeta);
+    }
+    if (data.containsKey('ciphertext_digest')) {
+      context.handle(
+        _ciphertextDigestMeta,
+        ciphertextDigest.isAcceptableOrUnknown(
+          data['ciphertext_digest']!,
+          _ciphertextDigestMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ciphertextDigestMeta);
+    }
+    if (data.containsKey('wrapped_key')) {
+      context.handle(
+        _wrappedKeyMeta,
+        wrappedKey.isAcceptableOrUnknown(data['wrapped_key']!, _wrappedKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_wrappedKeyMeta);
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdByMeta);
+    }
+    if (data.containsKey('device_id')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceIdMeta);
+    }
+    if (data.containsKey('created_at_us')) {
+      context.handle(
+        _createdAtUsMeta,
+        createdAtUs.isAcceptableOrUnknown(
+          data['created_at_us']!,
+          _createdAtUsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtUsMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  VaultDocumentVersion map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VaultDocumentVersion(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      familyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}family_id'],
+      )!,
+      documentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document_id'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+      mimeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mime_type'],
+      )!,
+      plaintextBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}plaintext_bytes'],
+      )!,
+      ciphertextDigest: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ciphertext_digest'],
+      )!,
+      wrappedKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}wrapped_key'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      )!,
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_id'],
+      )!,
+      createdAtUs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_us'],
+      )!,
+    );
+  }
+
+  @override
+  $VaultDocumentVersionsTable createAlias(String alias) {
+    return $VaultDocumentVersionsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+}
+
+class VaultDocumentVersion extends DataClass
+    implements Insertable<VaultDocumentVersion> {
+  final String id;
+  final String familyId;
+  final String documentId;
+  final int version;
+  final String mimeType;
+  final int plaintextBytes;
+  final String ciphertextDigest;
+  final Uint8List wrappedKey;
+  final String createdBy;
+  final String deviceId;
+  final int createdAtUs;
+  const VaultDocumentVersion({
+    required this.id,
+    required this.familyId,
+    required this.documentId,
+    required this.version,
+    required this.mimeType,
+    required this.plaintextBytes,
+    required this.ciphertextDigest,
+    required this.wrappedKey,
+    required this.createdBy,
+    required this.deviceId,
+    required this.createdAtUs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['family_id'] = Variable<String>(familyId);
+    map['document_id'] = Variable<String>(documentId);
+    map['version'] = Variable<int>(version);
+    map['mime_type'] = Variable<String>(mimeType);
+    map['plaintext_bytes'] = Variable<int>(plaintextBytes);
+    map['ciphertext_digest'] = Variable<String>(ciphertextDigest);
+    map['wrapped_key'] = Variable<Uint8List>(wrappedKey);
+    map['created_by'] = Variable<String>(createdBy);
+    map['device_id'] = Variable<String>(deviceId);
+    map['created_at_us'] = Variable<int>(createdAtUs);
+    return map;
+  }
+
+  VaultDocumentVersionsCompanion toCompanion(bool nullToAbsent) {
+    return VaultDocumentVersionsCompanion(
+      id: Value(id),
+      familyId: Value(familyId),
+      documentId: Value(documentId),
+      version: Value(version),
+      mimeType: Value(mimeType),
+      plaintextBytes: Value(plaintextBytes),
+      ciphertextDigest: Value(ciphertextDigest),
+      wrappedKey: Value(wrappedKey),
+      createdBy: Value(createdBy),
+      deviceId: Value(deviceId),
+      createdAtUs: Value(createdAtUs),
+    );
+  }
+
+  factory VaultDocumentVersion.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VaultDocumentVersion(
+      id: serializer.fromJson<String>(json['id']),
+      familyId: serializer.fromJson<String>(json['familyId']),
+      documentId: serializer.fromJson<String>(json['documentId']),
+      version: serializer.fromJson<int>(json['version']),
+      mimeType: serializer.fromJson<String>(json['mimeType']),
+      plaintextBytes: serializer.fromJson<int>(json['plaintextBytes']),
+      ciphertextDigest: serializer.fromJson<String>(json['ciphertextDigest']),
+      wrappedKey: serializer.fromJson<Uint8List>(json['wrappedKey']),
+      createdBy: serializer.fromJson<String>(json['createdBy']),
+      deviceId: serializer.fromJson<String>(json['deviceId']),
+      createdAtUs: serializer.fromJson<int>(json['createdAtUs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'familyId': serializer.toJson<String>(familyId),
+      'documentId': serializer.toJson<String>(documentId),
+      'version': serializer.toJson<int>(version),
+      'mimeType': serializer.toJson<String>(mimeType),
+      'plaintextBytes': serializer.toJson<int>(plaintextBytes),
+      'ciphertextDigest': serializer.toJson<String>(ciphertextDigest),
+      'wrappedKey': serializer.toJson<Uint8List>(wrappedKey),
+      'createdBy': serializer.toJson<String>(createdBy),
+      'deviceId': serializer.toJson<String>(deviceId),
+      'createdAtUs': serializer.toJson<int>(createdAtUs),
+    };
+  }
+
+  VaultDocumentVersion copyWith({
+    String? id,
+    String? familyId,
+    String? documentId,
+    int? version,
+    String? mimeType,
+    int? plaintextBytes,
+    String? ciphertextDigest,
+    Uint8List? wrappedKey,
+    String? createdBy,
+    String? deviceId,
+    int? createdAtUs,
+  }) => VaultDocumentVersion(
+    id: id ?? this.id,
+    familyId: familyId ?? this.familyId,
+    documentId: documentId ?? this.documentId,
+    version: version ?? this.version,
+    mimeType: mimeType ?? this.mimeType,
+    plaintextBytes: plaintextBytes ?? this.plaintextBytes,
+    ciphertextDigest: ciphertextDigest ?? this.ciphertextDigest,
+    wrappedKey: wrappedKey ?? this.wrappedKey,
+    createdBy: createdBy ?? this.createdBy,
+    deviceId: deviceId ?? this.deviceId,
+    createdAtUs: createdAtUs ?? this.createdAtUs,
+  );
+  VaultDocumentVersion copyWithCompanion(VaultDocumentVersionsCompanion data) {
+    return VaultDocumentVersion(
+      id: data.id.present ? data.id.value : this.id,
+      familyId: data.familyId.present ? data.familyId.value : this.familyId,
+      documentId: data.documentId.present
+          ? data.documentId.value
+          : this.documentId,
+      version: data.version.present ? data.version.value : this.version,
+      mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
+      plaintextBytes: data.plaintextBytes.present
+          ? data.plaintextBytes.value
+          : this.plaintextBytes,
+      ciphertextDigest: data.ciphertextDigest.present
+          ? data.ciphertextDigest.value
+          : this.ciphertextDigest,
+      wrappedKey: data.wrappedKey.present
+          ? data.wrappedKey.value
+          : this.wrappedKey,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      createdAtUs: data.createdAtUs.present
+          ? data.createdAtUs.value
+          : this.createdAtUs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultDocumentVersion(')
+          ..write('id: $id, ')
+          ..write('familyId: $familyId, ')
+          ..write('documentId: $documentId, ')
+          ..write('version: $version, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('plaintextBytes: $plaintextBytes, ')
+          ..write('ciphertextDigest: $ciphertextDigest, ')
+          ..write('wrappedKey: $wrappedKey, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('createdAtUs: $createdAtUs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    familyId,
+    documentId,
+    version,
+    mimeType,
+    plaintextBytes,
+    ciphertextDigest,
+    $driftBlobEquality.hash(wrappedKey),
+    createdBy,
+    deviceId,
+    createdAtUs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VaultDocumentVersion &&
+          other.id == this.id &&
+          other.familyId == this.familyId &&
+          other.documentId == this.documentId &&
+          other.version == this.version &&
+          other.mimeType == this.mimeType &&
+          other.plaintextBytes == this.plaintextBytes &&
+          other.ciphertextDigest == this.ciphertextDigest &&
+          $driftBlobEquality.equals(other.wrappedKey, this.wrappedKey) &&
+          other.createdBy == this.createdBy &&
+          other.deviceId == this.deviceId &&
+          other.createdAtUs == this.createdAtUs);
+}
+
+class VaultDocumentVersionsCompanion
+    extends UpdateCompanion<VaultDocumentVersion> {
+  final Value<String> id;
+  final Value<String> familyId;
+  final Value<String> documentId;
+  final Value<int> version;
+  final Value<String> mimeType;
+  final Value<int> plaintextBytes;
+  final Value<String> ciphertextDigest;
+  final Value<Uint8List> wrappedKey;
+  final Value<String> createdBy;
+  final Value<String> deviceId;
+  final Value<int> createdAtUs;
+  final Value<int> rowid;
+  const VaultDocumentVersionsCompanion({
+    this.id = const Value.absent(),
+    this.familyId = const Value.absent(),
+    this.documentId = const Value.absent(),
+    this.version = const Value.absent(),
+    this.mimeType = const Value.absent(),
+    this.plaintextBytes = const Value.absent(),
+    this.ciphertextDigest = const Value.absent(),
+    this.wrappedKey = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.createdAtUs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VaultDocumentVersionsCompanion.insert({
+    required String id,
+    required String familyId,
+    required String documentId,
+    required int version,
+    required String mimeType,
+    required int plaintextBytes,
+    required String ciphertextDigest,
+    required Uint8List wrappedKey,
+    required String createdBy,
+    required String deviceId,
+    required int createdAtUs,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       familyId = Value(familyId),
+       documentId = Value(documentId),
+       version = Value(version),
+       mimeType = Value(mimeType),
+       plaintextBytes = Value(plaintextBytes),
+       ciphertextDigest = Value(ciphertextDigest),
+       wrappedKey = Value(wrappedKey),
+       createdBy = Value(createdBy),
+       deviceId = Value(deviceId),
+       createdAtUs = Value(createdAtUs);
+  static Insertable<VaultDocumentVersion> custom({
+    Expression<String>? id,
+    Expression<String>? familyId,
+    Expression<String>? documentId,
+    Expression<int>? version,
+    Expression<String>? mimeType,
+    Expression<int>? plaintextBytes,
+    Expression<String>? ciphertextDigest,
+    Expression<Uint8List>? wrappedKey,
+    Expression<String>? createdBy,
+    Expression<String>? deviceId,
+    Expression<int>? createdAtUs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (familyId != null) 'family_id': familyId,
+      if (documentId != null) 'document_id': documentId,
+      if (version != null) 'version': version,
+      if (mimeType != null) 'mime_type': mimeType,
+      if (plaintextBytes != null) 'plaintext_bytes': plaintextBytes,
+      if (ciphertextDigest != null) 'ciphertext_digest': ciphertextDigest,
+      if (wrappedKey != null) 'wrapped_key': wrappedKey,
+      if (createdBy != null) 'created_by': createdBy,
+      if (deviceId != null) 'device_id': deviceId,
+      if (createdAtUs != null) 'created_at_us': createdAtUs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VaultDocumentVersionsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? familyId,
+    Value<String>? documentId,
+    Value<int>? version,
+    Value<String>? mimeType,
+    Value<int>? plaintextBytes,
+    Value<String>? ciphertextDigest,
+    Value<Uint8List>? wrappedKey,
+    Value<String>? createdBy,
+    Value<String>? deviceId,
+    Value<int>? createdAtUs,
+    Value<int>? rowid,
+  }) {
+    return VaultDocumentVersionsCompanion(
+      id: id ?? this.id,
+      familyId: familyId ?? this.familyId,
+      documentId: documentId ?? this.documentId,
+      version: version ?? this.version,
+      mimeType: mimeType ?? this.mimeType,
+      plaintextBytes: plaintextBytes ?? this.plaintextBytes,
+      ciphertextDigest: ciphertextDigest ?? this.ciphertextDigest,
+      wrappedKey: wrappedKey ?? this.wrappedKey,
+      createdBy: createdBy ?? this.createdBy,
+      deviceId: deviceId ?? this.deviceId,
+      createdAtUs: createdAtUs ?? this.createdAtUs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (familyId.present) {
+      map['family_id'] = Variable<String>(familyId.value);
+    }
+    if (documentId.present) {
+      map['document_id'] = Variable<String>(documentId.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (mimeType.present) {
+      map['mime_type'] = Variable<String>(mimeType.value);
+    }
+    if (plaintextBytes.present) {
+      map['plaintext_bytes'] = Variable<int>(plaintextBytes.value);
+    }
+    if (ciphertextDigest.present) {
+      map['ciphertext_digest'] = Variable<String>(ciphertextDigest.value);
+    }
+    if (wrappedKey.present) {
+      map['wrapped_key'] = Variable<Uint8List>(wrappedKey.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (deviceId.present) {
+      map['device_id'] = Variable<String>(deviceId.value);
+    }
+    if (createdAtUs.present) {
+      map['created_at_us'] = Variable<int>(createdAtUs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultDocumentVersionsCompanion(')
+          ..write('id: $id, ')
+          ..write('familyId: $familyId, ')
+          ..write('documentId: $documentId, ')
+          ..write('version: $version, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('plaintextBytes: $plaintextBytes, ')
+          ..write('ciphertextDigest: $ciphertextDigest, ')
+          ..write('wrappedKey: $wrappedKey, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('createdAtUs: $createdAtUs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $VaultDocumentLinksTable extends VaultDocumentLinks
+    with TableInfo<$VaultDocumentLinksTable, VaultDocumentLink> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VaultDocumentLinksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _familyIdMeta = const VerificationMeta(
+    'familyId',
+  );
+  @override
+  late final GeneratedColumn<String> familyId = GeneratedColumn<String>(
+    'family_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES family_spaces (id)',
+    ),
+  );
+  static const VerificationMeta _revisionMeta = const VerificationMeta(
+    'revision',
+  );
+  @override
+  late final GeneratedColumn<int> revision = GeneratedColumn<int>(
+    'revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByMeta = const VerificationMeta(
+    'updatedBy',
+  );
+  @override
+  late final GeneratedColumn<String> updatedBy = GeneratedColumn<String>(
+    'updated_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtUsMeta = const VerificationMeta(
+    'createdAtUs',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtUs = GeneratedColumn<int>(
+    'created_at_us',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtUsMeta = const VerificationMeta(
+    'updatedAtUs',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAtUs = GeneratedColumn<int>(
+    'updated_at_us',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtUsMeta = const VerificationMeta(
+    'deletedAtUs',
+  );
+  @override
+  late final GeneratedColumn<int> deletedAtUs = GeneratedColumn<int>(
+    'deleted_at_us',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _documentIdMeta = const VerificationMeta(
+    'documentId',
+  );
+  @override
+  late final GeneratedColumn<String> documentId = GeneratedColumn<String>(
+    'document_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _journalIdMeta = const VerificationMeta(
+    'journalId',
+  );
+  @override
+  late final GeneratedColumn<String> journalId = GeneratedColumn<String>(
+    'journal_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _assetIdMeta = const VerificationMeta(
+    'assetId',
+  );
+  @override
+  late final GeneratedColumn<String> assetId = GeneratedColumn<String>(
+    'asset_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    familyId,
+    revision,
+    createdBy,
+    updatedBy,
+    createdAtUs,
+    updatedAtUs,
+    deletedAtUs,
+    documentId,
+    journalId,
+    assetId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vault_document_links';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VaultDocumentLink> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('family_id')) {
+      context.handle(
+        _familyIdMeta,
+        familyId.isAcceptableOrUnknown(data['family_id']!, _familyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_familyIdMeta);
+    }
+    if (data.containsKey('revision')) {
+      context.handle(
+        _revisionMeta,
+        revision.isAcceptableOrUnknown(data['revision']!, _revisionMeta),
+      );
+    }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdByMeta);
+    }
+    if (data.containsKey('updated_by')) {
+      context.handle(
+        _updatedByMeta,
+        updatedBy.isAcceptableOrUnknown(data['updated_by']!, _updatedByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByMeta);
+    }
+    if (data.containsKey('created_at_us')) {
+      context.handle(
+        _createdAtUsMeta,
+        createdAtUs.isAcceptableOrUnknown(
+          data['created_at_us']!,
+          _createdAtUsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtUsMeta);
+    }
+    if (data.containsKey('updated_at_us')) {
+      context.handle(
+        _updatedAtUsMeta,
+        updatedAtUs.isAcceptableOrUnknown(
+          data['updated_at_us']!,
+          _updatedAtUsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtUsMeta);
+    }
+    if (data.containsKey('deleted_at_us')) {
+      context.handle(
+        _deletedAtUsMeta,
+        deletedAtUs.isAcceptableOrUnknown(
+          data['deleted_at_us']!,
+          _deletedAtUsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('document_id')) {
+      context.handle(
+        _documentIdMeta,
+        documentId.isAcceptableOrUnknown(data['document_id']!, _documentIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_documentIdMeta);
+    }
+    if (data.containsKey('journal_id')) {
+      context.handle(
+        _journalIdMeta,
+        journalId.isAcceptableOrUnknown(data['journal_id']!, _journalIdMeta),
+      );
+    }
+    if (data.containsKey('asset_id')) {
+      context.handle(
+        _assetIdMeta,
+        assetId.isAcceptableOrUnknown(data['asset_id']!, _assetIdMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  VaultDocumentLink map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VaultDocumentLink(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      familyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}family_id'],
+      )!,
+      revision: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}revision'],
+      )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      )!,
+      updatedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by'],
+      )!,
+      createdAtUs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_us'],
+      )!,
+      updatedAtUs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at_us'],
+      )!,
+      deletedAtUs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}deleted_at_us'],
+      ),
+      documentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document_id'],
+      )!,
+      journalId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}journal_id'],
+      ),
+      assetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}asset_id'],
+      ),
+    );
+  }
+
+  @override
+  $VaultDocumentLinksTable createAlias(String alias) {
+    return $VaultDocumentLinksTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+}
+
+class VaultDocumentLink extends DataClass
+    implements Insertable<VaultDocumentLink> {
+  final String id;
+  final String familyId;
+  final int revision;
+  final String createdBy;
+  final String updatedBy;
+  final int createdAtUs;
+  final int updatedAtUs;
+  final int? deletedAtUs;
+  final String documentId;
+  final String? journalId;
+  final String? assetId;
+  const VaultDocumentLink({
+    required this.id,
+    required this.familyId,
+    required this.revision,
+    required this.createdBy,
+    required this.updatedBy,
+    required this.createdAtUs,
+    required this.updatedAtUs,
+    this.deletedAtUs,
+    required this.documentId,
+    this.journalId,
+    this.assetId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['family_id'] = Variable<String>(familyId);
+    map['revision'] = Variable<int>(revision);
+    map['created_by'] = Variable<String>(createdBy);
+    map['updated_by'] = Variable<String>(updatedBy);
+    map['created_at_us'] = Variable<int>(createdAtUs);
+    map['updated_at_us'] = Variable<int>(updatedAtUs);
+    if (!nullToAbsent || deletedAtUs != null) {
+      map['deleted_at_us'] = Variable<int>(deletedAtUs);
+    }
+    map['document_id'] = Variable<String>(documentId);
+    if (!nullToAbsent || journalId != null) {
+      map['journal_id'] = Variable<String>(journalId);
+    }
+    if (!nullToAbsent || assetId != null) {
+      map['asset_id'] = Variable<String>(assetId);
+    }
+    return map;
+  }
+
+  VaultDocumentLinksCompanion toCompanion(bool nullToAbsent) {
+    return VaultDocumentLinksCompanion(
+      id: Value(id),
+      familyId: Value(familyId),
+      revision: Value(revision),
+      createdBy: Value(createdBy),
+      updatedBy: Value(updatedBy),
+      createdAtUs: Value(createdAtUs),
+      updatedAtUs: Value(updatedAtUs),
+      deletedAtUs: deletedAtUs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAtUs),
+      documentId: Value(documentId),
+      journalId: journalId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(journalId),
+      assetId: assetId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(assetId),
+    );
+  }
+
+  factory VaultDocumentLink.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VaultDocumentLink(
+      id: serializer.fromJson<String>(json['id']),
+      familyId: serializer.fromJson<String>(json['familyId']),
+      revision: serializer.fromJson<int>(json['revision']),
+      createdBy: serializer.fromJson<String>(json['createdBy']),
+      updatedBy: serializer.fromJson<String>(json['updatedBy']),
+      createdAtUs: serializer.fromJson<int>(json['createdAtUs']),
+      updatedAtUs: serializer.fromJson<int>(json['updatedAtUs']),
+      deletedAtUs: serializer.fromJson<int?>(json['deletedAtUs']),
+      documentId: serializer.fromJson<String>(json['documentId']),
+      journalId: serializer.fromJson<String?>(json['journalId']),
+      assetId: serializer.fromJson<String?>(json['assetId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'familyId': serializer.toJson<String>(familyId),
+      'revision': serializer.toJson<int>(revision),
+      'createdBy': serializer.toJson<String>(createdBy),
+      'updatedBy': serializer.toJson<String>(updatedBy),
+      'createdAtUs': serializer.toJson<int>(createdAtUs),
+      'updatedAtUs': serializer.toJson<int>(updatedAtUs),
+      'deletedAtUs': serializer.toJson<int?>(deletedAtUs),
+      'documentId': serializer.toJson<String>(documentId),
+      'journalId': serializer.toJson<String?>(journalId),
+      'assetId': serializer.toJson<String?>(assetId),
+    };
+  }
+
+  VaultDocumentLink copyWith({
+    String? id,
+    String? familyId,
+    int? revision,
+    String? createdBy,
+    String? updatedBy,
+    int? createdAtUs,
+    int? updatedAtUs,
+    Value<int?> deletedAtUs = const Value.absent(),
+    String? documentId,
+    Value<String?> journalId = const Value.absent(),
+    Value<String?> assetId = const Value.absent(),
+  }) => VaultDocumentLink(
+    id: id ?? this.id,
+    familyId: familyId ?? this.familyId,
+    revision: revision ?? this.revision,
+    createdBy: createdBy ?? this.createdBy,
+    updatedBy: updatedBy ?? this.updatedBy,
+    createdAtUs: createdAtUs ?? this.createdAtUs,
+    updatedAtUs: updatedAtUs ?? this.updatedAtUs,
+    deletedAtUs: deletedAtUs.present ? deletedAtUs.value : this.deletedAtUs,
+    documentId: documentId ?? this.documentId,
+    journalId: journalId.present ? journalId.value : this.journalId,
+    assetId: assetId.present ? assetId.value : this.assetId,
+  );
+  VaultDocumentLink copyWithCompanion(VaultDocumentLinksCompanion data) {
+    return VaultDocumentLink(
+      id: data.id.present ? data.id.value : this.id,
+      familyId: data.familyId.present ? data.familyId.value : this.familyId,
+      revision: data.revision.present ? data.revision.value : this.revision,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      updatedBy: data.updatedBy.present ? data.updatedBy.value : this.updatedBy,
+      createdAtUs: data.createdAtUs.present
+          ? data.createdAtUs.value
+          : this.createdAtUs,
+      updatedAtUs: data.updatedAtUs.present
+          ? data.updatedAtUs.value
+          : this.updatedAtUs,
+      deletedAtUs: data.deletedAtUs.present
+          ? data.deletedAtUs.value
+          : this.deletedAtUs,
+      documentId: data.documentId.present
+          ? data.documentId.value
+          : this.documentId,
+      journalId: data.journalId.present ? data.journalId.value : this.journalId,
+      assetId: data.assetId.present ? data.assetId.value : this.assetId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultDocumentLink(')
+          ..write('id: $id, ')
+          ..write('familyId: $familyId, ')
+          ..write('revision: $revision, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('updatedBy: $updatedBy, ')
+          ..write('createdAtUs: $createdAtUs, ')
+          ..write('updatedAtUs: $updatedAtUs, ')
+          ..write('deletedAtUs: $deletedAtUs, ')
+          ..write('documentId: $documentId, ')
+          ..write('journalId: $journalId, ')
+          ..write('assetId: $assetId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    familyId,
+    revision,
+    createdBy,
+    updatedBy,
+    createdAtUs,
+    updatedAtUs,
+    deletedAtUs,
+    documentId,
+    journalId,
+    assetId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VaultDocumentLink &&
+          other.id == this.id &&
+          other.familyId == this.familyId &&
+          other.revision == this.revision &&
+          other.createdBy == this.createdBy &&
+          other.updatedBy == this.updatedBy &&
+          other.createdAtUs == this.createdAtUs &&
+          other.updatedAtUs == this.updatedAtUs &&
+          other.deletedAtUs == this.deletedAtUs &&
+          other.documentId == this.documentId &&
+          other.journalId == this.journalId &&
+          other.assetId == this.assetId);
+}
+
+class VaultDocumentLinksCompanion extends UpdateCompanion<VaultDocumentLink> {
+  final Value<String> id;
+  final Value<String> familyId;
+  final Value<int> revision;
+  final Value<String> createdBy;
+  final Value<String> updatedBy;
+  final Value<int> createdAtUs;
+  final Value<int> updatedAtUs;
+  final Value<int?> deletedAtUs;
+  final Value<String> documentId;
+  final Value<String?> journalId;
+  final Value<String?> assetId;
+  final Value<int> rowid;
+  const VaultDocumentLinksCompanion({
+    this.id = const Value.absent(),
+    this.familyId = const Value.absent(),
+    this.revision = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.updatedBy = const Value.absent(),
+    this.createdAtUs = const Value.absent(),
+    this.updatedAtUs = const Value.absent(),
+    this.deletedAtUs = const Value.absent(),
+    this.documentId = const Value.absent(),
+    this.journalId = const Value.absent(),
+    this.assetId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VaultDocumentLinksCompanion.insert({
+    required String id,
+    required String familyId,
+    this.revision = const Value.absent(),
+    required String createdBy,
+    required String updatedBy,
+    required int createdAtUs,
+    required int updatedAtUs,
+    this.deletedAtUs = const Value.absent(),
+    required String documentId,
+    this.journalId = const Value.absent(),
+    this.assetId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       familyId = Value(familyId),
+       createdBy = Value(createdBy),
+       updatedBy = Value(updatedBy),
+       createdAtUs = Value(createdAtUs),
+       updatedAtUs = Value(updatedAtUs),
+       documentId = Value(documentId);
+  static Insertable<VaultDocumentLink> custom({
+    Expression<String>? id,
+    Expression<String>? familyId,
+    Expression<int>? revision,
+    Expression<String>? createdBy,
+    Expression<String>? updatedBy,
+    Expression<int>? createdAtUs,
+    Expression<int>? updatedAtUs,
+    Expression<int>? deletedAtUs,
+    Expression<String>? documentId,
+    Expression<String>? journalId,
+    Expression<String>? assetId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (familyId != null) 'family_id': familyId,
+      if (revision != null) 'revision': revision,
+      if (createdBy != null) 'created_by': createdBy,
+      if (updatedBy != null) 'updated_by': updatedBy,
+      if (createdAtUs != null) 'created_at_us': createdAtUs,
+      if (updatedAtUs != null) 'updated_at_us': updatedAtUs,
+      if (deletedAtUs != null) 'deleted_at_us': deletedAtUs,
+      if (documentId != null) 'document_id': documentId,
+      if (journalId != null) 'journal_id': journalId,
+      if (assetId != null) 'asset_id': assetId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VaultDocumentLinksCompanion copyWith({
+    Value<String>? id,
+    Value<String>? familyId,
+    Value<int>? revision,
+    Value<String>? createdBy,
+    Value<String>? updatedBy,
+    Value<int>? createdAtUs,
+    Value<int>? updatedAtUs,
+    Value<int?>? deletedAtUs,
+    Value<String>? documentId,
+    Value<String?>? journalId,
+    Value<String?>? assetId,
+    Value<int>? rowid,
+  }) {
+    return VaultDocumentLinksCompanion(
+      id: id ?? this.id,
+      familyId: familyId ?? this.familyId,
+      revision: revision ?? this.revision,
+      createdBy: createdBy ?? this.createdBy,
+      updatedBy: updatedBy ?? this.updatedBy,
+      createdAtUs: createdAtUs ?? this.createdAtUs,
+      updatedAtUs: updatedAtUs ?? this.updatedAtUs,
+      deletedAtUs: deletedAtUs ?? this.deletedAtUs,
+      documentId: documentId ?? this.documentId,
+      journalId: journalId ?? this.journalId,
+      assetId: assetId ?? this.assetId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (familyId.present) {
+      map['family_id'] = Variable<String>(familyId.value);
+    }
+    if (revision.present) {
+      map['revision'] = Variable<int>(revision.value);
+    }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (updatedBy.present) {
+      map['updated_by'] = Variable<String>(updatedBy.value);
+    }
+    if (createdAtUs.present) {
+      map['created_at_us'] = Variable<int>(createdAtUs.value);
+    }
+    if (updatedAtUs.present) {
+      map['updated_at_us'] = Variable<int>(updatedAtUs.value);
+    }
+    if (deletedAtUs.present) {
+      map['deleted_at_us'] = Variable<int>(deletedAtUs.value);
+    }
+    if (documentId.present) {
+      map['document_id'] = Variable<String>(documentId.value);
+    }
+    if (journalId.present) {
+      map['journal_id'] = Variable<String>(journalId.value);
+    }
+    if (assetId.present) {
+      map['asset_id'] = Variable<String>(assetId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultDocumentLinksCompanion(')
+          ..write('id: $id, ')
+          ..write('familyId: $familyId, ')
+          ..write('revision: $revision, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('updatedBy: $updatedBy, ')
+          ..write('createdAtUs: $createdAtUs, ')
+          ..write('updatedAtUs: $updatedAtUs, ')
+          ..write('deletedAtUs: $deletedAtUs, ')
+          ..write('documentId: $documentId, ')
+          ..write('journalId: $journalId, ')
+          ..write('assetId: $assetId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -18506,6 +20590,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SalaryPaymentsTable salaryPayments = $SalaryPaymentsTable(this);
   late final $AggregateJournalLinksTable aggregateJournalLinks =
       $AggregateJournalLinksTable(this);
+  late final $VaultDocumentsTable vaultDocuments = $VaultDocumentsTable(this);
+  late final $VaultDocumentVersionsTable vaultDocumentVersions =
+      $VaultDocumentVersionsTable(this);
+  late final $VaultDocumentLinksTable vaultDocumentLinks =
+      $VaultDocumentLinksTable(this);
   late final Index pendingMutationsRetry = Index(
     'pending_mutations_retry',
     'CREATE INDEX pending_mutations_retry ON pending_mutations (state, next_attempt_at_us)',
@@ -18543,6 +20632,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     workers,
     salaryPayments,
     aggregateJournalLinks,
+    vaultDocuments,
+    vaultDocumentVersions,
+    vaultDocumentLinks,
     pendingMutationsRetry,
   ];
 }
@@ -19871,6 +21963,45 @@ final class $$FamilySpacesTableReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<$VaultDocumentsTable, List<VaultDocument>>
+  _vaultDocumentsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.vaultDocuments,
+    aliasName: 'family_spaces__id__vault_documents__family_id',
+  );
+
+  $$VaultDocumentsTableProcessedTableManager get vaultDocumentsRefs {
+    final manager = $$VaultDocumentsTableTableManager(
+      $_db,
+      $_db.vaultDocuments,
+    ).filter((f) => f.familyId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_vaultDocumentsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$VaultDocumentLinksTable, List<VaultDocumentLink>>
+  _vaultDocumentLinksRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.vaultDocumentLinks,
+        aliasName: 'family_spaces__id__vault_document_links__family_id',
+      );
+
+  $$VaultDocumentLinksTableProcessedTableManager get vaultDocumentLinksRefs {
+    final manager = $$VaultDocumentLinksTableTableManager(
+      $_db,
+      $_db.vaultDocumentLinks,
+    ).filter((f) => f.familyId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _vaultDocumentLinksRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$FamilySpacesTableFilterComposer
@@ -20173,6 +22304,56 @@ class $$FamilySpacesTableFilterComposer
           }) => $$WorkersTableFilterComposer(
             $db: $db,
             $table: $db.workers,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> vaultDocumentsRefs(
+    Expression<bool> Function($$VaultDocumentsTableFilterComposer f) f,
+  ) {
+    final $$VaultDocumentsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.vaultDocuments,
+      getReferencedColumn: (t) => t.familyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$VaultDocumentsTableFilterComposer(
+            $db: $db,
+            $table: $db.vaultDocuments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> vaultDocumentLinksRefs(
+    Expression<bool> Function($$VaultDocumentLinksTableFilterComposer f) f,
+  ) {
+    final $$VaultDocumentLinksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.vaultDocumentLinks,
+      getReferencedColumn: (t) => t.familyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$VaultDocumentLinksTableFilterComposer(
+            $db: $db,
+            $table: $db.vaultDocumentLinks,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -20519,6 +22700,57 @@ class $$FamilySpacesTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> vaultDocumentsRefs<T extends Object>(
+    Expression<T> Function($$VaultDocumentsTableAnnotationComposer a) f,
+  ) {
+    final $$VaultDocumentsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.vaultDocuments,
+      getReferencedColumn: (t) => t.familyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$VaultDocumentsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.vaultDocuments,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> vaultDocumentLinksRefs<T extends Object>(
+    Expression<T> Function($$VaultDocumentLinksTableAnnotationComposer a) f,
+  ) {
+    final $$VaultDocumentLinksTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.vaultDocumentLinks,
+          getReferencedColumn: (t) => t.familyId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$VaultDocumentLinksTableAnnotationComposer(
+                $db: $db,
+                $table: $db.vaultDocumentLinks,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$FamilySpacesTableTableManager
@@ -20546,6 +22778,8 @@ class $$FamilySpacesTableTableManager
             bool businessesRefs,
             bool stockItemsRefs,
             bool workersRefs,
+            bool vaultDocumentsRefs,
+            bool vaultDocumentLinksRefs,
           })
         > {
   $$FamilySpacesTableTableManager(_$AppDatabase db, $FamilySpacesTable table)
@@ -20612,6 +22846,8 @@ class $$FamilySpacesTableTableManager
                 businessesRefs = false,
                 stockItemsRefs = false,
                 workersRefs = false,
+                vaultDocumentsRefs = false,
+                vaultDocumentLinksRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -20627,6 +22863,8 @@ class $$FamilySpacesTableTableManager
                     if (businessesRefs) db.businesses,
                     if (stockItemsRefs) db.stockItems,
                     if (workersRefs) db.workers,
+                    if (vaultDocumentsRefs) db.vaultDocuments,
+                    if (vaultDocumentLinksRefs) db.vaultDocumentLinks,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -20851,6 +23089,46 @@ class $$FamilySpacesTableTableManager
                           referencedColumn: 'family_id',
                           typedResults: items,
                         ),
+                      if (vaultDocumentsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          FamilySpace,
+                          $FamilySpacesTable,
+                          VaultDocument,
+                          $VaultDocumentsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$FamilySpacesTableReferences
+                              ._vaultDocumentsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$FamilySpacesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).vaultDocumentsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'family_id',
+                          typedResults: items,
+                        ),
+                      if (vaultDocumentLinksRefs)
+                        await $_getPrefetchedDataByColumns<
+                          FamilySpace,
+                          $FamilySpacesTable,
+                          VaultDocumentLink,
+                          $VaultDocumentLinksTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$FamilySpacesTableReferences
+                              ._vaultDocumentLinksRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$FamilySpacesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).vaultDocumentLinksRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'family_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -20883,6 +23161,8 @@ typedef $$FamilySpacesTableProcessedTableManager =
         bool businessesRefs,
         bool stockItemsRefs,
         bool workersRefs,
+        bool vaultDocumentsRefs,
+        bool vaultDocumentLinksRefs,
       })
     >;
 typedef $$FamilyMembersTableCreateCompanionBuilder =
@@ -30157,6 +32437,1274 @@ typedef $$AggregateJournalLinksTableProcessedTableManager =
       AggregateJournalLink,
       PrefetchHooks Function()
     >;
+typedef $$VaultDocumentsTableCreateCompanionBuilder =
+    VaultDocumentsCompanion Function({
+      required String id,
+      required String familyId,
+      Value<int> revision,
+      required String createdBy,
+      required String updatedBy,
+      required int createdAtUs,
+      required int updatedAtUs,
+      Value<int?> deletedAtUs,
+      required String title,
+      required String category,
+      required String ownerId,
+      Value<String?> expiryOn,
+      Value<int> rowid,
+    });
+typedef $$VaultDocumentsTableUpdateCompanionBuilder =
+    VaultDocumentsCompanion Function({
+      Value<String> id,
+      Value<String> familyId,
+      Value<int> revision,
+      Value<String> createdBy,
+      Value<String> updatedBy,
+      Value<int> createdAtUs,
+      Value<int> updatedAtUs,
+      Value<int?> deletedAtUs,
+      Value<String> title,
+      Value<String> category,
+      Value<String> ownerId,
+      Value<String?> expiryOn,
+      Value<int> rowid,
+    });
+
+final class $$VaultDocumentsTableReferences
+    extends BaseReferences<_$AppDatabase, $VaultDocumentsTable, VaultDocument> {
+  $$VaultDocumentsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $FamilySpacesTable _familyIdTable(_$AppDatabase db) => db.familySpaces
+      .createAlias('vault_documents__family_id__family_spaces__id');
+
+  $$FamilySpacesTableProcessedTableManager get familyId {
+    final $_column = $_itemColumn<String>('family_id')!;
+
+    final manager = $$FamilySpacesTableTableManager(
+      $_db,
+      $_db.familySpaces,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_familyIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$VaultDocumentsTableFilterComposer
+    extends Composer<_$AppDatabase, $VaultDocumentsTable> {
+  $$VaultDocumentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get revision => $composableBuilder(
+    column: $table.revision,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtUs => $composableBuilder(
+    column: $table.updatedAtUs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deletedAtUs => $composableBuilder(
+    column: $table.deletedAtUs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get expiryOn => $composableBuilder(
+    column: $table.expiryOn,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$FamilySpacesTableFilterComposer get familyId {
+    final $$FamilySpacesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.familyId,
+      referencedTable: $db.familySpaces,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FamilySpacesTableFilterComposer(
+            $db: $db,
+            $table: $db.familySpaces,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$VaultDocumentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $VaultDocumentsTable> {
+  $$VaultDocumentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get revision => $composableBuilder(
+    column: $table.revision,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtUs => $composableBuilder(
+    column: $table.updatedAtUs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deletedAtUs => $composableBuilder(
+    column: $table.deletedAtUs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get expiryOn => $composableBuilder(
+    column: $table.expiryOn,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$FamilySpacesTableOrderingComposer get familyId {
+    final $$FamilySpacesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.familyId,
+      referencedTable: $db.familySpaces,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FamilySpacesTableOrderingComposer(
+            $db: $db,
+            $table: $db.familySpaces,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$VaultDocumentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VaultDocumentsTable> {
+  $$VaultDocumentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get revision =>
+      $composableBuilder(column: $table.revision, builder: (column) => column);
+
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedBy =>
+      $composableBuilder(column: $table.updatedBy, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtUs => $composableBuilder(
+    column: $table.updatedAtUs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get deletedAtUs => $composableBuilder(
+    column: $table.deletedAtUs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
+
+  GeneratedColumn<String> get expiryOn =>
+      $composableBuilder(column: $table.expiryOn, builder: (column) => column);
+
+  $$FamilySpacesTableAnnotationComposer get familyId {
+    final $$FamilySpacesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.familyId,
+      referencedTable: $db.familySpaces,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FamilySpacesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.familySpaces,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$VaultDocumentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VaultDocumentsTable,
+          VaultDocument,
+          $$VaultDocumentsTableFilterComposer,
+          $$VaultDocumentsTableOrderingComposer,
+          $$VaultDocumentsTableAnnotationComposer,
+          $$VaultDocumentsTableCreateCompanionBuilder,
+          $$VaultDocumentsTableUpdateCompanionBuilder,
+          (VaultDocument, $$VaultDocumentsTableReferences),
+          VaultDocument,
+          PrefetchHooks Function({bool familyId})
+        > {
+  $$VaultDocumentsTableTableManager(
+    _$AppDatabase db,
+    $VaultDocumentsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VaultDocumentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VaultDocumentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VaultDocumentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> familyId = const Value.absent(),
+                Value<int> revision = const Value.absent(),
+                Value<String> createdBy = const Value.absent(),
+                Value<String> updatedBy = const Value.absent(),
+                Value<int> createdAtUs = const Value.absent(),
+                Value<int> updatedAtUs = const Value.absent(),
+                Value<int?> deletedAtUs = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> category = const Value.absent(),
+                Value<String> ownerId = const Value.absent(),
+                Value<String?> expiryOn = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VaultDocumentsCompanion(
+                id: id,
+                familyId: familyId,
+                revision: revision,
+                createdBy: createdBy,
+                updatedBy: updatedBy,
+                createdAtUs: createdAtUs,
+                updatedAtUs: updatedAtUs,
+                deletedAtUs: deletedAtUs,
+                title: title,
+                category: category,
+                ownerId: ownerId,
+                expiryOn: expiryOn,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String familyId,
+                Value<int> revision = const Value.absent(),
+                required String createdBy,
+                required String updatedBy,
+                required int createdAtUs,
+                required int updatedAtUs,
+                Value<int?> deletedAtUs = const Value.absent(),
+                required String title,
+                required String category,
+                required String ownerId,
+                Value<String?> expiryOn = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VaultDocumentsCompanion.insert(
+                id: id,
+                familyId: familyId,
+                revision: revision,
+                createdBy: createdBy,
+                updatedBy: updatedBy,
+                createdAtUs: createdAtUs,
+                updatedAtUs: updatedAtUs,
+                deletedAtUs: deletedAtUs,
+                title: title,
+                category: category,
+                ownerId: ownerId,
+                expiryOn: expiryOn,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$VaultDocumentsTable, VaultDocument>(table),
+                  $$VaultDocumentsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({familyId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (familyId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.familyId,
+                        referencedTable: $$VaultDocumentsTableReferences
+                            ._familyIdTable(db),
+                        referencedColumn: $$VaultDocumentsTableReferences
+                            ._familyIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$VaultDocumentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VaultDocumentsTable,
+      VaultDocument,
+      $$VaultDocumentsTableFilterComposer,
+      $$VaultDocumentsTableOrderingComposer,
+      $$VaultDocumentsTableAnnotationComposer,
+      $$VaultDocumentsTableCreateCompanionBuilder,
+      $$VaultDocumentsTableUpdateCompanionBuilder,
+      (VaultDocument, $$VaultDocumentsTableReferences),
+      VaultDocument,
+      PrefetchHooks Function({bool familyId})
+    >;
+typedef $$VaultDocumentVersionsTableCreateCompanionBuilder =
+    VaultDocumentVersionsCompanion Function({
+      required String id,
+      required String familyId,
+      required String documentId,
+      required int version,
+      required String mimeType,
+      required int plaintextBytes,
+      required String ciphertextDigest,
+      required Uint8List wrappedKey,
+      required String createdBy,
+      required String deviceId,
+      required int createdAtUs,
+      Value<int> rowid,
+    });
+typedef $$VaultDocumentVersionsTableUpdateCompanionBuilder =
+    VaultDocumentVersionsCompanion Function({
+      Value<String> id,
+      Value<String> familyId,
+      Value<String> documentId,
+      Value<int> version,
+      Value<String> mimeType,
+      Value<int> plaintextBytes,
+      Value<String> ciphertextDigest,
+      Value<Uint8List> wrappedKey,
+      Value<String> createdBy,
+      Value<String> deviceId,
+      Value<int> createdAtUs,
+      Value<int> rowid,
+    });
+
+class $$VaultDocumentVersionsTableFilterComposer
+    extends Composer<_$AppDatabase, $VaultDocumentVersionsTable> {
+  $$VaultDocumentVersionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get familyId => $composableBuilder(
+    column: $table.familyId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get plaintextBytes => $composableBuilder(
+    column: $table.plaintextBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ciphertextDigest => $composableBuilder(
+    column: $table.ciphertextDigest,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get wrappedKey => $composableBuilder(
+    column: $table.wrappedKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$VaultDocumentVersionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $VaultDocumentVersionsTable> {
+  $$VaultDocumentVersionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get familyId => $composableBuilder(
+    column: $table.familyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get plaintextBytes => $composableBuilder(
+    column: $table.plaintextBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ciphertextDigest => $composableBuilder(
+    column: $table.ciphertextDigest,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get wrappedKey => $composableBuilder(
+    column: $table.wrappedKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$VaultDocumentVersionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VaultDocumentVersionsTable> {
+  $$VaultDocumentVersionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get familyId =>
+      $composableBuilder(column: $table.familyId, builder: (column) => column);
+
+  GeneratedColumn<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+
+  GeneratedColumn<String> get mimeType =>
+      $composableBuilder(column: $table.mimeType, builder: (column) => column);
+
+  GeneratedColumn<int> get plaintextBytes => $composableBuilder(
+    column: $table.plaintextBytes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get ciphertextDigest => $composableBuilder(
+    column: $table.ciphertextDigest,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<Uint8List> get wrappedKey => $composableBuilder(
+    column: $table.wrappedKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<String> get deviceId =>
+      $composableBuilder(column: $table.deviceId, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => column,
+  );
+}
+
+class $$VaultDocumentVersionsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VaultDocumentVersionsTable,
+          VaultDocumentVersion,
+          $$VaultDocumentVersionsTableFilterComposer,
+          $$VaultDocumentVersionsTableOrderingComposer,
+          $$VaultDocumentVersionsTableAnnotationComposer,
+          $$VaultDocumentVersionsTableCreateCompanionBuilder,
+          $$VaultDocumentVersionsTableUpdateCompanionBuilder,
+          (
+            VaultDocumentVersion,
+            BaseReferences<
+              _$AppDatabase,
+              $VaultDocumentVersionsTable,
+              VaultDocumentVersion
+            >,
+          ),
+          VaultDocumentVersion,
+          PrefetchHooks Function()
+        > {
+  $$VaultDocumentVersionsTableTableManager(
+    _$AppDatabase db,
+    $VaultDocumentVersionsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VaultDocumentVersionsTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$VaultDocumentVersionsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$VaultDocumentVersionsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> familyId = const Value.absent(),
+                Value<String> documentId = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<String> mimeType = const Value.absent(),
+                Value<int> plaintextBytes = const Value.absent(),
+                Value<String> ciphertextDigest = const Value.absent(),
+                Value<Uint8List> wrappedKey = const Value.absent(),
+                Value<String> createdBy = const Value.absent(),
+                Value<String> deviceId = const Value.absent(),
+                Value<int> createdAtUs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VaultDocumentVersionsCompanion(
+                id: id,
+                familyId: familyId,
+                documentId: documentId,
+                version: version,
+                mimeType: mimeType,
+                plaintextBytes: plaintextBytes,
+                ciphertextDigest: ciphertextDigest,
+                wrappedKey: wrappedKey,
+                createdBy: createdBy,
+                deviceId: deviceId,
+                createdAtUs: createdAtUs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String familyId,
+                required String documentId,
+                required int version,
+                required String mimeType,
+                required int plaintextBytes,
+                required String ciphertextDigest,
+                required Uint8List wrappedKey,
+                required String createdBy,
+                required String deviceId,
+                required int createdAtUs,
+                Value<int> rowid = const Value.absent(),
+              }) => VaultDocumentVersionsCompanion.insert(
+                id: id,
+                familyId: familyId,
+                documentId: documentId,
+                version: version,
+                mimeType: mimeType,
+                plaintextBytes: plaintextBytes,
+                ciphertextDigest: ciphertextDigest,
+                wrappedKey: wrappedKey,
+                createdBy: createdBy,
+                deviceId: deviceId,
+                createdAtUs: createdAtUs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $VaultDocumentVersionsTable,
+                    VaultDocumentVersion
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $VaultDocumentVersionsTable,
+                    VaultDocumentVersion
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$VaultDocumentVersionsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VaultDocumentVersionsTable,
+      VaultDocumentVersion,
+      $$VaultDocumentVersionsTableFilterComposer,
+      $$VaultDocumentVersionsTableOrderingComposer,
+      $$VaultDocumentVersionsTableAnnotationComposer,
+      $$VaultDocumentVersionsTableCreateCompanionBuilder,
+      $$VaultDocumentVersionsTableUpdateCompanionBuilder,
+      (
+        VaultDocumentVersion,
+        BaseReferences<
+          _$AppDatabase,
+          $VaultDocumentVersionsTable,
+          VaultDocumentVersion
+        >,
+      ),
+      VaultDocumentVersion,
+      PrefetchHooks Function()
+    >;
+typedef $$VaultDocumentLinksTableCreateCompanionBuilder =
+    VaultDocumentLinksCompanion Function({
+      required String id,
+      required String familyId,
+      Value<int> revision,
+      required String createdBy,
+      required String updatedBy,
+      required int createdAtUs,
+      required int updatedAtUs,
+      Value<int?> deletedAtUs,
+      required String documentId,
+      Value<String?> journalId,
+      Value<String?> assetId,
+      Value<int> rowid,
+    });
+typedef $$VaultDocumentLinksTableUpdateCompanionBuilder =
+    VaultDocumentLinksCompanion Function({
+      Value<String> id,
+      Value<String> familyId,
+      Value<int> revision,
+      Value<String> createdBy,
+      Value<String> updatedBy,
+      Value<int> createdAtUs,
+      Value<int> updatedAtUs,
+      Value<int?> deletedAtUs,
+      Value<String> documentId,
+      Value<String?> journalId,
+      Value<String?> assetId,
+      Value<int> rowid,
+    });
+
+final class $$VaultDocumentLinksTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $VaultDocumentLinksTable,
+          VaultDocumentLink
+        > {
+  $$VaultDocumentLinksTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $FamilySpacesTable _familyIdTable(_$AppDatabase db) => db.familySpaces
+      .createAlias('vault_document_links__family_id__family_spaces__id');
+
+  $$FamilySpacesTableProcessedTableManager get familyId {
+    final $_column = $_itemColumn<String>('family_id')!;
+
+    final manager = $$FamilySpacesTableTableManager(
+      $_db,
+      $_db.familySpaces,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_familyIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$VaultDocumentLinksTableFilterComposer
+    extends Composer<_$AppDatabase, $VaultDocumentLinksTable> {
+  $$VaultDocumentLinksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get revision => $composableBuilder(
+    column: $table.revision,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAtUs => $composableBuilder(
+    column: $table.updatedAtUs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get deletedAtUs => $composableBuilder(
+    column: $table.deletedAtUs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get journalId => $composableBuilder(
+    column: $table.journalId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get assetId => $composableBuilder(
+    column: $table.assetId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$FamilySpacesTableFilterComposer get familyId {
+    final $$FamilySpacesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.familyId,
+      referencedTable: $db.familySpaces,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FamilySpacesTableFilterComposer(
+            $db: $db,
+            $table: $db.familySpaces,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$VaultDocumentLinksTableOrderingComposer
+    extends Composer<_$AppDatabase, $VaultDocumentLinksTable> {
+  $$VaultDocumentLinksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get revision => $composableBuilder(
+    column: $table.revision,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+    column: $table.createdBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAtUs => $composableBuilder(
+    column: $table.updatedAtUs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get deletedAtUs => $composableBuilder(
+    column: $table.deletedAtUs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get journalId => $composableBuilder(
+    column: $table.journalId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get assetId => $composableBuilder(
+    column: $table.assetId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$FamilySpacesTableOrderingComposer get familyId {
+    final $$FamilySpacesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.familyId,
+      referencedTable: $db.familySpaces,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FamilySpacesTableOrderingComposer(
+            $db: $db,
+            $table: $db.familySpaces,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$VaultDocumentLinksTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VaultDocumentLinksTable> {
+  $$VaultDocumentLinksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get revision =>
+      $composableBuilder(column: $table.revision, builder: (column) => column);
+
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedBy =>
+      $composableBuilder(column: $table.updatedBy, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get updatedAtUs => $composableBuilder(
+    column: $table.updatedAtUs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get deletedAtUs => $composableBuilder(
+    column: $table.deletedAtUs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get journalId =>
+      $composableBuilder(column: $table.journalId, builder: (column) => column);
+
+  GeneratedColumn<String> get assetId =>
+      $composableBuilder(column: $table.assetId, builder: (column) => column);
+
+  $$FamilySpacesTableAnnotationComposer get familyId {
+    final $$FamilySpacesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.familyId,
+      referencedTable: $db.familySpaces,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$FamilySpacesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.familySpaces,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$VaultDocumentLinksTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VaultDocumentLinksTable,
+          VaultDocumentLink,
+          $$VaultDocumentLinksTableFilterComposer,
+          $$VaultDocumentLinksTableOrderingComposer,
+          $$VaultDocumentLinksTableAnnotationComposer,
+          $$VaultDocumentLinksTableCreateCompanionBuilder,
+          $$VaultDocumentLinksTableUpdateCompanionBuilder,
+          (VaultDocumentLink, $$VaultDocumentLinksTableReferences),
+          VaultDocumentLink,
+          PrefetchHooks Function({bool familyId})
+        > {
+  $$VaultDocumentLinksTableTableManager(
+    _$AppDatabase db,
+    $VaultDocumentLinksTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VaultDocumentLinksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VaultDocumentLinksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$VaultDocumentLinksTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> familyId = const Value.absent(),
+                Value<int> revision = const Value.absent(),
+                Value<String> createdBy = const Value.absent(),
+                Value<String> updatedBy = const Value.absent(),
+                Value<int> createdAtUs = const Value.absent(),
+                Value<int> updatedAtUs = const Value.absent(),
+                Value<int?> deletedAtUs = const Value.absent(),
+                Value<String> documentId = const Value.absent(),
+                Value<String?> journalId = const Value.absent(),
+                Value<String?> assetId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VaultDocumentLinksCompanion(
+                id: id,
+                familyId: familyId,
+                revision: revision,
+                createdBy: createdBy,
+                updatedBy: updatedBy,
+                createdAtUs: createdAtUs,
+                updatedAtUs: updatedAtUs,
+                deletedAtUs: deletedAtUs,
+                documentId: documentId,
+                journalId: journalId,
+                assetId: assetId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String familyId,
+                Value<int> revision = const Value.absent(),
+                required String createdBy,
+                required String updatedBy,
+                required int createdAtUs,
+                required int updatedAtUs,
+                Value<int?> deletedAtUs = const Value.absent(),
+                required String documentId,
+                Value<String?> journalId = const Value.absent(),
+                Value<String?> assetId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VaultDocumentLinksCompanion.insert(
+                id: id,
+                familyId: familyId,
+                revision: revision,
+                createdBy: createdBy,
+                updatedBy: updatedBy,
+                createdAtUs: createdAtUs,
+                updatedAtUs: updatedAtUs,
+                deletedAtUs: deletedAtUs,
+                documentId: documentId,
+                journalId: journalId,
+                assetId: assetId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$VaultDocumentLinksTable, VaultDocumentLink>(
+                    table,
+                  ),
+                  $$VaultDocumentLinksTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({familyId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (familyId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.familyId,
+                        referencedTable: $$VaultDocumentLinksTableReferences
+                            ._familyIdTable(db),
+                        referencedColumn: $$VaultDocumentLinksTableReferences
+                            ._familyIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$VaultDocumentLinksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VaultDocumentLinksTable,
+      VaultDocumentLink,
+      $$VaultDocumentLinksTableFilterComposer,
+      $$VaultDocumentLinksTableOrderingComposer,
+      $$VaultDocumentLinksTableAnnotationComposer,
+      $$VaultDocumentLinksTableCreateCompanionBuilder,
+      $$VaultDocumentLinksTableUpdateCompanionBuilder,
+      (VaultDocumentLink, $$VaultDocumentLinksTableReferences),
+      VaultDocumentLink,
+      PrefetchHooks Function({bool familyId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -30217,4 +33765,10 @@ class $AppDatabaseManager {
       $$SalaryPaymentsTableTableManager(_db, _db.salaryPayments);
   $$AggregateJournalLinksTableTableManager get aggregateJournalLinks =>
       $$AggregateJournalLinksTableTableManager(_db, _db.aggregateJournalLinks);
+  $$VaultDocumentsTableTableManager get vaultDocuments =>
+      $$VaultDocumentsTableTableManager(_db, _db.vaultDocuments);
+  $$VaultDocumentVersionsTableTableManager get vaultDocumentVersions =>
+      $$VaultDocumentVersionsTableTableManager(_db, _db.vaultDocumentVersions);
+  $$VaultDocumentLinksTableTableManager get vaultDocumentLinks =>
+      $$VaultDocumentLinksTableTableManager(_db, _db.vaultDocumentLinks);
 }

@@ -22,7 +22,7 @@ a registry version match alone is not proof.
 | [path_provider](https://pub.dev/packages/path_provider/versions/2.1.6) | 2.1.6 | 2026-06-15 | Future private app-directory integration. Flutter-maintained native plugin; selected but defer adoption until vault lifecycle is implemented. |
 | [path](https://pub.dev/packages/path/versions/1.9.1) | 1.9.1 | 2024-10-17 | Safe local path construction. Stable Dart-maintained library; old publication alone is not evidence of abandonment. |
 | [uuid](https://pub.dev/packages/uuid/versions/4.6.0) | 4.6.0 | 2026-07-15 | Stable operation/entity identifiers. Use CSPRNG UUIDv4; IDs do not replace authorization. |
-| [cryptography](https://pub.dev/packages/cryptography/versions/2.9.0) | 2.9.0 | 2025-11-21 | Future document/backup envelopes. Selected candidate; maintained cross-platform primitives, envelope/key-exchange audit still required; defer adoption until that milestone. |
+| [cryptography](https://pub.dev/packages/cryptography/versions/2.9.0) | 2.9.0 | 2025-11-21 | Device Ed25519 and X25519 keys and authenticated local document files. Key delivery and archive formats require separate tests. |
 | [drift_dev](https://pub.dev/packages/drift_dev/versions/2.35.3) | 2.35.3 | 2026-11-08 | Drift code generation. Companion generator may have a different patch version from runtime; verify build_runner output and schema checks. |
 | [build_runner](https://pub.dev/packages/build_runner/versions/2.17.1) | 2.17.1 | 2026-10-14 | Code generation. Build-time tool; lock full graph and run generation without blanket deletion flags. |
 | [flutter_lints](https://pub.dev/packages/flutter_lints/versions/6.0.0) | 6.0.0 | 2025-05-27 | Static analysis. Flutter/Dart lint defaults plus project checks. |
