@@ -28,3 +28,13 @@ for familyvault_jdk in "$FAMILYVAULT_ROOT"/.tools/jdk-21*; do
 done
 unset familyvault_jdk
 export PATH="$FAMILYVAULT_ROOT/.tools/flutter/bin:${JAVA_HOME:+$JAVA_HOME/bin:}$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+# The PDF native-asset hook also compiles a small host library during tests.
+if [[ "$(uname -sm)" = 'Linux x86_64' ]] && ! command -v clang >/dev/null; then
+  for familyvault_llvm in "$ANDROID_HOME"/ndk/*/toolchains/llvm/prebuilt/linux-x86_64/bin; do
+    if [[ -x "$familyvault_llvm/clang" ]]; then
+      export PATH="$PATH:$familyvault_llvm"
+      break
+    fi
+  done
+  unset familyvault_llvm
+fi

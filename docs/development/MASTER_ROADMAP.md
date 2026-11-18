@@ -33,6 +33,9 @@ No production deployment, real family data, paid services or destructive history
 - [ ] M08 Encrypted document/key engine, versions/import/camera scan/preview/search/reminders and audited gateway.
   - [x] M08a Additive v4 migration, encrypted version files, metadata, links and local audit.
   - [ ] M08b Document screens, native file and camera input, preview, expiry and export.
+    - [x] Local document screens, Files and camera adapters, PDF and image preview, export and links.
+    - [x] In-app expiry reminders.
+    - [ ] Scheduled OS reminders and physical camera validation.
   - [ ] M08c Shared device keys, confirmed private Storage delivery and access audit.
 - [ ] M09 Authenticated archive/local backup/export/restore, independent Drive adapter and complete clean-environment recovery tests.
 - [ ] M10 Integrated UI/security/accessibility regression, Android emulator/device-independent integration and dependency/secret review.

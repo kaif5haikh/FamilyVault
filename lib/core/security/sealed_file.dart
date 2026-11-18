@@ -56,8 +56,22 @@ final class SealedFile {
     required int clearLength,
     required SecretKey key,
     required List<int> context,
+  }) => encryptStream(
+    source: source.openRead(),
+    destination: destination,
+    clearLength: clearLength,
+    key: key,
+    context: context,
+  );
+
+  static Future<String> encryptStream({
+    required Stream<List<int>> source,
+    required File destination,
+    required int clearLength,
+    required SecretKey key,
+    required List<int> context,
   }) async {
-    if (clearLength < 1 || await source.length() != clearLength) throw invalid;
+    if (clearLength < 1) throw invalid;
     final header = Uint8List.fromList([
       ..._magic,
       ...randomBytes(16),
@@ -65,37 +79,41 @@ final class SealedFile {
     ]);
     await destination.create(exclusive: true);
     try {
-      final input = await source.open();
+      final output = await destination.open(mode: FileMode.writeOnly);
+      final buffer = Uint8List(chunkSize);
       try {
-        final output = await destination.open(mode: FileMode.writeOnly);
-        try {
-          await output.writeFrom(header);
-          var remaining = clearLength;
-          for (var index = 0; remaining > 0; index++) {
-            final count = min(chunkSize, remaining);
-            final bytes = await input.read(count);
-            try {
-              if (bytes.length != count) throw invalid;
-              final box = await algorithm.encrypt(
-                bytes,
-                secretKey: key,
-                nonce: _nonce(header, index),
-                aad: _authenticate(context, header, index),
-              );
-              await output.writeFrom(box.cipherText);
-              await output.writeFrom(box.mac.bytes);
-            } finally {
-              bytes.fillRange(0, bytes.length, 0);
-            }
-            remaining -= count;
-          }
-          if (await input.readByte() != -1) throw invalid;
-          await output.flush();
-        } finally {
-          await output.close();
+        await output.writeFrom(header);
+        var length = 0, filled = 0, index = 0;
+        Future<void> writeBlock() async {
+          final box = await algorithm.encrypt(
+            Uint8List.sublistView(buffer, 0, filled),
+            secretKey: key,
+            nonce: _nonce(header, index),
+            aad: _authenticate(context, header, index),
+          );
+          await output.writeFrom(box.cipherText);
+          await output.writeFrom(box.mac.bytes);
+          index++;
+          filled = 0;
         }
+
+        await for (final segment in source) {
+          length += segment.length;
+          if (length > clearLength) throw invalid;
+          for (var offset = 0; offset < segment.length;) {
+            final count = min(chunkSize - filled, segment.length - offset);
+            buffer.setRange(filled, filled + count, segment, offset);
+            offset += count;
+            filled += count;
+            if (filled == chunkSize) await writeBlock();
+          }
+        }
+        if (length != clearLength) throw invalid;
+        if (filled != 0) await writeBlock();
+        await output.flush();
       } finally {
-        await input.close();
+        buffer.fillRange(0, buffer.length, 0);
+        await output.close();
       }
       return await digest(destination);
     } catch (_) {

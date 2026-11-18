@@ -29,6 +29,21 @@ a registry version match alone is not proof.
 | [flutter_dotenv](https://pub.dev/packages/flutter_dotenv/versions/6.0.1) | 6.0.1 | 2026-04-21 | Not adopted. No secrets in bundled dotenv; compile-time public config is extractable. Initial app does not initialize cloud services. |
 | [connectivity_plus](https://pub.dev/packages/connectivity_plus/versions/7.3.2) | 7.3.2 | 2026-10-01 | Not adopted yet. Reachability does not prove server availability. Add only when a durable coordinator needs a wake-up hint. |
 
+
+The document screens pin File Picker 13.3.3, Image Picker 1.2.4 and pdfrx
+2.12.1. They support the project's Flutter and Dart constraints and the iOS
+15 deployment target. The file adapter uses native selection and streams bytes.
+Camera capture uses the Flutter-maintained plugin and cleans its own app-cache
+capture after save or cancellation. [File Picker 13.3.3](https://pub.dev/packages/file_picker/versions/13.3.3) · [Image Picker](https://pub.dev/packages/image_picker)
+
+The PDF viewer receives verified bytes from memory and disables external links
+and text selection. The resolved `pdfium_dart` 0.4.4 hook pins PDFium
+`chromium/8125` and verifies the downloaded archive against its SHA-256 table.
+Linux host tests compile the hook's C gate with clang. On x86-64 Linux the
+project's existing Android NDK clang is a fallback. OSV scanned 177 resolved
+packages with zero advisory matches. Native PDFium and OS security updates
+require their own review. [pdfrx 2.12.1](https://pub.dev/packages/pdfrx/versions/2.12.1) · [pdfium_dart 0.4.4](https://pub.dev/packages/pdfium_dart/versions/0.4.4)
+
 ## Security and supply chain
 
 The OSV querybatch API returned no advisory matches for the 16 direct candidate

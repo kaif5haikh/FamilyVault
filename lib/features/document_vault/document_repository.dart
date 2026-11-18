@@ -21,38 +21,49 @@ enum DocumentFormat {
   const DocumentFormat(this.mime, this.extension);
   final String mime, extension;
 
-  static Future<({DocumentFormat format, int bytes})> inspect(File file) async {
-    final bytes = await file.length();
+  static Future<({DocumentFormat format, int bytes})> inspect(
+    DocumentInput source,
+  ) async {
+    final bytes = await source.length();
     if (bytes < 8 || bytes > documentByteLimit) {
       throw const AppFailure(
         FailureCode.validation,
         'Choose a PDF, JPG or PNG file up to 24 MB.',
       );
     }
-    final input = await file.open();
-    try {
-      final header = await input.read(8);
-      if (_startsWith(header, ascii.encode('%PDF-'))) {
-        return (format: pdf, bytes: bytes);
-      }
-      if (_startsWith(header, const [255, 216, 255])) {
-        return (format: jpeg, bytes: bytes);
-      }
-      if (_startsWith(header, const [137, 80, 78, 71, 13, 10, 26, 10])) {
-        return (format: png, bytes: bytes);
-      }
-      throw const AppFailure(
-        FailureCode.validation,
-        'Choose a PDF, JPG or PNG file.',
-      );
-    } finally {
-      await input.close();
+    final header = <int>[];
+    await for (final fragment in source.openRead()) {
+      header.addAll(fragment.take(8 - header.length));
+      if (header.length == 8) break;
     }
+    if (_startsWith(header, ascii.encode('%PDF-'))) {
+      return (format: pdf, bytes: bytes);
+    }
+    if (_startsWith(header, const [255, 216, 255])) {
+      return (format: jpeg, bytes: bytes);
+    }
+    if (_startsWith(header, const [137, 80, 78, 71, 13, 10, 26, 10])) {
+      return (format: png, bytes: bytes);
+    }
+    throw const AppFailure(
+      FailureCode.validation,
+      'Choose a PDF, JPG or PNG file.',
+    );
   }
 
   static bool _startsWith(List<int> bytes, List<int> prefix) =>
       bytes.length >= prefix.length &&
       prefix.asMap().entries.every((byte) => bytes[byte.key] == byte.value);
+}
+
+/// A picked file can be read through a provider URI without making an app copy.
+final class DocumentInput {
+  const DocumentInput({required this.length, required this.openRead});
+  DocumentInput.file(File source)
+    : length = source.length,
+      openRead = source.openRead;
+  final Future<int> Function() length;
+  final Stream<List<int>> Function() openRead;
 }
 
 final class DocumentDetails {
@@ -193,6 +204,11 @@ final class DocumentRepository {
   Future<VaultDocumentVersion> add({
     required DocumentDetails details,
     required File source,
+  }) => addInput(details: details, source: DocumentInput.file(source));
+
+  Future<VaultDocumentVersion> addInput({
+    required DocumentDetails details,
+    required DocumentInput source,
   }) async {
     final title = _title(details), documentId = _uuid.v4();
     return _addVersion(
@@ -225,6 +241,13 @@ final class DocumentRepository {
     String documentId,
     int expectedRevision,
     File source,
+  ) =>
+      addVersionInput(documentId, expectedRevision, DocumentInput.file(source));
+
+  Future<VaultDocumentVersion> addVersionInput(
+    String documentId,
+    int expectedRevision,
+    DocumentInput source,
   ) => _addVersion(
     documentId,
     source,
@@ -259,7 +282,7 @@ final class DocumentRepository {
 
   Future<VaultDocumentVersion> _addVersion(
     String documentId,
-    File source, {
+    DocumentInput source, {
     required Future<int> Function() prepare,
   }) => storageBoundary(() async {
     await _authorize(writing: true);
@@ -278,8 +301,8 @@ final class DocumentRepository {
     );
     try {
       await _files.create(recursive: true);
-      final digest = await SealedFile.encrypt(
-        source: source,
+      final digest = await SealedFile.encryptStream(
+        source: source.openRead(),
         destination: temp,
         clearLength: inspected.bytes,
         key: contentKey,
@@ -413,6 +436,34 @@ final class DocumentRepository {
             ))
             .get();
       });
+
+  Stream<List<VaultDocument>> watchLinked({
+    String? journalId,
+    String? assetId,
+  }) async* {
+    await _authorize();
+    if ((journalId == null) == (assetId == null)) throw _missing;
+    final documents = _db.vaultDocuments, links = _db.vaultDocumentLinks;
+    final query =
+        _db.select(documents).join([
+          innerJoin(
+            links,
+            links.documentId.equalsExp(documents.id) &
+                links.familyId.equalsExp(documents.familyId),
+          ),
+        ])..where(
+          documents.familyId.equals(_familyId) &
+              documents.deletedAtUs.isNull() &
+              links.deletedAtUs.isNull() &
+              (journalId != null
+                  ? links.journalId.equals(journalId)
+                  : links.assetId.equals(assetId!)),
+        );
+    await for (final rows in query.watch()) {
+      _checkOpen();
+      yield [for (final row in rows) row.readTable(documents)];
+    }
+  }
 
   Future<String> link(
     String documentId, {

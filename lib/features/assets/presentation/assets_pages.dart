@@ -8,6 +8,7 @@ import '../../../core/finance/fixed_decimal.dart';
 import '../../../core/finance/formatters.dart';
 import '../../../shared/widgets/record_audit.dart';
 import '../../../shared/widgets/vault_widgets.dart';
+import '../../document_vault/linked_documents.dart';
 import '../data/asset_repository.dart';
 import 'asset_providers.dart';
 
@@ -323,6 +324,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                   ),
                 ),
               const SizedBox(height: 24),
+              LinkedDocuments(assetId: a.id),
               const SectionHeading('Linked accounting history'),
               for (final j in journals)
                 ListTile(

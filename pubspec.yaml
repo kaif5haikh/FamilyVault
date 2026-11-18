@@ -25,6 +25,9 @@ dependencies:
   intl: ^0.20.3
   cryptography: ^2.9.0
   local_auth: ^3.0.2
+  file_picker: 13.3.3
+  image_picker: 1.2.4
+  pdfrx: 2.12.1
 
 dev_dependencies:
   flutter_test:

@@ -10,6 +10,9 @@ import '../features/business/presentation/business_detail_pages.dart';
 import '../features/business/presentation/business_entry_editor.dart';
 import '../features/business/presentation/business_pages.dart';
 import '../features/business/presentation/business_record_editor.dart';
+import '../features/document_vault/document_detail.dart';
+import '../features/document_vault/document_inputs.dart';
+import '../features/document_vault/document_pages.dart';
 import '../features/foundation/foundation_pages.dart';
 import '../features/finance/presentation/finance_home_page.dart';
 import '../features/finance/presentation/accounts_pages.dart';
@@ -29,6 +32,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     debugLabel: 'familyvault.root',
   );
   ref.listen(vaultProvider, (_, _) => refresh.value++);
+  ref.listen(documentIntakeProvider, (_, _) => refresh.value++);
   final router = GoRouter(
     initialLocation: '/',
     navigatorKey: rootNavigator,
@@ -41,6 +45,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/access';
       }
       if (open && (path == '/' || path == '/access')) {
+        final selection = ref.read(documentIntakeProvider);
+        if (selection?.belongsTo(session.identity) == true) {
+          return '/document/import';
+        }
         return '/home';
       }
       return null;
@@ -53,12 +61,34 @@ final routerProvider = Provider<GoRouter>((ref) {
       _workspaceRoute('/transactions', const TransactionsPage()),
       _workspaceRoute('/accounts', const AccountsPage()),
       _workspaceRoute('/assets', const AssetsPage()),
+      _workspaceRoute('/documents', const DocumentsPage()),
       _workspaceRoute('/loans', const DebtsPage()),
       _workspaceRoute('/businesses', const BusinessesPage()),
       _workspaceRoute('/planning', const PlanningPage()),
       _workspaceRoute('/reports', const ReportsPage()),
       _workspaceRoute('/settings', const SettingsPage()),
       _workspaceRoute('/more', const MorePage()),
+      GoRoute(
+        path: '/document/import',
+        builder: (_, _) => const DocumentEditorPage(),
+      ),
+      GoRoute(
+        path: '/document/:id/edit',
+        builder: (_, state) =>
+            DocumentEditorPage(documentId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/document/:id/version/:version',
+        builder: (_, state) => DocumentPreviewPage(
+          documentId: state.pathParameters['id']!,
+          versionId: state.pathParameters['version']!,
+        ),
+      ),
+      GoRoute(
+        path: '/document/:id',
+        builder: (_, state) =>
+            DocumentDetailPage(documentId: state.pathParameters['id']!),
+      ),
       GoRoute(
         path: '/family-recovery',
         builder: (_, _) => const SyncRecoveryPage(),

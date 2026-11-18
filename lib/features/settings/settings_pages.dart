@@ -20,6 +20,12 @@ class MorePage extends StatelessWidget {
       const SectionHeading('More for your family'),
       for (final entry in <(String, String, IconData, String)>[
         (
+          'Documents',
+          'Files, scans and expiry dates',
+          Icons.folder_outlined,
+          '/documents',
+        ),
+        (
           'Assets',
           'Property, metals, investments and valuations',
           Icons.diamond_outlined,

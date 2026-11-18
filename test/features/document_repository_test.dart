@@ -251,6 +251,10 @@ void main() {
     final link = await vault.link(doc.documentId, journalId: journal.id);
     expect(await vault.link(doc.documentId, journalId: journal.id), link);
     expect((await vault.links(doc.documentId)).single.journalId, journal.id);
+    expect(
+      (await vault.watchLinked(journalId: journal.id).first).single.id,
+      doc.documentId,
+    );
     await vault.unlink(link);
     expect(await vault.links(doc.documentId), isEmpty);
     expect(

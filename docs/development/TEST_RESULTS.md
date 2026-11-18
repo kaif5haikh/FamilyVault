@@ -236,3 +236,22 @@ Record exact command, date, outcome and material platform/provider limits below.
   are project-local. Android installation and physical device checks remain
   pending. Transcripts `.cache/checks/android-avd-boot-20261118-b.txt` through
   `.cache/checks/android-avd-boot-20261118-d.txt`.
+
+## M08b — 2026-11-18 local document screens
+
+- `bash tool/check.sh` passed with 105 Flutter tests and one opt-in provider
+  check skipped. The widget test simulates the native picker pausing the app,
+  verifies device unlock resumes the same vault's pending import, and checks
+  an image preview, explicit export and both audit events. The resolved PDFium
+  library rendered a generated sample from memory. Transcript
+  `.cache/checks/m08-ui-full-20261118-a.txt`.
+- The resolved package audit returned zero Pub advisory matches across 177
+  packages. Android debug built with all three document plugins in 119.7
+  seconds. Transcripts `.cache/checks/m08-document-advisories-20261118-a.txt`
+  and `.cache/checks/m08-ui-android-20261118-a.txt`. The updated build with
+  linked-document screens passed in 18.6 seconds.
+  Transcript `.cache/checks/m08-ui-android-20261118-b.txt`.
+- The first host test run failed because the PDF build hook could not find
+  clang. The existing Android NDK clang compiled the host gate. The lifecycle
+  test also needed Android's intermediate hidden and inactive transitions.
+  Both corrections are reflected in the passing full check.

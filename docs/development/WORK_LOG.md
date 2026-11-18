@@ -244,3 +244,15 @@ separately. Continue with the business UI and executable backend policies.
   official Android archive after 37.2.13 crashed. Both exited 139 before boot.
   Continue with document screens, camera and Files integration using host tests
   and Android builds. [Android Emulator downloads](https://developer.android.com/studio/emulator_archive)
+
+## 2026-11-18 — local document screens and native adapters
+
+- Verified `89c06f0` on the public origin. Reviewed and pinned file_picker
+  13.3.3, image_picker 1.2.4 and pdfrx 2.12.1. Added an import flow that locks
+  keys while a native picker is open and resumes after device verification.
+- Verified document search, ownership, version history, asset and journal
+  links, due dates, image preview and a deliberate save dialog. Rendered a
+  synthetic PDF using the resolved native library. All 105 tests passed.
+- The Android debug build passed. Native camera and OS picker hardware
+  validation remain pending after the emulator crash. Next connect document
+  keys and private Storage receipts, and continue encrypted recovery work.

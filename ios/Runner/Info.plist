@@ -35,6 +35,10 @@
 	<false/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Verify your identity to unlock your private family vault.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Scan a document into your family vault.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Select an image when adding a document to your family vault.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

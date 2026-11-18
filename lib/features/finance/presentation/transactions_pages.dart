@@ -9,6 +9,7 @@ import '../../../app/vault_providers.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/finance/formatters.dart';
 import '../../../shared/widgets/vault_widgets.dart';
+import '../../document_vault/linked_documents.dart';
 import '../data/ledger_repository.dart';
 
 final _membersProvider = StreamProvider.autoDispose<Map<String, String>>((ref) {
@@ -303,6 +304,7 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
               ),
             ),
             const SizedBox(height: 24),
+            LinkedDocuments(journalId: journal.id),
             const SectionHeading('Audit history'),
             AuditHistory(entityId: journal.id),
           ],

@@ -14,6 +14,7 @@ class VaultShell extends ConsumerWidget {
     ('/transactions', 'transactions', Icons.swap_vert),
     ('/accounts', 'accounts', Icons.account_balance_outlined),
     ('/assets', 'assets', Icons.diamond_outlined),
+    ('/documents', 'documents', Icons.folder_outlined),
     ('/loans', 'liabilities', Icons.request_quote_outlined),
     ('/businesses', 'business', Icons.storefront_outlined),
     ('/planning', 'budgets', Icons.savings_outlined),
