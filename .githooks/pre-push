@@ -4,5 +4,10 @@ if [[ "${2:-}" != 'git@github.com:kaif5haikh/FamilyVault.git' ]]; then
   printf '%s\n' 'Push stopped: destination must be the designated FamilyVault SSH repository.' >&2
   exit 1
 fi
-gh repo view kaif5haikh/FamilyVault --json nameWithOwner,isPrivate |
-  python3 -c 'import json,sys; r=json.load(sys.stdin); sys.exit(0 if r["nameWithOwner"] == "kaif5haikh/FamilyVault" and r["isPrivate"] else "Push stopped: repository identity/privacy check failed")'
+familyvault_visibility=$(git config --local --get familyvault.expectedVisibility || printf '%s' PRIVATE)
+case "$familyvault_visibility" in
+  PRIVATE|PUBLIC) ;;
+  *) printf '%s\n' 'Push stopped: expected visibility must be PRIVATE or PUBLIC.' >&2; exit 1 ;;
+esac
+gh repo view kaif5haikh/FamilyVault --json nameWithOwner,visibility |
+  python3 -c 'import json,sys; r=json.load(sys.stdin); sys.exit(0 if r["nameWithOwner"] == "kaif5haikh/FamilyVault" and r["visibility"] == sys.argv[1] else "Push stopped: repository identity or visibility differs from the expected value")' "$familyvault_visibility"

@@ -3,8 +3,8 @@
 FamilyVault handles financial and identity information. The initial foundation
 has not passed a production security review and must not hold real family data.
 
-Report suspected vulnerabilities using this private repository's security
-advisory/reporting channel when enabled, or contact the repository owner through
+Report suspected vulnerabilities through GitHub private vulnerability
+reporting when enabled, or contact the repository owner through
 an already established private channel. Do not create public issues, attach real
 documents, paste access tokens or upload database dumps.
 

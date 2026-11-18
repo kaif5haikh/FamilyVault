@@ -1,7 +1,6 @@
 # FamilyVault working instructions
 
-- Work only in this project. Never inspect or modify Project Nexus, TenTal or
-  other projects. Preserve existing user data and files.
+- Work only in this project. Never inspect or modify sibling projects. Preserve existing user data and files.
 - Read `docs/architecture.md`, `docs/database.md`, ADR 0003 and ADR 0004 before
   implementation. The owner's autonomous end-to-end mission supersedes the prior
   per-phase human approval gate and authorizes implementation/engineering choices.
@@ -13,7 +12,7 @@
   Ownership is metadata, never a private document ACL. Do not re-open these defaults.
 - Restricted billing remains unspecified; do not invent its requirements.
 - Routine project file edits, free tool installation, local checks, commits and
-  private-origin pushes are authorized. Do not repeatedly request approval.
+  pushes to the designated SSH origin are authorized. Do not repeatedly request approval.
 - Keep keys/tokens/private documents/databases/exports out of Git and logs. No
   service-role credentials in Flutter, public document buckets or paid services.
 - Source `tool/env.sh` for local tooling/caches. Use `bash tool/check.sh` and
@@ -23,4 +22,5 @@
 - Update `docs/decisions/` for major engineering decisions and the operation log
   for verified commands/results. Distinguish proposals from implemented controls.
 - Inspect indexed content, run the repository policy check and redacted Gitleaks
-  before commits. Preserve the private SSH origin; local hooks enforce it.
+  before commits. Preserve the designated SSH origin and verify the owner-approved visibility.
+  The owner requested public repository visibility on 2026-11-18.

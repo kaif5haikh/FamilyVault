@@ -1,66 +1,30 @@
 # FamilyVault
 
-Private Android and iOS application for a family's finances, assets, liabilities,
-business records and encrypted documents. This is an independent project.
+FamilyVault is a Flutter app I am building to help a family keep track of money and important documents in one place. It uses rupees and Indian number formatting, including lakh and crore.
 
-**Status: active implementation.** The encrypted offline finance workspace now
-supports accounts, income, expenses, transfers, corrections, budgets,
-reconciliation, dashboards and reports. Assets include property and metal details,
-dated valuations, ownership, rent and closure history. Device-authenticated unlock
-and automatic locking are connected. Loans, business, cloud membership/sync,
-documents and backup/recovery are in development. No production backend or paid service
-has been provisioned. See the [verified implementation status](docs/development/IMPLEMENTATION_STATUS.md).
+## What works now
 
-## Product
+- Add cash and bank accounts, income, expenses and transfers.
+- Set monthly budgets and see where the money goes.
+- Record property, gold, silver and other assets with ownership details and a history of their values.
+- Correct a transaction while keeping the original entry in its history.
+- Save records on the device without internet. The app encrypts the local database and uses your device lock to open it.
 
-- INR/₹ by default, exact integer paise, Indian grouping and lakh/crore presentation.
-- Independent family accounts with shared family editing and creator/modifier audit.
-- Immutable posted accounting, linked corrections/reversals and financial tombstones.
-- Shared document visibility; ownership is metadata, never a private document ACL.
-- Encrypted local **and** Google Drive backups; Drive is not the live sync database.
-- Native Flutter, Riverpod, GoRouter, FL Chart, encrypted Drift/SQLite and Supabase.
+## What I am still building
 
-The separate restricted billing module is unspecified and deliberately deferred.
-No identities, balances, property details or family documents are seeded.
+I am working on loans, business accounts, family login, sync between devices and the document vault. Encrypted backups for the device and Google Drive are also part of the project.
 
-## Develop
+## Run it
 
-Read [AGENTS.md](AGENTS.md), [CONTRIBUTING.md](CONTRIBUTING.md),
-[SECURITY.md](SECURITY.md) and the [development setup](docs/development.md).
-The project-local toolchains and caches are configured by `tool/env.sh`.
+Install Flutter and set up an Android emulator or connect an Android phone. From the project folder run these commands.
 
 ```bash
-source tool/env.sh
-bash tool/check.sh
-flutter build apk --debug --no-pub
+flutter pub get --enforce-lockfile
+flutter run
 ```
 
-The Android debug artifact is `build/app/outputs/flutter-apk/app-debug.apk`.
-A device screen lock/biometric setup is required to create and unlock a vault.
-Start with an empty local workspace; it works without cloud credentials.
-A local save is explicitly reported as local, never as confirmed synchronization.
-Release APK/AAB preparation and physical-device validation remain separate
-acceptance items. iOS builds require macOS/Xcode; this Linux host cannot validate them.
+Set a screen lock on the device before creating a vault. The local app works without a Supabase account. For the tool versions and checks, see the [setup guide](docs/development.md).
 
-## Engineering evidence
+The Android debug build has been tested. The iOS project is included and needs a Mac with Xcode for build testing. Please use sample data while the app is in development.
 
-- [Roadmap](docs/development/MASTER_ROADMAP.md) and [implementation status](docs/development/IMPLEMENTATION_STATUS.md).
-- [Test results](docs/development/TEST_RESULTS.md) and [operation journal](docs/development/WORK_LOG.md).
-- [Documentation index](docs/README.md), [requirements](docs/product-requirements.md),
-  [architecture](docs/architecture.md), [database](docs/database.md).
-- Confirmed product decisions: [ADR 0003](docs/decisions/0003-confirmed-product-architecture.md).
-- Autonomous execution/migration authority: [ADR 0004](docs/decisions/0004-autonomous-implementation.md).
-- Implemented ledger: [ADR 0005](docs/decisions/0005-local-ledger.md).
-- Device vault: [ADR 0006](docs/decisions/0006-device-vault-lifecycle.md).
-
-The owner's autonomous mission supersedes the historic per-phase stop gate. It
-is not a claim of completed human security review or production deployment approval.
-SQL proposals elsewhere in the documentation are labelled separately from
-executable migrations and tested application behavior.
-
-## Security baseline
-
-Keep credentials, personal documents, databases, exports and backups out of Git.
-Supabase service-role/secret keys never belong in Flutter. Private repository
-visibility is not a data-security boundary. Development and tests use synthetic
-inputs only. App logs must not contain financial data, documents, keys or tokens.
+See the [project status](docs/development/IMPLEMENTATION_STATUS.md) for what has been tested so far.

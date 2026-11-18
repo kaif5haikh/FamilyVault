@@ -125,3 +125,17 @@ math; wealth/valuation; debt/repayment; business/inventory/salary and their UI.
   passed with 67 tests. See TEST_RESULTS for the exact transcript.
 - Loan contract and repayment repository work started separately. Next verify
   independent server-relevant invariants and finish native loan workflows.
+
+## 2026-11-18 — public source repository and README
+
+The owner requested public visibility for the existing GitHub repository and a
+simpler README. Checked all nine reachable commits and 195 distinct tracked
+paths. Redacted Gitleaks reported no leaks. The history scan found no private
+file types and all author and committer email addresses use GitHub noreply.
+GitHub showed one main branch and zero pull requests, issues, forks, releases,
+deployments, action runs, artifacts and repository action secrets.
+
+Rewrote the README in plain English and checked it contains no em dashes.
+The push hook checks the same SSH destination, owner and expected visibility
+throughout the transition. Application data and sensitive local files remain
+excluded from the source repository. No history rewrite or repository replacement.

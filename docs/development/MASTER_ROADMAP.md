@@ -24,5 +24,5 @@ No production deployment, real family data, paid services or destructive history
 - [ ] M11 Release APK/AAB/signing setup, iOS configuration, installation/user/migration/recovery guides and release notes.
 
 For each unit: implement → relevant tests/fixes → evidence/status/journal → logical
-commit → private SSH push → next available unit. Restricted billing remains an
+commit → verified SSH push → next available unit. Restricted billing remains an
 unimplemented extension point. No milestone is complete from a schema probe alone.

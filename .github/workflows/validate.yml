@@ -1,6 +1,6 @@
 name: Validate foundation
 
-# Manual until the owner chooses an automated CI cadence for the private repo.
+# Manual until the owner chooses an automated CI cadence for the repository.
 on:
   workflow_dispatch:
 
