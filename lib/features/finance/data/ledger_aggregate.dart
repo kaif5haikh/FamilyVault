@@ -19,6 +19,12 @@ extension LedgerAggregates on LedgerRepository {
     String action = 'update',
   }) => storageBoundary(
     () => db.transaction(() async {
+      if (identity.isCloud) {
+        throw const AppFailure(
+          FailureCode.configuration,
+          'Use your local vault to edit this section while family sync is in development.',
+        );
+      }
       await mutations.authorize();
       final digest = payloadDigest(
         canonicalJson({

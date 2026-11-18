@@ -3,8 +3,12 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../app/vault_providers.dart';
+import '../../core/security/vault_identity.dart';
 import '../../shared/widgets/vault_widgets.dart';
 import 'cloud_access_gateway.dart';
+import 'cloud_cache.dart';
+import 'cloud_connection.dart';
 import 'cloud_device_registration.dart';
 import 'cloud_providers.dart';
 import 'family_admin_panel.dart';
@@ -42,6 +46,7 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
   final _email = TextEditingController(), _password = TextEditingController();
   List<CloudJson> _families = [], _invitations = [];
   CloudJson? _selected;
+  VaultIdentity? _recent;
   EnrollmentResult? _enrollment;
   Object? _error;
   bool _busy = false;
@@ -64,6 +69,7 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
         _invitations = [];
         _enrollment = null;
         _selected = null;
+        _recent = null;
       });
     }, onError: (Object _) {});
     if (_gateway.userId != null) {
@@ -102,6 +108,10 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
 
   Future<void> _refresh() async {
     final user = _gateway.userId;
+    if (user != null) {
+      final recent = await (await _cache()).access.last(user);
+      if (mounted && user == _gateway.userId) setState(() => _recent = recent);
+    }
     final data = await _gateway.listAccess();
     if (!mounted || user == null || user != _gateway.userId) {
       return;
@@ -147,9 +157,42 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
     }
   });
 
+  Future<CloudWorkspaceCache> _cache() async {
+    final root = ref.read(vaultLifecycleProvider).root;
+    return CloudWorkspaceCache(
+      await ref.read(cloudRegistrationProvider.future),
+      root: root,
+    );
+  }
+
+  Future<void> _openFamily(
+    String familyId,
+    String memberId, {
+    String? deviceId,
+  }) => _run(() async {
+    final controller = ref.read(vaultProvider.notifier);
+    final cache = await _cache();
+    await controller.openConnected(
+      () => connectFamily(
+        cache: cache,
+        familyId: familyId,
+        memberId: memberId,
+        expectedDevice: deviceId,
+        onRevoked: (failure) => controller.lock(reason: failure),
+      ),
+    );
+  });
+
   Future<void> _signOut() => _run(() async {
     try {
-      await _gateway.signOut(null);
+      try {
+        final user = _gateway.userId;
+        if (user != null && _recent != null) {
+          await (await _cache()).access.revoke(user, _recent!);
+        }
+      } finally {
+        await _gateway.signOut(null);
+      }
     } finally {
       if (mounted) {
         _email.clear();
@@ -159,6 +202,7 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
           _invitations = [];
           _selected = null;
           _enrollment = null;
+          _recent = null;
         });
       }
     }
@@ -232,6 +276,17 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
             )
           else ...[
             const SectionHeading('Device approved'),
+            if (_selected case final selection?)
+              FilledButton.icon(
+                onPressed: _busy
+                    ? null
+                    : () => _openFamily(
+                        cloudText(selection, 'family_id'),
+                        cloudText(selection, 'member_id'),
+                      ),
+                icon: const Icon(Icons.folder_open_outlined),
+                label: const Text('Open family vault'),
+              ),
             if (_selected != null &&
                 enrollment.workspace?['role'] == 'administrator')
               FamilyAdminPanel(
@@ -246,6 +301,18 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
         Wrap(
           spacing: 12,
           children: [
+            if (_recent case final recent?)
+              TextButton.icon(
+                onPressed: _busy
+                    ? null
+                    : () => _openFamily(
+                        recent.familyId,
+                        recent.memberId,
+                        deviceId: recent.deviceId,
+                      ),
+                icon: const Icon(Icons.history),
+                label: const Text('Open last family vault'),
+              ),
             TextButton.icon(
               onPressed: _busy ? null : () => _run(_refresh),
               icon: const Icon(Icons.refresh),

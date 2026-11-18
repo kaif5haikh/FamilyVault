@@ -24,19 +24,23 @@ final class VaultFixture {
   late LedgerRepository ledger;
   File get file => File('${directory.path}/test.sqlite3');
   VaultDatabaseKey get key => VaultDatabaseKey.fromBytes(keyBytes);
-  static Future<VaultFixture> create({bool bootstrap = true}) async {
+  static Future<VaultFixture> create({
+    bool bootstrap = true,
+    VaultIdentity? identity,
+  }) async {
     final parent = await Directory('.cache/test-vaults')
         .create(recursive: true);
     final random = Random.secure();
     final fixture = VaultFixture._(
       await parent.createTemp('ledger-'),
       List.generate(32, (_) => random.nextInt(256)),
-      VaultIdentity(
-        familyId: uuid.v4(),
-        memberId: uuid.v4(),
-        deviceId: uuid.v4(),
-        mode: 'offline',
-      ),
+      identity ??
+          VaultIdentity(
+            familyId: uuid.v4(),
+            memberId: uuid.v4(),
+            deviceId: uuid.v4(),
+            mode: 'offline',
+          ),
     );
     if (bootstrap) {
       await fixture.ledger.createOfflineWorkspace(

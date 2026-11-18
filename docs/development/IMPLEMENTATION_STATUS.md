@@ -1,6 +1,6 @@
 # Implementation status
 
-Current task: **M06 shared family access and backend**. The local finance, assets, loans and business workflows passed.
+Current task: **M07 shared finance and recovery**. The basic connected ledger and the local finance, assets, loans and business workflows passed.
 Baseline: b9a2705. Goal active; no financial features existed at baseline.
 
 | Area | Actual baseline | Current result |
@@ -8,9 +8,9 @@ Baseline: b9a2705. Goal active; no financial features existed at baseline.
 | App | Locked welcome/access/about, theme, Riverpod/GoRouter | Device-authenticated local setup/unlock, encrypted overview and automatic privacy/locking wired/tested |
 | Persistence | Encrypted Drift v1: outbox/checkpoints/conflicts only | Encrypted v3 foundation implemented/tested; populated v1/v2 and immutable snapshots preserved |
 | Finance/wealth/debt/business | Architecture only | Local ledger + functional account/income/expense/transfer/correction/budget/reconciliation/report UI tested; v3 schema and exact calculations; asset, property, metal, rent, ownership and valuation screens tested with posted history; loans and repayment history; business revenue, operating costs, stock purchases, issues, wages and profit tested |
-| Auth/backend/sync | Secure storage adapters and proposal SQL | Local PostgreSQL and Supabase Auth/PostgREST verify family access, ordinary ledger writes, budgets, statement checks and ordered receipts. Mobile enrollment is wired and tested. The encrypted cloud cache, client replication and other finance commands remain pending. |
+| Auth/backend/sync | Secure storage adapters and proposal SQL | Approved devices can open isolated encrypted family caches and sync ordinary finance, budgets and statement checks. Two Dart clients passed a live local Supabase round trip. Offline leases and conflict detection passed host tests. User-directed recovery and other module commands are pending. |
 | Documents/backup/Drive | Design only | Engines/adapters/integration tests required |
-| Tests | 9 Flutter host tests and design probes | 86 Flutter host tests passed, including encrypted form workflows and atomic opening balances. Ordinary server commands passed PostgreSQL and concurrent Data API tests. |
+| Tests | 9 Flutter host tests and design probes | 96 Flutter host tests passed. The opt-in real provider round trip passed separately. Hardware checks are pending. |
 | Release | Prior Android debug APK | M06b Android debug build passed; release APK/AAB and complete UI still required; iOS needs macOS/Xcode |
 
 External constraints: no Supabase/Google OAuth/deployment credentials supplied;

@@ -188,3 +188,20 @@ Record exact command, date, outcome and material platform/provider limits below.
 - The real provider check passed a two-device budget and reconciliation flow.
   It verified a one-paise adjustment to an opening beyond JavaScript's safe
   integer range. Transcript `.cache/checks/m06c-planning-rest-20261118-a.txt`.
+
+## M06d and M07a-b — 2026-11-18 connected finance
+
+- `bash tool/check.sh` passed 96 Flutter tests, analyzer, dependency audit,
+  schema probes and executable PostgreSQL checks. The test using the provider
+  pod was skipped by the default host suite and passed separately.
+  Transcript `.cache/checks/m07-live-full-20261118-b.txt`.
+- The cache tests cover account isolation, server chart validation, missing
+  initialized files, lock on account switch, offline expiry, clock rollback,
+  changed Auth session and revocation. Two encrypted clients simulate airplane
+  mode, recovery from a lost receipt, restart, concurrent edits and atomic
+  page rollback. Physical airplane-mode testing remains pending.
+- `python3 -B tool/check_supabase.py --mobile` passed with genuine Auth sessions,
+  the Dart Supabase adapter and two encrypted SQLite caches. The test creates a
+  paise value above the JavaScript safe integer range, retrieves it on another
+  account, edits it there and verifies creator and editor on the first device.
+  Transcript `.cache/checks/m07-real-mobile-20261118-a.txt`.

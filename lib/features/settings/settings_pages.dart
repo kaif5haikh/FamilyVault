@@ -4,7 +4,13 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../app/appearance.dart';
 import '../../app/vault_providers.dart';
+import '../../core/errors/app_failure.dart';
+import '../../core/security/vault_lifecycle.dart';
+import '../../core/sync/live_sync.dart';
 import '../../shared/widgets/vault_widgets.dart';
+import '../auth/cloud_device_registration.dart';
+import '../auth/cloud_cache_access.dart';
+import '../auth/cloud_providers.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -172,6 +178,10 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
+        if (session?.sync case final sync?) ...[
+          _SyncSection(sync: sync, session: session!),
+          const SizedBox(height: 24),
+        ],
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.info_outline),
@@ -182,4 +192,89 @@ class SettingsPage extends ConsumerWidget {
       ],
     );
   }
+}
+
+class _SyncSection extends ConsumerWidget {
+  const _SyncSection({required this.sync, required this.session});
+  final LiveSync sync;
+  final VaultSession session;
+
+  Future<void> _signOut(WidgetRef ref) async {
+    final registration = await ref.read(cloudRegistrationProvider.future);
+    final gateway = registration.gateway;
+    if (session.closed) return;
+    final proof = CloudDevice(session.identity, session.keys).proof;
+    final controller = ref.read(vaultProvider.notifier);
+    final closed = controller.lock();
+    try {
+      try {
+        final user = gateway.userId;
+        if (user != null) {
+          await CloudCacheAccess(registration).revoke(user, session.identity);
+        }
+      } finally {
+        await gateway.signOut(proof);
+      }
+    } on AppFailure catch (error) {
+      await controller.lock(reason: error);
+    } catch (_) {
+      await controller.lock(
+        reason: const AppFailure(
+          FailureCode.storage,
+          'Secure sign-out needs another check.',
+        ),
+      );
+    } finally {
+      await closed;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Card.outlined(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: StreamBuilder<SyncFeedback>(
+        stream: sync.changes,
+        initialData: sync.status,
+        builder: (context, snapshot) {
+          final value = snapshot.data ?? sync.status;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Family sync',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 10),
+              if (value.checking) const LinearProgressIndicator(),
+              if (value.pending case final pending?)
+                Text(
+                  pending == 0
+                      ? 'No local changes are waiting for a receipt.'
+                      : '$pending local ${pending == 1 ? 'change is' : 'changes are'} waiting for a receipt.',
+                ),
+              if (value.failure case final failure?) FailureNotice(failure),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: value.checking ? null : sync.check,
+                    icon: const Icon(Icons.sync),
+                    label: const Text('Check sync'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _signOut(ref),
+                    icon: const Icon(Icons.logout),
+                    label: const Text('Sign out on this device'),
+                  ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
+    ),
+  );
 }

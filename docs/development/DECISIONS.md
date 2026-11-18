@@ -95,3 +95,8 @@ the private Auth helper and permission boundaries.
 
 ADR 0013 records the exact-byte operation envelope, family-scoped transaction
 sequence, atomic opening and corrections, and revision conflict response.
+
+## 2026-11-18 — encrypted family replicas
+
+ADR 0014 records verified chart and directory bootstrap, isolated cache paths,
+outbox leases, receipt recovery and transactional feed replay.

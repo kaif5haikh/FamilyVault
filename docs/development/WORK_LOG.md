@@ -207,3 +207,17 @@ separately. Continue with the business UI and executable backend policies.
   Supabase Data API test passed. Continue with a scoped cache and client
   replay for the tested finance commands. Wealth, loans and business remain
   local while their typed cloud commands are developed.
+
+## 2026-11-18 — connected ledger on two devices
+
+- Verified `a9ada33` on the public origin. Connected the verified chart and
+  family directory to isolated encrypted caches. The app now presents pending
+  receipt counts, sync feedback and safe sign-out in Settings.
+- Tested account switch and denial, a twelve-hour offline grant bound to the
+  same Auth session, optimistic conflicts, bounded retries and rollback on
+  interrupted pull. Fixed analyzer findings before rerunning the full check.
+- The full 96-test check passed. The opt-in Dart test against the disposable
+  Supabase pod verified exact round-trip finance and cross-member attribution.
+  Started the API 36 system image installation inside the project SDK.
+- Next implement conflict recovery that preserves the outgoing encrypted cache,
+  followed by the document engine and extended typed domain integration.

@@ -193,8 +193,15 @@ final class LedgerRepository {
     }),
   );
 
-  String chartId(String code) =>
-      uuid.v5(_nameSpace, '${identity.familyId}/chart/$code');
+  String chartId(String code) {
+    final path = '${identity.familyId}/chart/$code';
+    if (!identity.isCloud) return uuid.v5(_nameSpace, path);
+    final hash = payloadDigest(path);
+    return '${hash.substring(0, 8)}-${hash.substring(8, 12)}'
+        '-8${hash.substring(13, 16)}-8${hash.substring(17, 20)}'
+        '-${hash.substring(20, 32)}';
+  }
+
   String operationId() => uuid.v4();
   static String _text(String text, int max) {
     text = text.trim();

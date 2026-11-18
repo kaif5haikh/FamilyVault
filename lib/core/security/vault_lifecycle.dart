@@ -9,6 +9,7 @@ import '../../features/finance/data/ledger_repository.dart';
 import '../database/app_database.dart';
 import '../database/encrypted_connection.dart';
 import '../errors/app_failure.dart';
+import '../sync/live_sync.dart';
 import 'device_gate.dart';
 import 'secure_store.dart';
 import 'vault_identity.dart';
@@ -41,14 +42,28 @@ final class VaultSession {
   final VaultKeys keys;
   final Directory directory;
   final LedgerRepository ledger;
+  LiveSync? _sync;
+  LiveSync? get sync => _sync;
   bool closed = false;
+
+  void attachSync(LiveSync sync) {
+    if (closed || !identity.isCloud || _sync != null) {
+      throw StateError('The connected session is unavailable');
+    }
+    _sync = sync;
+  }
+
   Future<void> close() async {
     if (closed) {
       return;
     }
     closed = true;
     try {
-      await db.close();
+      try {
+        await _sync?.close();
+      } finally {
+        await db.close();
+      }
     } finally {
       keys.destroy();
     }
@@ -74,6 +89,7 @@ final class VaultLifecycle {
   Stream<VaultStatus> get changes => _events.stream;
   int _epoch = 0;
   bool _busy = false, _disposed = false;
+  Future<void>? _closing;
 
   void _set(VaultStatus value) {
     if (_disposed) {
@@ -149,6 +165,56 @@ final class VaultLifecycle {
   }) => _open(create: true, familyName: familyName, ownerName: ownerName);
   Future<void> unlock() => _open();
 
+  Future<void> openConnected(Future<VaultSession> Function() open) async {
+    if (_busy || _disposed || _status.session != null) {
+      throw const AppFailure(
+        FailureCode.locked,
+        'Wait for the current vault action to finish.',
+      );
+    }
+    _busy = true;
+    final epoch = ++_epoch;
+    final hasLocalVault = _status.hasVault;
+    _set(VaultStatus(VaultPhase.opening, hasVault: hasLocalVault));
+    VaultSession? candidate;
+    try {
+      await _closing;
+      _checkEpoch(epoch);
+      candidate = await open();
+      _checkEpoch(epoch);
+      if (!candidate.identity.isCloud ||
+          candidate.closed ||
+          candidate.sync == null) {
+        throw const AppFailure(
+          FailureCode.integrity,
+          'Family access could not be verified.',
+        );
+      }
+      _set(
+        VaultStatus(
+          VaultPhase.open,
+          session: candidate,
+          hasVault: hasLocalVault,
+        ),
+      );
+      candidate.sync!.start();
+      candidate = null;
+    } catch (error) {
+      if (epoch == _epoch) {
+        _set(
+          VaultStatus(
+            hasLocalVault ? VaultPhase.locked : VaultPhase.setup,
+            hasVault: hasLocalVault,
+          ),
+        );
+      }
+      throw _safe(error);
+    } finally {
+      await candidate?.close();
+      _busy = false;
+    }
+  }
+
   Future<void> _open({
     bool create = false,
     String? familyName,
@@ -163,6 +229,8 @@ final class VaultLifecycle {
     VaultSession? candidate;
     VaultKeys? keys;
     try {
+      await _closing;
+      _checkEpoch(epoch);
       if (!await gate.authenticate()) {
         throw const AppFailure(
           FailureCode.locked,
@@ -316,7 +384,7 @@ final class VaultLifecycle {
           'Secure storage or the vault is unavailable. Existing files and keys are preserved.',
         );
 
-  Future<void> lock() async {
+  Future<void> lock({AppFailure? reason}) async {
     ++_epoch;
     final session = _status.session;
     _set(
@@ -327,17 +395,26 @@ final class VaultLifecycle {
             ? VaultPhase.locked
             : VaultPhase.setup,
         hasVault: _status.hasVault,
-        failure: _status.phase == VaultPhase.unavailable
-            ? _status.failure
-            : null,
+        failure:
+            reason ??
+            (_status.phase == VaultPhase.unavailable ? _status.failure : null),
       ),
     );
-    await session?.close();
+    if (session != null) {
+      final closing = session.close();
+      _closing = closing;
+      try {
+        await closing;
+      } finally {
+        if (identical(_closing, closing)) _closing = null;
+      }
+    }
   }
 
   Future<void> dispose() async {
     ++_epoch;
     _disposed = true;
+    await _closing;
     await _status.session?.close();
     await _events.close();
   }

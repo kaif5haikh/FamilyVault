@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../core/errors/app_failure.dart';
 import '../core/security/device_gate.dart';
 import '../core/security/secure_store.dart';
 import '../core/security/vault_lifecycle.dart';
@@ -39,7 +40,9 @@ class VaultController extends Notifier<VaultStatus> {
   Future<void> createOffline(String familyName, String ownerName) =>
       _lifecycle.createOffline(familyName: familyName, ownerName: ownerName);
   Future<void> unlock() => _lifecycle.unlock();
-  Future<void> lock() => _lifecycle.lock();
+  Future<void> openConnected(Future<VaultSession> Function() open) =>
+      _lifecycle.openConnected(open);
+  Future<void> lock({AppFailure? reason}) => _lifecycle.lock(reason: reason);
   Future<void> retry() => _lifecycle.initialize();
 }
 

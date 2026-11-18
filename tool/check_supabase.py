@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Run real Auth/PostgREST against a disposable, loopback-only Supabase pod."""
 
+import argparse
 import base64
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import hmac
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
 import re
@@ -12,6 +14,7 @@ from pathlib import Path
 import secrets
 import subprocess
 import tempfile
+from threading import Thread
 import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -173,7 +176,61 @@ def check_ledger(rpc, family: str, owner: dict, owner_session: str, member: dict
     print('Real Data API passed shared budgets, stale statement refusal and atomic reconciliation.')
 
 
-def run(scratch: Path):
+def check_mobile(scratch: Path, auth_url: str, rest_url: str, family: str, users: list[dict]):
+    """Expose the two isolated services under the normal Supabase client paths."""
+    class FixtureProxy(BaseHTTPRequestHandler):
+        def forward(self):
+            target = None
+            for prefix, upstream in (('/auth/v1/', auth_url), ('/rest/v1/', rest_url)):
+                if self.path.startswith(prefix):
+                    target = upstream + '/' + self.path[len(prefix):]
+                    break
+            if target is None:
+                self.send_error(404)
+                return
+            length = int(self.headers.get('Content-Length', '0'))
+            if length > 2 * 1024 * 1024:
+                self.send_error(413)
+                return
+            body = self.rfile.read(length) if length else None
+            headers = {key: self.headers[key] for key in ('Authorization', 'Content-Type', 'Accept', 'Prefer')
+                       if key in self.headers}
+            try:
+                response = urlopen(Request(target, data=body, headers=headers, method=self.command), timeout=10)
+            except HTTPError as error:
+                response = error
+            except (URLError, TimeoutError):
+                self.send_error(502)
+                return
+            with response:
+                raw = response.read()
+                self.send_response(response.code)
+                self.send_header('Content-Type', response.headers.get('Content-Type', 'application/json'))
+                self.send_header('Content-Length', str(len(raw)))
+                self.end_headers()
+                self.wfile.write(raw)
+
+        do_POST = do_GET = forward
+
+        def log_message(self, *_):
+            pass
+
+    with ThreadingHTTPServer(('127.0.0.1', 0), FixtureProxy) as proxy:
+        config = scratch / 'mobile-fixture.json'
+        config.write_text(json.dumps({'url': f'http://127.0.0.1:{proxy.server_port}', 'family': family, 'users': users}))
+        config.chmod(0o600)
+        thread = Thread(target=proxy.serve_forever, daemon=True)
+        thread.start()
+        try:
+            subprocess.run(['flutter', 'test', '--no-pub', 'test/features/supabase_ledger_round_trip_test.dart'],
+                           env={**os.environ, 'FAMILYVAULT_TEST_SUPABASE_FIXTURE': str(config)},
+                           cwd=ROOT, timeout=180, check=True)
+        finally:
+            proxy.shutdown()
+            thread.join(timeout=5)
+
+
+def run(scratch: Path, *, mobile: bool):
     name = 'fv-check-' + uuid4().hex[:10]
     db, auth, rest = (f'{name}-{service}' for service in ('db', 'auth', 'rest'))
     password = secrets.token_hex(32)
@@ -234,15 +291,15 @@ def run(scratch: Path):
             pw = secrets.token_urlsafe(32)
             user = request(auth_url + '/admin/users', {'email': email, 'password': pw, 'email_confirm': True}, token=admin)
             access = request(auth_url + '/token?grant_type=password', {'email': email, 'password': pw})
-            return user['id'], access['access_token']
+            return user['id'], access['access_token'], pw
 
         def rpc(endpoint: str, fields: dict, token: str, status: int | tuple[int, ...] = 200):
             return request(rest_url + '/rpc/fv_' + endpoint, fields, token=token, status=status)
 
         admin = admin_token(signing_key)
-        owner, owner_session = create_user('owner@example.invalid', admin)
-        member, member_session = create_user('member@example.invalid', admin)
-        outsider, outsider_session = create_user('outside@example.invalid', admin)
+        owner, owner_session, owner_password = create_user('owner@example.invalid', admin)
+        member, member_session, member_password = create_user('member@example.invalid', admin)
+        outsider, outsider_session, _ = create_user('outside@example.invalid', admin)
         del member, outsider, admin
         family = psql(f"SELECT fv_internal.bootstrap_family('{owner}', 'Synthetic workspace', 'Synthetic owner');")
 
@@ -276,6 +333,11 @@ def run(scratch: Path):
         rpc('admin_access', member_fields, member_session, status=403)
         rpc('workspace', {**member_fields, 'p_proof': secrets.token_hex(32)}, member_session, status=403)
         check_ledger(rpc, family, owner_fields, owner_session, member_fields, member_session)
+        if mobile:
+            check_mobile(scratch, auth_url, rest_url, family, [
+                {'email': 'owner@example.invalid', 'password': owner_password, **owner_fields},
+                {'email': 'member@example.invalid', 'password': member_password, **member_fields},
+            ])
         request(auth_url + '/logout?scope=local', {}, token=member_session, status=204)
         rpc('workspace', member_fields, member_session, status=403)
         rpc('sync_pull', {**member_fields, 'p_after': 0}, member_session, status=403)
@@ -293,6 +355,9 @@ def run(scratch: Path):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--mobile', action='store_true', help='run the Dart transport against the same provider pod')
+    args = parser.parse_args()
     CACHE.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='fv-supabase-', dir=CACHE) as scratch_dir:
-        run(Path(scratch_dir))
+        run(Path(scratch_dir), mobile=args.mobile)

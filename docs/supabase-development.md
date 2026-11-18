@@ -24,6 +24,11 @@ with two signed-in, approved devices. It verifies the exact paise amount in
 the feed and confirms that the losing edit gets HTTP 409. It also checks that
 the previous member token loses access after Auth sign-out.
 
+Run `python3 -B tool/check_supabase.py --mobile` for the two-client Dart round
+trip. The disposable pod provides live Auth and Data API endpoints. Each client
+uses its own encrypted SQLite test file and app repository and verifies the
+shared record, exact balance, original creator and latest editor.
+
 ## Provision a development family
 
 1. Use a dedicated development project and apply `supabase/migrations/` in

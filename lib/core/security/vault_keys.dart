@@ -45,6 +45,17 @@ final class VaultKeys {
   final Uint8List database, documents, signingSeed, exchangeSeed;
   bool _destroyed = false;
   bool get destroyed => _destroyed;
+
+  VaultKeys copy() {
+    if (_destroyed) throw _invalid;
+    return VaultKeys._(
+      Uint8List.fromList(database),
+      Uint8List.fromList(documents),
+      Uint8List.fromList(signingSeed),
+      Uint8List.fromList(exchangeSeed),
+    );
+  }
+
   Map<String, Object?> toJson() {
     if (_destroyed) {
       throw _invalid;

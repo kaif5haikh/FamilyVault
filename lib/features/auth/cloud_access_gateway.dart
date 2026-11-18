@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../core/errors/app_failure.dart';
+import '../../core/sync/sync_protocol.dart';
 
 typedef CloudJson = Map<String, Object?>;
 
@@ -17,6 +20,7 @@ final class DeviceProof {
 
 abstract interface class CloudAccessGateway {
   String? get userId;
+  String? get sessionId;
   Stream<String?> get identityChanges;
   Future<void> signIn(String email, String password);
   Future<CloudJson> listAccess();
@@ -30,6 +34,8 @@ abstract interface class CloudAccessGateway {
   });
   Future<void> bind(DeviceProof device);
   Future<CloudJson> workspace(DeviceProof device);
+  Future<List<CloudJson>> chart(DeviceProof device);
+  SyncTransport syncTransport(DeviceProof device);
   Future<CloudJson> administratorView(DeviceProof device);
   Future<void> invite(
     DeviceProof device,
@@ -54,6 +60,28 @@ final class SupabaseAccessGateway implements CloudAccessGateway {
   final SupabaseClient _client;
   @override
   String? get userId => _client.auth.currentUser?.id;
+
+  @override
+  String? get sessionId {
+    final session = _client.auth.currentSession;
+    if (session == null) return null;
+    try {
+      final jwt = session.accessToken.split('.');
+      if (jwt.length != 3) return null;
+      final claims = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(jwt[1]))),
+      ) as CloudJson;
+      final id = claims['session_id'];
+      if (claims['sub'] == session.user.id &&
+          id is String &&
+          Uuid.isValidUUID(fromString: id)) {
+        return id;
+      }
+    } catch (_) {
+      // The local identifier only scopes a previous server grant.
+    }
+    return null;
+  }
 
   @override
   Stream<String?> get identityChanges => _client.auth.onAuthStateChange
@@ -102,6 +130,14 @@ final class SupabaseAccessGateway implements CloudAccessGateway {
       _rpc<CloudJson>('workspace', device.parameters);
 
   @override
+  Future<List<CloudJson>> chart(DeviceProof device) async =>
+      cloudRows(await _rpc<Object?>('sync_chart', device.parameters));
+
+  @override
+  SyncTransport syncTransport(DeviceProof device) =>
+      _SupabaseSync(this, device);
+
+  @override
   Future<CloudJson> administratorView(DeviceProof device) =>
       _rpc<CloudJson>('admin_access', device.parameters);
 
@@ -139,16 +175,18 @@ final class SupabaseAccessGateway implements CloudAccessGateway {
 
   @override
   Future<void> signOut(DeviceProof? device) async {
+    AppFailure? revocationFailure;
     try {
       if (device != null) {
         await _command('sign_out_device', device.parameters);
       }
     } on AppFailure catch (e) {
       if (e.code != FailureCode.unauthorized) {
-        rethrow;
+        revocationFailure = e;
       }
     }
     await _request(() => _client.auth.signOut(scope: SignOutScope.local));
+    if (revocationFailure != null) throw revocationFailure;
   }
 
   @override
@@ -215,16 +253,32 @@ final class SupabaseAccessGateway implements CloudAccessGateway {
     } on AuthException {
       throw _denied;
     } on PostgrestException catch (e) {
-      if (e.code == '42501' || e.code == 'PGRST301') {
+      final code = e.code ?? '';
+      if (['42501', 'PGRST301', 'PGRST303', '401', '403'].contains(code)) {
         throw _denied;
       }
-      if (e.code == '22023' || e.code == '23505') {
+      if (code == 'PT409') {
+        throw const AppFailure(
+          FailureCode.conflict,
+          'Shared records changed. Review the latest family records.',
+        );
+      }
+      if (code.startsWith('22') || code.startsWith('23')) {
         throw const AppFailure(
           FailureCode.validation,
           'Check the details or refresh the latest family access status.',
         );
       }
-      if (['PGRST000', 'PGRST001', 'PGRST002'].contains(e.code)) {
+      if ([
+        'PGRST000',
+        'PGRST001',
+        'PGRST002',
+        '408',
+        '429',
+        '502',
+        '503',
+        '504',
+      ].contains(code)) {
         throw _network;
       }
       throw _invalidResponse;
@@ -238,6 +292,28 @@ final class SupabaseAccessGateway implements CloudAccessGateway {
       throw _invalidResponse;
     }
   }
+}
+
+final class _SupabaseSync implements SyncTransport {
+  const _SupabaseSync(this.gateway, this.device);
+  final SupabaseAccessGateway gateway;
+  final DeviceProof device;
+
+  @override
+  Future<SyncReceipt> push(SyncEnvelope envelope) async => SyncReceipt.fromJson(
+    await gateway._rpc<CloudJson>('sync_push', {
+      ...device.parameters,
+      'p_envelope': envelope.raw,
+    }),
+  );
+
+  @override
+  Future<SyncPage> pull(int after) async => SyncPage.fromJson(
+    await gateway._rpc<CloudJson>('sync_pull', {
+      ...device.parameters,
+      'p_after': after,
+    }),
+  );
 }
 
 List<CloudJson> cloudRows(Object? value) {

@@ -1,8 +1,11 @@
-# Offline synchronization protocol — design, not yet implemented
+# Offline synchronization protocol
 
-This revision follows the confirmed shared-family model in
-[ADR 0003](decisions/0003-confirmed-product-architecture.md). No financial, document
-transport or backup integration is implemented by this architecture update.
+This design follows the shared-family model in [ADR 0003](decisions/0003-confirmed-product-architecture.md).
+The executable database and Dart worker for ordinary finance are described
+in [ADR 0013](decisions/0013-shared-ledger-receipts.md) and
+[ADR 0014](decisions/0014-encrypted-family-replica.md). This document also records
+target behavior for later integration, including the lease, conflict resolution,
+document transport, epoch policy and backup.
 
 ## Identity and durable local writes
 
@@ -25,8 +28,8 @@ Persist before showing success. Later edits get new operation IDs; never rewrite
 an operation already attempted. UI distinguishes saved locally, pending, retrying,
 conflicted, rejected and server-confirmed. Connectivity signals only wake retries.
 
-The foundation creates metadata tables only; domain-write transactions, transport
-and worker scheduling are future work.
+Ordinary financial writes use transactional envelopes today. Worker scheduling
+and support for other module commands remain separate integration tasks.
 
 ## Push and acknowledgement
 
