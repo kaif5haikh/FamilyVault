@@ -20542,6 +20542,1086 @@ class VaultDocumentLinksCompanion extends UpdateCompanion<VaultDocumentLink> {
   }
 }
 
+class $VaultDocumentUploadsTable extends VaultDocumentUploads
+    with TableInfo<$VaultDocumentUploadsTable, VaultDocumentUpload> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $VaultDocumentUploadsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _operationIdMeta = const VerificationMeta(
+    'operationId',
+  );
+  @override
+  late final GeneratedColumn<String> operationId = GeneratedColumn<String>(
+    'operation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _familyIdMeta = const VerificationMeta(
+    'familyId',
+  );
+  @override
+  late final GeneratedColumn<String> familyId = GeneratedColumn<String>(
+    'family_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _documentIdMeta = const VerificationMeta(
+    'documentId',
+  );
+  @override
+  late final GeneratedColumn<String> documentId = GeneratedColumn<String>(
+    'document_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
+    'ownerId',
+  );
+  @override
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+    'owner_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _memberIdMeta = const VerificationMeta(
+    'memberId',
+  );
+  @override
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+    'member_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deviceIdMeta = const VerificationMeta(
+    'deviceId',
+  );
+  @override
+  late final GeneratedColumn<String> deviceId = GeneratedColumn<String>(
+    'device_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _baseRevisionMeta = const VerificationMeta(
+    'baseRevision',
+  );
+  @override
+  late final GeneratedColumn<int> baseRevision = GeneratedColumn<int>(
+    'base_revision',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _versionMeta = const VerificationMeta(
+    'version',
+  );
+  @override
+  late final GeneratedColumn<int> version = GeneratedColumn<int>(
+    'version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _metadataBoxMeta = const VerificationMeta(
+    'metadataBox',
+  );
+  @override
+  late final GeneratedColumn<String> metadataBox = GeneratedColumn<String>(
+    'metadata_box',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mimeTypeMeta = const VerificationMeta(
+    'mimeType',
+  );
+  @override
+  late final GeneratedColumn<String> mimeType = GeneratedColumn<String>(
+    'mime_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _plaintextBytesMeta = const VerificationMeta(
+    'plaintextBytes',
+  );
+  @override
+  late final GeneratedColumn<int> plaintextBytes = GeneratedColumn<int>(
+    'plaintext_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _ciphertextDigestMeta = const VerificationMeta(
+    'ciphertextDigest',
+  );
+  @override
+  late final GeneratedColumn<String> ciphertextDigest = GeneratedColumn<String>(
+    'ciphertext_digest',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _wrappedKeyMeta = const VerificationMeta(
+    'wrappedKey',
+  );
+  @override
+  late final GeneratedColumn<Uint8List> wrappedKey = GeneratedColumn<Uint8List>(
+    'wrapped_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.blob,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtUsMeta = const VerificationMeta(
+    'createdAtUs',
+  );
+  @override
+  late final GeneratedColumn<int> createdAtUs = GeneratedColumn<int>(
+    'created_at_us',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('pending'),
+  );
+  static const VerificationMeta _attemptsMeta = const VerificationMeta(
+    'attempts',
+  );
+  @override
+  late final GeneratedColumn<int> attempts = GeneratedColumn<int>(
+    'attempts',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _nextAttemptAtUsMeta = const VerificationMeta(
+    'nextAttemptAtUs',
+  );
+  @override
+  late final GeneratedColumn<int> nextAttemptAtUs = GeneratedColumn<int>(
+    'next_attempt_at_us',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    operationId,
+    familyId,
+    documentId,
+    ownerId,
+    memberId,
+    deviceId,
+    baseRevision,
+    version,
+    title,
+    metadataBox,
+    mimeType,
+    plaintextBytes,
+    ciphertextDigest,
+    wrappedKey,
+    createdAtUs,
+    state,
+    attempts,
+    nextAttemptAtUs,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'vault_document_uploads';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<VaultDocumentUpload> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('operation_id')) {
+      context.handle(
+        _operationIdMeta,
+        operationId.isAcceptableOrUnknown(
+          data['operation_id']!,
+          _operationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_operationIdMeta);
+    }
+    if (data.containsKey('family_id')) {
+      context.handle(
+        _familyIdMeta,
+        familyId.isAcceptableOrUnknown(data['family_id']!, _familyIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_familyIdMeta);
+    }
+    if (data.containsKey('document_id')) {
+      context.handle(
+        _documentIdMeta,
+        documentId.isAcceptableOrUnknown(data['document_id']!, _documentIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_documentIdMeta);
+    }
+    if (data.containsKey('owner_id')) {
+      context.handle(
+        _ownerIdMeta,
+        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerIdMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(
+        _memberIdMeta,
+        memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_memberIdMeta);
+    }
+    if (data.containsKey('device_id')) {
+      context.handle(
+        _deviceIdMeta,
+        deviceId.isAcceptableOrUnknown(data['device_id']!, _deviceIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceIdMeta);
+    }
+    if (data.containsKey('base_revision')) {
+      context.handle(
+        _baseRevisionMeta,
+        baseRevision.isAcceptableOrUnknown(
+          data['base_revision']!,
+          _baseRevisionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_baseRevisionMeta);
+    }
+    if (data.containsKey('version')) {
+      context.handle(
+        _versionMeta,
+        version.isAcceptableOrUnknown(data['version']!, _versionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_versionMeta);
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('metadata_box')) {
+      context.handle(
+        _metadataBoxMeta,
+        metadataBox.isAcceptableOrUnknown(
+          data['metadata_box']!,
+          _metadataBoxMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_metadataBoxMeta);
+    }
+    if (data.containsKey('mime_type')) {
+      context.handle(
+        _mimeTypeMeta,
+        mimeType.isAcceptableOrUnknown(data['mime_type']!, _mimeTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mimeTypeMeta);
+    }
+    if (data.containsKey('plaintext_bytes')) {
+      context.handle(
+        _plaintextBytesMeta,
+        plaintextBytes.isAcceptableOrUnknown(
+          data['plaintext_bytes']!,
+          _plaintextBytesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_plaintextBytesMeta);
+    }
+    if (data.containsKey('ciphertext_digest')) {
+      context.handle(
+        _ciphertextDigestMeta,
+        ciphertextDigest.isAcceptableOrUnknown(
+          data['ciphertext_digest']!,
+          _ciphertextDigestMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_ciphertextDigestMeta);
+    }
+    if (data.containsKey('wrapped_key')) {
+      context.handle(
+        _wrappedKeyMeta,
+        wrappedKey.isAcceptableOrUnknown(data['wrapped_key']!, _wrappedKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_wrappedKeyMeta);
+    }
+    if (data.containsKey('created_at_us')) {
+      context.handle(
+        _createdAtUsMeta,
+        createdAtUs.isAcceptableOrUnknown(
+          data['created_at_us']!,
+          _createdAtUsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtUsMeta);
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
+      );
+    }
+    if (data.containsKey('attempts')) {
+      context.handle(
+        _attemptsMeta,
+        attempts.isAcceptableOrUnknown(data['attempts']!, _attemptsMeta),
+      );
+    }
+    if (data.containsKey('next_attempt_at_us')) {
+      context.handle(
+        _nextAttemptAtUsMeta,
+        nextAttemptAtUs.isAcceptableOrUnknown(
+          data['next_attempt_at_us']!,
+          _nextAttemptAtUsMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  VaultDocumentUpload map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return VaultDocumentUpload(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      operationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operation_id'],
+      )!,
+      familyId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}family_id'],
+      )!,
+      documentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}document_id'],
+      )!,
+      ownerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_id'],
+      )!,
+      memberId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}member_id'],
+      )!,
+      deviceId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_id'],
+      )!,
+      baseRevision: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}base_revision'],
+      )!,
+      version: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}version'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      metadataBox: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}metadata_box'],
+      )!,
+      mimeType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mime_type'],
+      )!,
+      plaintextBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}plaintext_bytes'],
+      )!,
+      ciphertextDigest: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ciphertext_digest'],
+      )!,
+      wrappedKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.blob,
+        data['${effectivePrefix}wrapped_key'],
+      )!,
+      createdAtUs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at_us'],
+      )!,
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
+      )!,
+      attempts: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}attempts'],
+      )!,
+      nextAttemptAtUs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}next_attempt_at_us'],
+      ),
+    );
+  }
+
+  @override
+  $VaultDocumentUploadsTable createAlias(String alias) {
+    return $VaultDocumentUploadsTable(attachedDatabase, alias);
+  }
+
+  @override
+  bool get isStrict => true;
+}
+
+class VaultDocumentUpload extends DataClass
+    implements Insertable<VaultDocumentUpload> {
+  final String id;
+  final String operationId;
+  final String familyId;
+  final String documentId;
+  final String ownerId;
+  final String memberId;
+  final String deviceId;
+  final int baseRevision;
+  final int version;
+  final String title;
+  final String metadataBox;
+  final String mimeType;
+  final int plaintextBytes;
+  final String ciphertextDigest;
+  final Uint8List wrappedKey;
+  final int createdAtUs;
+  final String state;
+  final int attempts;
+  final int? nextAttemptAtUs;
+  const VaultDocumentUpload({
+    required this.id,
+    required this.operationId,
+    required this.familyId,
+    required this.documentId,
+    required this.ownerId,
+    required this.memberId,
+    required this.deviceId,
+    required this.baseRevision,
+    required this.version,
+    required this.title,
+    required this.metadataBox,
+    required this.mimeType,
+    required this.plaintextBytes,
+    required this.ciphertextDigest,
+    required this.wrappedKey,
+    required this.createdAtUs,
+    required this.state,
+    required this.attempts,
+    this.nextAttemptAtUs,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['operation_id'] = Variable<String>(operationId);
+    map['family_id'] = Variable<String>(familyId);
+    map['document_id'] = Variable<String>(documentId);
+    map['owner_id'] = Variable<String>(ownerId);
+    map['member_id'] = Variable<String>(memberId);
+    map['device_id'] = Variable<String>(deviceId);
+    map['base_revision'] = Variable<int>(baseRevision);
+    map['version'] = Variable<int>(version);
+    map['title'] = Variable<String>(title);
+    map['metadata_box'] = Variable<String>(metadataBox);
+    map['mime_type'] = Variable<String>(mimeType);
+    map['plaintext_bytes'] = Variable<int>(plaintextBytes);
+    map['ciphertext_digest'] = Variable<String>(ciphertextDigest);
+    map['wrapped_key'] = Variable<Uint8List>(wrappedKey);
+    map['created_at_us'] = Variable<int>(createdAtUs);
+    map['state'] = Variable<String>(state);
+    map['attempts'] = Variable<int>(attempts);
+    if (!nullToAbsent || nextAttemptAtUs != null) {
+      map['next_attempt_at_us'] = Variable<int>(nextAttemptAtUs);
+    }
+    return map;
+  }
+
+  VaultDocumentUploadsCompanion toCompanion(bool nullToAbsent) {
+    return VaultDocumentUploadsCompanion(
+      id: Value(id),
+      operationId: Value(operationId),
+      familyId: Value(familyId),
+      documentId: Value(documentId),
+      ownerId: Value(ownerId),
+      memberId: Value(memberId),
+      deviceId: Value(deviceId),
+      baseRevision: Value(baseRevision),
+      version: Value(version),
+      title: Value(title),
+      metadataBox: Value(metadataBox),
+      mimeType: Value(mimeType),
+      plaintextBytes: Value(plaintextBytes),
+      ciphertextDigest: Value(ciphertextDigest),
+      wrappedKey: Value(wrappedKey),
+      createdAtUs: Value(createdAtUs),
+      state: Value(state),
+      attempts: Value(attempts),
+      nextAttemptAtUs: nextAttemptAtUs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nextAttemptAtUs),
+    );
+  }
+
+  factory VaultDocumentUpload.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return VaultDocumentUpload(
+      id: serializer.fromJson<String>(json['id']),
+      operationId: serializer.fromJson<String>(json['operationId']),
+      familyId: serializer.fromJson<String>(json['familyId']),
+      documentId: serializer.fromJson<String>(json['documentId']),
+      ownerId: serializer.fromJson<String>(json['ownerId']),
+      memberId: serializer.fromJson<String>(json['memberId']),
+      deviceId: serializer.fromJson<String>(json['deviceId']),
+      baseRevision: serializer.fromJson<int>(json['baseRevision']),
+      version: serializer.fromJson<int>(json['version']),
+      title: serializer.fromJson<String>(json['title']),
+      metadataBox: serializer.fromJson<String>(json['metadataBox']),
+      mimeType: serializer.fromJson<String>(json['mimeType']),
+      plaintextBytes: serializer.fromJson<int>(json['plaintextBytes']),
+      ciphertextDigest: serializer.fromJson<String>(json['ciphertextDigest']),
+      wrappedKey: serializer.fromJson<Uint8List>(json['wrappedKey']),
+      createdAtUs: serializer.fromJson<int>(json['createdAtUs']),
+      state: serializer.fromJson<String>(json['state']),
+      attempts: serializer.fromJson<int>(json['attempts']),
+      nextAttemptAtUs: serializer.fromJson<int?>(json['nextAttemptAtUs']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'operationId': serializer.toJson<String>(operationId),
+      'familyId': serializer.toJson<String>(familyId),
+      'documentId': serializer.toJson<String>(documentId),
+      'ownerId': serializer.toJson<String>(ownerId),
+      'memberId': serializer.toJson<String>(memberId),
+      'deviceId': serializer.toJson<String>(deviceId),
+      'baseRevision': serializer.toJson<int>(baseRevision),
+      'version': serializer.toJson<int>(version),
+      'title': serializer.toJson<String>(title),
+      'metadataBox': serializer.toJson<String>(metadataBox),
+      'mimeType': serializer.toJson<String>(mimeType),
+      'plaintextBytes': serializer.toJson<int>(plaintextBytes),
+      'ciphertextDigest': serializer.toJson<String>(ciphertextDigest),
+      'wrappedKey': serializer.toJson<Uint8List>(wrappedKey),
+      'createdAtUs': serializer.toJson<int>(createdAtUs),
+      'state': serializer.toJson<String>(state),
+      'attempts': serializer.toJson<int>(attempts),
+      'nextAttemptAtUs': serializer.toJson<int?>(nextAttemptAtUs),
+    };
+  }
+
+  VaultDocumentUpload copyWith({
+    String? id,
+    String? operationId,
+    String? familyId,
+    String? documentId,
+    String? ownerId,
+    String? memberId,
+    String? deviceId,
+    int? baseRevision,
+    int? version,
+    String? title,
+    String? metadataBox,
+    String? mimeType,
+    int? plaintextBytes,
+    String? ciphertextDigest,
+    Uint8List? wrappedKey,
+    int? createdAtUs,
+    String? state,
+    int? attempts,
+    Value<int?> nextAttemptAtUs = const Value.absent(),
+  }) => VaultDocumentUpload(
+    id: id ?? this.id,
+    operationId: operationId ?? this.operationId,
+    familyId: familyId ?? this.familyId,
+    documentId: documentId ?? this.documentId,
+    ownerId: ownerId ?? this.ownerId,
+    memberId: memberId ?? this.memberId,
+    deviceId: deviceId ?? this.deviceId,
+    baseRevision: baseRevision ?? this.baseRevision,
+    version: version ?? this.version,
+    title: title ?? this.title,
+    metadataBox: metadataBox ?? this.metadataBox,
+    mimeType: mimeType ?? this.mimeType,
+    plaintextBytes: plaintextBytes ?? this.plaintextBytes,
+    ciphertextDigest: ciphertextDigest ?? this.ciphertextDigest,
+    wrappedKey: wrappedKey ?? this.wrappedKey,
+    createdAtUs: createdAtUs ?? this.createdAtUs,
+    state: state ?? this.state,
+    attempts: attempts ?? this.attempts,
+    nextAttemptAtUs: nextAttemptAtUs.present
+        ? nextAttemptAtUs.value
+        : this.nextAttemptAtUs,
+  );
+  VaultDocumentUpload copyWithCompanion(VaultDocumentUploadsCompanion data) {
+    return VaultDocumentUpload(
+      id: data.id.present ? data.id.value : this.id,
+      operationId: data.operationId.present
+          ? data.operationId.value
+          : this.operationId,
+      familyId: data.familyId.present ? data.familyId.value : this.familyId,
+      documentId: data.documentId.present
+          ? data.documentId.value
+          : this.documentId,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      deviceId: data.deviceId.present ? data.deviceId.value : this.deviceId,
+      baseRevision: data.baseRevision.present
+          ? data.baseRevision.value
+          : this.baseRevision,
+      version: data.version.present ? data.version.value : this.version,
+      title: data.title.present ? data.title.value : this.title,
+      metadataBox: data.metadataBox.present
+          ? data.metadataBox.value
+          : this.metadataBox,
+      mimeType: data.mimeType.present ? data.mimeType.value : this.mimeType,
+      plaintextBytes: data.plaintextBytes.present
+          ? data.plaintextBytes.value
+          : this.plaintextBytes,
+      ciphertextDigest: data.ciphertextDigest.present
+          ? data.ciphertextDigest.value
+          : this.ciphertextDigest,
+      wrappedKey: data.wrappedKey.present
+          ? data.wrappedKey.value
+          : this.wrappedKey,
+      createdAtUs: data.createdAtUs.present
+          ? data.createdAtUs.value
+          : this.createdAtUs,
+      state: data.state.present ? data.state.value : this.state,
+      attempts: data.attempts.present ? data.attempts.value : this.attempts,
+      nextAttemptAtUs: data.nextAttemptAtUs.present
+          ? data.nextAttemptAtUs.value
+          : this.nextAttemptAtUs,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultDocumentUpload(')
+          ..write('id: $id, ')
+          ..write('operationId: $operationId, ')
+          ..write('familyId: $familyId, ')
+          ..write('documentId: $documentId, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('memberId: $memberId, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('baseRevision: $baseRevision, ')
+          ..write('version: $version, ')
+          ..write('title: $title, ')
+          ..write('metadataBox: $metadataBox, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('plaintextBytes: $plaintextBytes, ')
+          ..write('ciphertextDigest: $ciphertextDigest, ')
+          ..write('wrappedKey: $wrappedKey, ')
+          ..write('createdAtUs: $createdAtUs, ')
+          ..write('state: $state, ')
+          ..write('attempts: $attempts, ')
+          ..write('nextAttemptAtUs: $nextAttemptAtUs')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    operationId,
+    familyId,
+    documentId,
+    ownerId,
+    memberId,
+    deviceId,
+    baseRevision,
+    version,
+    title,
+    metadataBox,
+    mimeType,
+    plaintextBytes,
+    ciphertextDigest,
+    $driftBlobEquality.hash(wrappedKey),
+    createdAtUs,
+    state,
+    attempts,
+    nextAttemptAtUs,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is VaultDocumentUpload &&
+          other.id == this.id &&
+          other.operationId == this.operationId &&
+          other.familyId == this.familyId &&
+          other.documentId == this.documentId &&
+          other.ownerId == this.ownerId &&
+          other.memberId == this.memberId &&
+          other.deviceId == this.deviceId &&
+          other.baseRevision == this.baseRevision &&
+          other.version == this.version &&
+          other.title == this.title &&
+          other.metadataBox == this.metadataBox &&
+          other.mimeType == this.mimeType &&
+          other.plaintextBytes == this.plaintextBytes &&
+          other.ciphertextDigest == this.ciphertextDigest &&
+          $driftBlobEquality.equals(other.wrappedKey, this.wrappedKey) &&
+          other.createdAtUs == this.createdAtUs &&
+          other.state == this.state &&
+          other.attempts == this.attempts &&
+          other.nextAttemptAtUs == this.nextAttemptAtUs);
+}
+
+class VaultDocumentUploadsCompanion
+    extends UpdateCompanion<VaultDocumentUpload> {
+  final Value<String> id;
+  final Value<String> operationId;
+  final Value<String> familyId;
+  final Value<String> documentId;
+  final Value<String> ownerId;
+  final Value<String> memberId;
+  final Value<String> deviceId;
+  final Value<int> baseRevision;
+  final Value<int> version;
+  final Value<String> title;
+  final Value<String> metadataBox;
+  final Value<String> mimeType;
+  final Value<int> plaintextBytes;
+  final Value<String> ciphertextDigest;
+  final Value<Uint8List> wrappedKey;
+  final Value<int> createdAtUs;
+  final Value<String> state;
+  final Value<int> attempts;
+  final Value<int?> nextAttemptAtUs;
+  final Value<int> rowid;
+  const VaultDocumentUploadsCompanion({
+    this.id = const Value.absent(),
+    this.operationId = const Value.absent(),
+    this.familyId = const Value.absent(),
+    this.documentId = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.deviceId = const Value.absent(),
+    this.baseRevision = const Value.absent(),
+    this.version = const Value.absent(),
+    this.title = const Value.absent(),
+    this.metadataBox = const Value.absent(),
+    this.mimeType = const Value.absent(),
+    this.plaintextBytes = const Value.absent(),
+    this.ciphertextDigest = const Value.absent(),
+    this.wrappedKey = const Value.absent(),
+    this.createdAtUs = const Value.absent(),
+    this.state = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.nextAttemptAtUs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  VaultDocumentUploadsCompanion.insert({
+    required String id,
+    required String operationId,
+    required String familyId,
+    required String documentId,
+    required String ownerId,
+    required String memberId,
+    required String deviceId,
+    required int baseRevision,
+    required int version,
+    required String title,
+    required String metadataBox,
+    required String mimeType,
+    required int plaintextBytes,
+    required String ciphertextDigest,
+    required Uint8List wrappedKey,
+    required int createdAtUs,
+    this.state = const Value.absent(),
+    this.attempts = const Value.absent(),
+    this.nextAttemptAtUs = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       operationId = Value(operationId),
+       familyId = Value(familyId),
+       documentId = Value(documentId),
+       ownerId = Value(ownerId),
+       memberId = Value(memberId),
+       deviceId = Value(deviceId),
+       baseRevision = Value(baseRevision),
+       version = Value(version),
+       title = Value(title),
+       metadataBox = Value(metadataBox),
+       mimeType = Value(mimeType),
+       plaintextBytes = Value(plaintextBytes),
+       ciphertextDigest = Value(ciphertextDigest),
+       wrappedKey = Value(wrappedKey),
+       createdAtUs = Value(createdAtUs);
+  static Insertable<VaultDocumentUpload> custom({
+    Expression<String>? id,
+    Expression<String>? operationId,
+    Expression<String>? familyId,
+    Expression<String>? documentId,
+    Expression<String>? ownerId,
+    Expression<String>? memberId,
+    Expression<String>? deviceId,
+    Expression<int>? baseRevision,
+    Expression<int>? version,
+    Expression<String>? title,
+    Expression<String>? metadataBox,
+    Expression<String>? mimeType,
+    Expression<int>? plaintextBytes,
+    Expression<String>? ciphertextDigest,
+    Expression<Uint8List>? wrappedKey,
+    Expression<int>? createdAtUs,
+    Expression<String>? state,
+    Expression<int>? attempts,
+    Expression<int>? nextAttemptAtUs,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (operationId != null) 'operation_id': operationId,
+      if (familyId != null) 'family_id': familyId,
+      if (documentId != null) 'document_id': documentId,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (memberId != null) 'member_id': memberId,
+      if (deviceId != null) 'device_id': deviceId,
+      if (baseRevision != null) 'base_revision': baseRevision,
+      if (version != null) 'version': version,
+      if (title != null) 'title': title,
+      if (metadataBox != null) 'metadata_box': metadataBox,
+      if (mimeType != null) 'mime_type': mimeType,
+      if (plaintextBytes != null) 'plaintext_bytes': plaintextBytes,
+      if (ciphertextDigest != null) 'ciphertext_digest': ciphertextDigest,
+      if (wrappedKey != null) 'wrapped_key': wrappedKey,
+      if (createdAtUs != null) 'created_at_us': createdAtUs,
+      if (state != null) 'state': state,
+      if (attempts != null) 'attempts': attempts,
+      if (nextAttemptAtUs != null) 'next_attempt_at_us': nextAttemptAtUs,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  VaultDocumentUploadsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? operationId,
+    Value<String>? familyId,
+    Value<String>? documentId,
+    Value<String>? ownerId,
+    Value<String>? memberId,
+    Value<String>? deviceId,
+    Value<int>? baseRevision,
+    Value<int>? version,
+    Value<String>? title,
+    Value<String>? metadataBox,
+    Value<String>? mimeType,
+    Value<int>? plaintextBytes,
+    Value<String>? ciphertextDigest,
+    Value<Uint8List>? wrappedKey,
+    Value<int>? createdAtUs,
+    Value<String>? state,
+    Value<int>? attempts,
+    Value<int?>? nextAttemptAtUs,
+    Value<int>? rowid,
+  }) {
+    return VaultDocumentUploadsCompanion(
+      id: id ?? this.id,
+      operationId: operationId ?? this.operationId,
+      familyId: familyId ?? this.familyId,
+      documentId: documentId ?? this.documentId,
+      ownerId: ownerId ?? this.ownerId,
+      memberId: memberId ?? this.memberId,
+      deviceId: deviceId ?? this.deviceId,
+      baseRevision: baseRevision ?? this.baseRevision,
+      version: version ?? this.version,
+      title: title ?? this.title,
+      metadataBox: metadataBox ?? this.metadataBox,
+      mimeType: mimeType ?? this.mimeType,
+      plaintextBytes: plaintextBytes ?? this.plaintextBytes,
+      ciphertextDigest: ciphertextDigest ?? this.ciphertextDigest,
+      wrappedKey: wrappedKey ?? this.wrappedKey,
+      createdAtUs: createdAtUs ?? this.createdAtUs,
+      state: state ?? this.state,
+      attempts: attempts ?? this.attempts,
+      nextAttemptAtUs: nextAttemptAtUs ?? this.nextAttemptAtUs,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (operationId.present) {
+      map['operation_id'] = Variable<String>(operationId.value);
+    }
+    if (familyId.present) {
+      map['family_id'] = Variable<String>(familyId.value);
+    }
+    if (documentId.present) {
+      map['document_id'] = Variable<String>(documentId.value);
+    }
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (deviceId.present) {
+      map['device_id'] = Variable<String>(deviceId.value);
+    }
+    if (baseRevision.present) {
+      map['base_revision'] = Variable<int>(baseRevision.value);
+    }
+    if (version.present) {
+      map['version'] = Variable<int>(version.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (metadataBox.present) {
+      map['metadata_box'] = Variable<String>(metadataBox.value);
+    }
+    if (mimeType.present) {
+      map['mime_type'] = Variable<String>(mimeType.value);
+    }
+    if (plaintextBytes.present) {
+      map['plaintext_bytes'] = Variable<int>(plaintextBytes.value);
+    }
+    if (ciphertextDigest.present) {
+      map['ciphertext_digest'] = Variable<String>(ciphertextDigest.value);
+    }
+    if (wrappedKey.present) {
+      map['wrapped_key'] = Variable<Uint8List>(wrappedKey.value);
+    }
+    if (createdAtUs.present) {
+      map['created_at_us'] = Variable<int>(createdAtUs.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (attempts.present) {
+      map['attempts'] = Variable<int>(attempts.value);
+    }
+    if (nextAttemptAtUs.present) {
+      map['next_attempt_at_us'] = Variable<int>(nextAttemptAtUs.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('VaultDocumentUploadsCompanion(')
+          ..write('id: $id, ')
+          ..write('operationId: $operationId, ')
+          ..write('familyId: $familyId, ')
+          ..write('documentId: $documentId, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('memberId: $memberId, ')
+          ..write('deviceId: $deviceId, ')
+          ..write('baseRevision: $baseRevision, ')
+          ..write('version: $version, ')
+          ..write('title: $title, ')
+          ..write('metadataBox: $metadataBox, ')
+          ..write('mimeType: $mimeType, ')
+          ..write('plaintextBytes: $plaintextBytes, ')
+          ..write('ciphertextDigest: $ciphertextDigest, ')
+          ..write('wrappedKey: $wrappedKey, ')
+          ..write('createdAtUs: $createdAtUs, ')
+          ..write('state: $state, ')
+          ..write('attempts: $attempts, ')
+          ..write('nextAttemptAtUs: $nextAttemptAtUs, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -20595,9 +21675,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $VaultDocumentVersionsTable(this);
   late final $VaultDocumentLinksTable vaultDocumentLinks =
       $VaultDocumentLinksTable(this);
+  late final $VaultDocumentUploadsTable vaultDocumentUploads =
+      $VaultDocumentUploadsTable(this);
   late final Index pendingMutationsRetry = Index(
     'pending_mutations_retry',
     'CREATE INDEX pending_mutations_retry ON pending_mutations (state, next_attempt_at_us)',
+  );
+  late final Index vaultDocumentUploadRetry = Index(
+    'vault_document_upload_retry',
+    'CREATE INDEX vault_document_upload_retry ON vault_document_uploads (state, next_attempt_at_us)',
   );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -20635,7 +21721,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     vaultDocuments,
     vaultDocumentVersions,
     vaultDocumentLinks,
+    vaultDocumentUploads,
     pendingMutationsRetry,
+    vaultDocumentUploadRetry,
   ];
 }
 
@@ -33705,6 +34793,517 @@ typedef $$VaultDocumentLinksTableProcessedTableManager =
       VaultDocumentLink,
       PrefetchHooks Function({bool familyId})
     >;
+typedef $$VaultDocumentUploadsTableCreateCompanionBuilder =
+    VaultDocumentUploadsCompanion Function({
+      required String id,
+      required String operationId,
+      required String familyId,
+      required String documentId,
+      required String ownerId,
+      required String memberId,
+      required String deviceId,
+      required int baseRevision,
+      required int version,
+      required String title,
+      required String metadataBox,
+      required String mimeType,
+      required int plaintextBytes,
+      required String ciphertextDigest,
+      required Uint8List wrappedKey,
+      required int createdAtUs,
+      Value<String> state,
+      Value<int> attempts,
+      Value<int?> nextAttemptAtUs,
+      Value<int> rowid,
+    });
+typedef $$VaultDocumentUploadsTableUpdateCompanionBuilder =
+    VaultDocumentUploadsCompanion Function({
+      Value<String> id,
+      Value<String> operationId,
+      Value<String> familyId,
+      Value<String> documentId,
+      Value<String> ownerId,
+      Value<String> memberId,
+      Value<String> deviceId,
+      Value<int> baseRevision,
+      Value<int> version,
+      Value<String> title,
+      Value<String> metadataBox,
+      Value<String> mimeType,
+      Value<int> plaintextBytes,
+      Value<String> ciphertextDigest,
+      Value<Uint8List> wrappedKey,
+      Value<int> createdAtUs,
+      Value<String> state,
+      Value<int> attempts,
+      Value<int?> nextAttemptAtUs,
+      Value<int> rowid,
+    });
+
+class $$VaultDocumentUploadsTableFilterComposer
+    extends Composer<_$AppDatabase, $VaultDocumentUploadsTable> {
+  $$VaultDocumentUploadsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get familyId => $composableBuilder(
+    column: $table.familyId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get baseRevision => $composableBuilder(
+    column: $table.baseRevision,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get metadataBox => $composableBuilder(
+    column: $table.metadataBox,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get plaintextBytes => $composableBuilder(
+    column: $table.plaintextBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ciphertextDigest => $composableBuilder(
+    column: $table.ciphertextDigest,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<Uint8List> get wrappedKey => $composableBuilder(
+    column: $table.wrappedKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get nextAttemptAtUs => $composableBuilder(
+    column: $table.nextAttemptAtUs,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$VaultDocumentUploadsTableOrderingComposer
+    extends Composer<_$AppDatabase, $VaultDocumentUploadsTable> {
+  $$VaultDocumentUploadsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get familyId => $composableBuilder(
+    column: $table.familyId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get memberId => $composableBuilder(
+    column: $table.memberId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceId => $composableBuilder(
+    column: $table.deviceId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get baseRevision => $composableBuilder(
+    column: $table.baseRevision,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get version => $composableBuilder(
+    column: $table.version,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get metadataBox => $composableBuilder(
+    column: $table.metadataBox,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mimeType => $composableBuilder(
+    column: $table.mimeType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get plaintextBytes => $composableBuilder(
+    column: $table.plaintextBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ciphertextDigest => $composableBuilder(
+    column: $table.ciphertextDigest,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<Uint8List> get wrappedKey => $composableBuilder(
+    column: $table.wrappedKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get state => $composableBuilder(
+    column: $table.state,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get attempts => $composableBuilder(
+    column: $table.attempts,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get nextAttemptAtUs => $composableBuilder(
+    column: $table.nextAttemptAtUs,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$VaultDocumentUploadsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $VaultDocumentUploadsTable> {
+  $$VaultDocumentUploadsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get familyId =>
+      $composableBuilder(column: $table.familyId, builder: (column) => column);
+
+  GeneratedColumn<String> get documentId => $composableBuilder(
+    column: $table.documentId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
+
+  GeneratedColumn<String> get memberId =>
+      $composableBuilder(column: $table.memberId, builder: (column) => column);
+
+  GeneratedColumn<String> get deviceId =>
+      $composableBuilder(column: $table.deviceId, builder: (column) => column);
+
+  GeneratedColumn<int> get baseRevision => $composableBuilder(
+    column: $table.baseRevision,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get version =>
+      $composableBuilder(column: $table.version, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get metadataBox => $composableBuilder(
+    column: $table.metadataBox,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get mimeType =>
+      $composableBuilder(column: $table.mimeType, builder: (column) => column);
+
+  GeneratedColumn<int> get plaintextBytes => $composableBuilder(
+    column: $table.plaintextBytes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get ciphertextDigest => $composableBuilder(
+    column: $table.ciphertextDigest,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<Uint8List> get wrappedKey => $composableBuilder(
+    column: $table.wrappedKey,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get createdAtUs => $composableBuilder(
+    column: $table.createdAtUs,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
+
+  GeneratedColumn<int> get attempts =>
+      $composableBuilder(column: $table.attempts, builder: (column) => column);
+
+  GeneratedColumn<int> get nextAttemptAtUs => $composableBuilder(
+    column: $table.nextAttemptAtUs,
+    builder: (column) => column,
+  );
+}
+
+class $$VaultDocumentUploadsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $VaultDocumentUploadsTable,
+          VaultDocumentUpload,
+          $$VaultDocumentUploadsTableFilterComposer,
+          $$VaultDocumentUploadsTableOrderingComposer,
+          $$VaultDocumentUploadsTableAnnotationComposer,
+          $$VaultDocumentUploadsTableCreateCompanionBuilder,
+          $$VaultDocumentUploadsTableUpdateCompanionBuilder,
+          (
+            VaultDocumentUpload,
+            BaseReferences<
+              _$AppDatabase,
+              $VaultDocumentUploadsTable,
+              VaultDocumentUpload
+            >,
+          ),
+          VaultDocumentUpload,
+          PrefetchHooks Function()
+        > {
+  $$VaultDocumentUploadsTableTableManager(
+    _$AppDatabase db,
+    $VaultDocumentUploadsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$VaultDocumentUploadsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$VaultDocumentUploadsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$VaultDocumentUploadsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> operationId = const Value.absent(),
+                Value<String> familyId = const Value.absent(),
+                Value<String> documentId = const Value.absent(),
+                Value<String> ownerId = const Value.absent(),
+                Value<String> memberId = const Value.absent(),
+                Value<String> deviceId = const Value.absent(),
+                Value<int> baseRevision = const Value.absent(),
+                Value<int> version = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> metadataBox = const Value.absent(),
+                Value<String> mimeType = const Value.absent(),
+                Value<int> plaintextBytes = const Value.absent(),
+                Value<String> ciphertextDigest = const Value.absent(),
+                Value<Uint8List> wrappedKey = const Value.absent(),
+                Value<int> createdAtUs = const Value.absent(),
+                Value<String> state = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<int?> nextAttemptAtUs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VaultDocumentUploadsCompanion(
+                id: id,
+                operationId: operationId,
+                familyId: familyId,
+                documentId: documentId,
+                ownerId: ownerId,
+                memberId: memberId,
+                deviceId: deviceId,
+                baseRevision: baseRevision,
+                version: version,
+                title: title,
+                metadataBox: metadataBox,
+                mimeType: mimeType,
+                plaintextBytes: plaintextBytes,
+                ciphertextDigest: ciphertextDigest,
+                wrappedKey: wrappedKey,
+                createdAtUs: createdAtUs,
+                state: state,
+                attempts: attempts,
+                nextAttemptAtUs: nextAttemptAtUs,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String operationId,
+                required String familyId,
+                required String documentId,
+                required String ownerId,
+                required String memberId,
+                required String deviceId,
+                required int baseRevision,
+                required int version,
+                required String title,
+                required String metadataBox,
+                required String mimeType,
+                required int plaintextBytes,
+                required String ciphertextDigest,
+                required Uint8List wrappedKey,
+                required int createdAtUs,
+                Value<String> state = const Value.absent(),
+                Value<int> attempts = const Value.absent(),
+                Value<int?> nextAttemptAtUs = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => VaultDocumentUploadsCompanion.insert(
+                id: id,
+                operationId: operationId,
+                familyId: familyId,
+                documentId: documentId,
+                ownerId: ownerId,
+                memberId: memberId,
+                deviceId: deviceId,
+                baseRevision: baseRevision,
+                version: version,
+                title: title,
+                metadataBox: metadataBox,
+                mimeType: mimeType,
+                plaintextBytes: plaintextBytes,
+                ciphertextDigest: ciphertextDigest,
+                wrappedKey: wrappedKey,
+                createdAtUs: createdAtUs,
+                state: state,
+                attempts: attempts,
+                nextAttemptAtUs: nextAttemptAtUs,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$VaultDocumentUploadsTable, VaultDocumentUpload>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $VaultDocumentUploadsTable,
+                    VaultDocumentUpload
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$VaultDocumentUploadsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $VaultDocumentUploadsTable,
+      VaultDocumentUpload,
+      $$VaultDocumentUploadsTableFilterComposer,
+      $$VaultDocumentUploadsTableOrderingComposer,
+      $$VaultDocumentUploadsTableAnnotationComposer,
+      $$VaultDocumentUploadsTableCreateCompanionBuilder,
+      $$VaultDocumentUploadsTableUpdateCompanionBuilder,
+      (
+        VaultDocumentUpload,
+        BaseReferences<
+          _$AppDatabase,
+          $VaultDocumentUploadsTable,
+          VaultDocumentUpload
+        >,
+      ),
+      VaultDocumentUpload,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -33771,4 +35370,6 @@ class $AppDatabaseManager {
       $$VaultDocumentVersionsTableTableManager(_db, _db.vaultDocumentVersions);
   $$VaultDocumentLinksTableTableManager get vaultDocumentLinks =>
       $$VaultDocumentLinksTableTableManager(_db, _db.vaultDocumentLinks);
+  $$VaultDocumentUploadsTableTableManager get vaultDocumentUploads =>
+      $$VaultDocumentUploadsTableTableManager(_db, _db.vaultDocumentUploads);
 }

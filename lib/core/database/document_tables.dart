@@ -92,6 +92,53 @@ class VaultDocumentLinks extends Table with FamilyProvenance {
   ];
 }
 
+/// A private staged version until the matching server receipt is validated.
+@DataClassName('VaultDocumentUpload')
+@TableIndex(
+  name: 'vault_document_upload_retry',
+  columns: {#state, #nextAttemptAtUs},
+)
+class VaultDocumentUploads extends Table {
+  TextColumn get id => text()();
+  TextColumn get operationId => text().unique()();
+  TextColumn get familyId => text()();
+  TextColumn get documentId => text()();
+  TextColumn get ownerId => text()();
+  TextColumn get memberId => text()();
+  TextColumn get deviceId => text()();
+  IntColumn get baseRevision => integer()();
+  IntColumn get version => integer()();
+  TextColumn get title => text()();
+  TextColumn get metadataBox => text()();
+  TextColumn get mimeType => text()();
+  IntColumn get plaintextBytes => integer()();
+  TextColumn get ciphertextDigest => text()();
+  BlobColumn get wrappedKey => blob()();
+  IntColumn get createdAtUs => integer()();
+  TextColumn get state => text().withDefault(const Constant('pending'))();
+  IntColumn get attempts => integer().withDefault(const Constant(0))();
+  IntColumn get nextAttemptAtUs => integer().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+  @override
+  bool get isStrict => true;
+  @override
+  List<String> get customConstraints => [
+    'CHECK (base_revision >= 0 AND version > 0 AND created_at_us >= 0 AND attempts >= 0)',
+    'CHECK (length(trim(title)) BETWEEN 1 AND 120)',
+    'CHECK (length(metadata_box) BETWEEN 56 AND 4096)',
+    "CHECK (mime_type IN ('application/pdf', 'image/jpeg', 'image/png'))",
+    'CHECK (plaintext_bytes BETWEEN 8 AND 25165824)',
+    "CHECK (length(ciphertext_digest) = 64 AND ciphertext_digest NOT GLOB '*[^a-f0-9]*')",
+    'CHECK (length(wrapped_key) = 72)',
+    "CHECK (state IN ('pending', 'acknowledged', 'conflicted', 'rejected'))",
+    "CHECK (next_attempt_at_us IS NULL OR (state = 'pending' AND next_attempt_at_us >= 0))",
+    'FOREIGN KEY (family_id, owner_id) REFERENCES family_members(family_id, id)',
+    'FOREIGN KEY (family_id, device_id, member_id) REFERENCES vault_devices(family_id, id, member_id)',
+  ];
+}
+
 const documentGuards = <String>[
   '''CREATE TRIGGER IF NOT EXISTS vault_document_version_sequence BEFORE INSERT ON vault_document_versions
      WHEN NEW.version <> (SELECT coalesce(max(version), 0) + 1 FROM vault_document_versions
@@ -120,4 +167,17 @@ const documentGuards = <String>[
        OR NEW.journal_id IS NOT OLD.journal_id OR NEW.asset_id IS NOT OLD.asset_id
        OR NEW.revision <> OLD.revision + 1 OR OLD.deleted_at_us IS NOT NULL OR NEW.deleted_at_us IS NULL
      BEGIN SELECT RAISE(ABORT, 'A document link can be unlinked once'); END''',
+  '''CREATE UNIQUE INDEX IF NOT EXISTS vault_document_pending_upload ON vault_document_uploads(family_id, document_id)
+     WHERE state = 'pending' ''',
+  '''CREATE TRIGGER IF NOT EXISTS vault_document_upload_identity BEFORE UPDATE ON vault_document_uploads
+     WHEN OLD.state <> 'pending' OR NEW.id IS NOT OLD.id OR NEW.operation_id IS NOT OLD.operation_id
+       OR NEW.family_id IS NOT OLD.family_id OR NEW.document_id IS NOT OLD.document_id
+       OR NEW.owner_id IS NOT OLD.owner_id OR NEW.member_id IS NOT OLD.member_id OR NEW.device_id IS NOT OLD.device_id
+       OR NEW.base_revision IS NOT OLD.base_revision OR NEW.version IS NOT OLD.version
+       OR NEW.title IS NOT OLD.title OR NEW.metadata_box IS NOT OLD.metadata_box OR NEW.mime_type IS NOT OLD.mime_type
+       OR NEW.plaintext_bytes IS NOT OLD.plaintext_bytes OR NEW.ciphertext_digest IS NOT OLD.ciphertext_digest
+       OR NEW.wrapped_key IS NOT OLD.wrapped_key OR NEW.created_at_us IS NOT OLD.created_at_us OR NEW.attempts < OLD.attempts
+     BEGIN SELECT RAISE(ABORT, 'Staged document content and receipts are immutable'); END''',
+  '''CREATE TRIGGER IF NOT EXISTS vault_document_upload_retain BEFORE DELETE ON vault_document_uploads
+     BEGIN SELECT RAISE(ABORT, 'Staged documents are retained'); END''',
 ];

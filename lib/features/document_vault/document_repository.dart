@@ -13,6 +13,8 @@ import '../../core/security/sealed_file.dart';
 import '../../core/security/vault_lifecycle.dart';
 import '../finance/data/ledger_repository.dart';
 
+part 'document_transfer_queue.dart';
+
 enum DocumentFormat {
   pdf('application/pdf', 'pdf'),
   jpeg('image/jpeg', 'jpg'),
@@ -209,33 +211,7 @@ final class DocumentRepository {
   Future<VaultDocumentVersion> addInput({
     required DocumentDetails details,
     required DocumentInput source,
-  }) async {
-    final title = _title(details), documentId = _uuid.v4();
-    return _addVersion(
-      documentId,
-      source,
-      prepare: () async {
-        final now = _writer.now;
-        await _db
-            .into(_db.vaultDocuments)
-            .insert(
-              VaultDocumentsCompanion.insert(
-                id: documentId,
-                familyId: _familyId,
-                createdBy: _memberId,
-                updatedBy: _memberId,
-                createdAtUs: now,
-                updatedAtUs: now,
-                title: title,
-                category: details.category.name,
-                ownerId: details.ownerId,
-                expiryOn: Value(details.expiryOn),
-              ),
-            );
-        return 1;
-      },
-    );
-  }
+  }) => _addVersion(_uuid.v4(), source, details: details);
 
   Future<VaultDocumentVersion> addVersion(
     String documentId,
@@ -248,44 +224,16 @@ final class DocumentRepository {
     String documentId,
     int expectedRevision,
     DocumentInput source,
-  ) => _addVersion(
-    documentId,
-    source,
-    prepare: () async {
-      final document = await _load(documentId);
-      if (document.deletedAtUs != null ||
-          document.revision != expectedRevision) {
-        throw _changed;
-      }
-      final existing =
-          await (_db.select(_db.vaultDocumentVersions)
-                ..where(
-                  (t) =>
-                      t.familyId.equals(_familyId) &
-                      t.documentId.equals(documentId),
-                )
-                ..orderBy([(t) => OrderingTerm.desc(t.version)])
-                ..limit(1))
-              .getSingle();
-      await (_db.update(
-        _db.vaultDocuments,
-      )..where((t) => t.id.equals(documentId))).write(
-        VaultDocumentsCompanion(
-          revision: Value(document.revision + 1),
-          updatedAtUs: Value(_writer.now),
-          updatedBy: Value(_memberId),
-        ),
-      );
-      return existing.version + 1;
-    },
-  );
+  ) => _addVersion(documentId, source, expectedRevision: expectedRevision);
 
   Future<VaultDocumentVersion> _addVersion(
     String documentId,
     DocumentInput source, {
-    required Future<int> Function() prepare,
+    DocumentDetails? details,
+    int? expectedRevision,
   }) => storageBoundary(() async {
-    await _authorize(writing: true);
+    await _authorize();
+    if (details != null) _title(details);
     final inspected = await DocumentFormat.inspect(source);
     final id = _uuid.v4(), file = ciphertext(id);
     final temp = File('${file.path}.partial');
@@ -310,15 +258,31 @@ final class DocumentRepository {
       );
       final wrapped = await _wrap(contentKey, context);
       return await _db.transaction(() async {
-        await _authorize(writing: true);
-        final sequence = await prepare();
-        if (await file.exists()) throw SealedFile.invalid;
-        await temp.rename(file.path);
+        await _authorize();
+        final current = expectedRevision == null
+            ? null
+            : await _load(documentId);
+        if (current != null &&
+            (current.deletedAtUs != null ||
+                current.revision != expectedRevision)) {
+          throw _changed;
+        }
+        final latest = current == null
+            ? null
+            : await (_db.select(_db.vaultDocumentVersions)
+                    ..where(
+                      (t) =>
+                          t.familyId.equals(_familyId) &
+                          t.documentId.equals(documentId),
+                    )
+                    ..orderBy([(t) => OrderingTerm.desc(t.version)])
+                    ..limit(1))
+                  .getSingle();
         final version = VaultDocumentVersion(
           id: id,
           familyId: _familyId,
           documentId: documentId,
-          version: sequence,
+          version: (latest?.version ?? 0) + 1,
           mimeType: inspected.format.mime,
           plaintextBytes: inspected.bytes,
           ciphertextDigest: digest,
@@ -327,12 +291,23 @@ final class DocumentRepository {
           deviceId: _deviceId,
           createdAtUs: _writer.now,
         );
-        await _db.into(_db.vaultDocumentVersions).insert(version);
-        await _audit(
-          documentId,
-          sequence == 1 ? 'create' : 'version',
-          versionId: id,
-        );
+        final metadata =
+            details ??
+            DocumentDetails(
+              title: current!.title,
+              category: DocumentCategory.values.byName(current.category),
+              ownerId: current.ownerId,
+              expiryOn: current.expiryOn,
+            );
+        if (session.identity.isCloud) {
+          await _stage(version, current?.revision ?? 0, metadata, contentKey);
+        } else {
+          await _publishLocal(version, current, metadata);
+        }
+        _checkOpen();
+        if (await file.exists()) throw SealedFile.invalid;
+        await temp.rename(file.path);
+        _checkOpen();
         return version;
       });
     } finally {
@@ -341,10 +316,50 @@ final class DocumentRepository {
     }
   });
 
-  Future<Uint8List> read(
+  Future<void> _publishLocal(
+    VaultDocumentVersion version,
+    VaultDocument? current,
+    DocumentDetails details,
+  ) async {
+    if (current == null) {
+      await _db
+          .into(_db.vaultDocuments)
+          .insert(
+            VaultDocumentsCompanion.insert(
+              id: version.documentId,
+              familyId: _familyId,
+              createdBy: _memberId,
+              updatedBy: _memberId,
+              createdAtUs: version.createdAtUs,
+              updatedAtUs: version.createdAtUs,
+              title: _title(details),
+              category: details.category.name,
+              ownerId: details.ownerId,
+              expiryOn: Value(details.expiryOn),
+            ),
+          );
+    } else {
+      await _db
+          .update(_db.vaultDocuments)
+          .replace(
+            current.copyWith(
+              revision: current.revision + 1,
+              updatedBy: _memberId,
+              updatedAtUs: version.createdAtUs,
+            ),
+          );
+    }
+    await _db.into(_db.vaultDocumentVersions).insert(version);
+    await _audit(
+      version.documentId,
+      current == null ? 'create' : 'version',
+      versionId: version.id,
+    );
+  }
+
+  Future<({VaultDocumentVersion version, String title})> describeVersion(
     String documentId,
     String versionId,
-    DocumentAccess purpose,
   ) => storageBoundary(() async {
     await _authorize();
     final version =
@@ -355,7 +370,30 @@ final class DocumentRepository {
                   t.id.equals(versionId),
             ))
             .getSingleOrNull();
-    if (version == null) throw _missing;
+    if (version != null) {
+      return (version: version, title: (await _load(documentId)).title);
+    }
+    if (session.identity.isCloud) {
+      final job =
+          await (_db.select(_db.vaultDocumentUploads)..where(
+                (t) =>
+                    t.familyId.equals(_familyId) &
+                    t.documentId.equals(documentId) &
+                    t.id.equals(versionId) &
+                    t.deviceId.equals(_deviceId),
+              ))
+              .getSingleOrNull();
+      if (job != null) return (version: job.fileVersion, title: job.title);
+    }
+    throw _missing;
+  });
+
+  Future<Uint8List> read(
+    String documentId,
+    String versionId,
+    DocumentAccess purpose,
+  ) => storageBoundary(() async {
+    final version = (await describeVersion(documentId, versionId)).version;
     final context = _context(
       documentId,
       versionId,

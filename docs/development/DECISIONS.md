@@ -110,3 +110,6 @@ authenticated file chunks and access audit boundaries.
 
 ADR 0016 records device-addressed signed key grants, isolated upload
 reservations, worker-only byte verification and authenticated ciphertext reads.
+
+ADR 0017 records the separation of device-private staged versions from accepted
+family history and the additive Drift v5 migration.

@@ -338,7 +338,10 @@ final class CloudWorkspaceCache {
           await gateway.workspace(proof),
           identity,
         );
-        await db.transaction(() => directory.apply(db));
+        await db.transaction(() async {
+          await directory.apply(db);
+          await _restoreDocumentTransfers(existing, session);
+        });
         await session.ledger.mutations.audit(
           operationId: const Uuid().v4(),
           entityType: 'sync_recovery',
@@ -361,6 +364,38 @@ final class CloudWorkspaceCache {
       rethrow;
     }
   });
+
+  Future<void> _restoreDocumentTransfers(
+    File source,
+    VaultSession session,
+  ) async {
+    final previous = AppDatabase.encrypted(
+      file: source,
+      key: VaultDatabaseKey.fromBytes(session.keys.database),
+    );
+    try {
+      await previous.customStatement('PRAGMA query_only = ON');
+      final uploads = await previous
+          .select(previous.vaultDocumentUploads)
+          .get();
+      final audit =
+          await (previous.select(previous.localAuditEvents)..where(
+                (t) => t.entityType.isIn([
+                  'document',
+                  'document_transfer',
+                  'document_access',
+                  'document_link',
+                ]),
+              ))
+              .get();
+      await session.db.batch((batch) {
+        batch.insertAll(session.db.vaultDocumentUploads, uploads);
+        batch.insertAll(session.db.localAuditEvents, audit);
+      });
+    } finally {
+      await previous.close();
+    }
+  }
 
   Future<List<({PendingMutation local, SyncConflict? competing})>> savedChanges(
     VaultSession session,

@@ -9,6 +9,7 @@ import 'package:familyvault/core/database/app_database.dart';
 import 'package:familyvault/core/errors/app_failure.dart';
 import 'package:familyvault/core/finance/money.dart';
 import 'package:familyvault/core/security/sealed_file.dart';
+import 'package:familyvault/core/security/vault_identity.dart';
 import 'package:familyvault/core/security/vault_keys.dart';
 import 'package:familyvault/core/security/vault_lifecycle.dart';
 import 'package:familyvault/features/document_vault/document_repository.dart';
@@ -266,6 +267,77 @@ void main() {
           .single
           .deletedAtUs,
       isNotNull,
+    );
+  });
+
+  test('an offline shared upload keeps a readable private draft and stable operation across reopening', () async {
+    final identity = VaultIdentity(
+      familyId: fixture.identity.familyId,
+      memberId: fixture.identity.memberId,
+      deviceId: fixture.identity.deviceId,
+      mode: 'cloud',
+    );
+    // Only the identity's sharing mode changes in this isolated fixture.
+    final cloud = VaultSession(
+      db: fixture.db,
+      identity: identity,
+      keys: session.keys.copy(),
+      directory: fixture.directory,
+    );
+    addTearDown(cloud.keys.destroy);
+    final uploads = DocumentRepository(cloud);
+    await fixture.db.customStatement(
+      '''CREATE TRIGGER fail_queue_audit BEFORE INSERT ON local_audit_events
+      WHEN NEW.entity_type = 'document_transfer' BEGIN SELECT RAISE(ABORT, 'Synthetic queue failure'); END''',
+    );
+    await expectLater(
+      uploads.add(details: sample(), source: source),
+      throwsA(failure(FailureCode.storage)),
+    );
+    expect(await uploads.watchUploads().first, isEmpty);
+    await fixture.db.customStatement('DROP TRIGGER fail_queue_audit');
+
+    final draft = await uploads.add(details: sample(), source: source);
+    final queued = (await uploads.watchUploads().first).single;
+    expect(queued.id, draft.id);
+    expect(queued.state, 'pending');
+    expect(await uploads.watch().first, isEmpty);
+    expect(queued.metadataBox, isNot(contains('Synthetic property file')));
+    expect(
+      await SealedFile.digest(uploads.ciphertext(draft.id)),
+      queued.ciphertextDigest,
+    );
+    await expectLater(
+      fixture.db.customStatement(
+        'UPDATE vault_document_uploads SET base_revision = 3 WHERE id = ?',
+        [draft.id],
+      ),
+      throwsA(anything),
+    );
+
+    final keys = cloud.keys.copy();
+    await cloud.close();
+    fixture.db = AppDatabase.encrypted(file: fixture.file, key: fixture.key);
+    final reopened = VaultSession(
+      db: fixture.db,
+      identity: identity,
+      keys: keys,
+      directory: fixture.directory,
+    );
+    addTearDown(reopened.keys.destroy);
+    final after = DocumentRepository(reopened);
+    expect((await after.watchUploads().first).single, queued);
+    expect(
+      (await after.describeVersion(draft.documentId, draft.id)).title,
+      'Synthetic property file',
+    );
+    expect(
+      await after.read(draft.documentId, draft.id, DocumentAccess.preview),
+      content,
+    );
+    await expectLater(
+      after.read(const Uuid().v4(), draft.id, DocumentAccess.preview),
+      throwsA(failure(FailureCode.validation)),
     );
   });
 }

@@ -13,6 +13,7 @@ import 'package:familyvault/features/auth/cloud_access_gateway.dart';
 import 'package:familyvault/features/auth/cloud_cache.dart';
 import 'package:familyvault/features/auth/cloud_connection.dart';
 import 'package:familyvault/features/auth/cloud_device_registration.dart';
+import 'package:familyvault/features/document_vault/document_repository.dart';
 import 'package:familyvault/features/finance/data/ledger_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uuid/uuid.dart';
@@ -421,6 +422,18 @@ void main() {
       'Synthetic disconnected edit',
       local.revision,
     );
+    final source = File('${root.path}/synthetic-fixture.pdf');
+    await source.writeAsString('%PDF-1.4\nSynthetic staged document');
+    final oldDocuments = DocumentRepository(original);
+    final waiting = await oldDocuments.add(
+      details: DocumentDetails(
+        title: 'Synthetic draft',
+        category: DocumentCategory.general,
+        ownerId: original.identity.memberId,
+      ),
+      source: source,
+    );
+    final upload = (await oldDocuments.watchUploads().first).single;
     await original.close();
 
     gateway.skipSequence = true;
@@ -444,6 +457,23 @@ void main() {
       rebuild: true,
     );
     sessions.add(recovered);
+    final documents = DocumentRepository(recovered);
+    expect((await documents.watchUploads().first).single, upload);
+    expect(
+      await documents.read(
+        waiting.documentId,
+        waiting.id,
+        DocumentAccess.preview,
+      ),
+      await source.readAsBytes(),
+    );
+    expect(
+      (await (recovered.db.select(recovered.db.localAuditEvents)
+                ..where((t) => t.operationId.equals(upload.operationId)))
+              .getSingle())
+          .action,
+      'queue',
+    );
     expect(
       (await recovered.ledger.account(local.id)).name,
       'Synthetic accepted name',

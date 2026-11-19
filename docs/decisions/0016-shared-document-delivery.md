@@ -35,6 +35,7 @@ server directory needs a pinned administrator trust anchor. Newly enrolled
 devices need historical key backfill from an approved holder. Instant removal
 of copies already received on a device is outside the revocation mechanism.
 
-The Data API test uses real Auth sessions and a synthetic worker receipt. Deno
-tests verify object bytes against a Storage transport fixture. Hosted Storage
-and a joined provider transfer remain pending. [Private Storage access](https://supabase.com/docs/guides/storage/security/access-control) · [Function secrets](https://supabase.com/docs/guides/functions/secrets)
+The Data API test uses real Auth sessions and a synthetic worker receipt. The
+joined local provider check additionally verifies actual Storage upload and
+readback with the Deno gateway and PostgreSQL. Hosted deployment remains pending.
+[Private Storage access](https://supabase.com/docs/guides/storage/security/access-control) · [Function secrets](https://supabase.com/docs/guides/functions/secrets)

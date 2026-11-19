@@ -278,3 +278,16 @@ Record exact command, date, outcome and material platform/provider limits below.
   an approved device downloaded the same ciphertext. Public and direct Storage
   reads failed. Transcript `.cache/checks/m08-storage-joined-20261119-b.txt`.
   Connected Flutter views remain pending.
+
+## M08c2a — 2026-11-19 durable staged documents
+
+- `dart run build_runner build` and `dart run drift_dev make-migrations`
+  generated the v5 schema. Prior snapshots remained unchanged.
+- The 15 targeted Flutter tests passed. Populated encrypted databases from v1
+  through v4 retained their data and constraints. An audit failure rolled back
+  the draft, and a valid staged upload retained its exact operation and preview
+  across closing and reopening. Transcript `.cache/checks/m08-queue-tests-20261119-a.txt`.
+- `bash tool/check.sh` passed 108 Flutter tests, analyzer, four Deno tests,
+  proposal probes, PostgreSQL and the audit of 177 resolved packages. The
+  finance recovery test retained the draft file, queue and audit in the new
+  cache. Transcript `.cache/checks/m08-queue-full-20261119-a.txt`.

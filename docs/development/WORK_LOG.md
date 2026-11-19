@@ -279,3 +279,14 @@ separately. Continue with the business UI and executable backend policies.
   database role. Applying it as the Storage owner through `SET ROLE` in the
   existing local administrator session fixed the fixture. The rerun passed.
 - Continue with the durable mobile document queue and receiving device cache.
+
+## 2026-11-19 — staging and preserving pending document uploads
+
+- Verified `ae794eb` on the public origin. Added Drift v5 for durable encrypted
+  staging with one pending version per document on the device. Kept staged
+  versions readable without adding them to the confirmed document history.
+- Ran the generator, additive migration checks, isolated draft tests and
+  `bash tool/check.sh`. The 108-test check passed. The recovery fixture verifies
+  that rebuilding the finance cache retains the pending document and its audit.
+- Continue with upload resumption and key backfill in PostgreSQL, the mobile
+  transport and receiving device replay.

@@ -9,6 +9,7 @@ import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
 import 'generated/schema_v3.dart' as v3;
+import 'generated/schema_v4.dart' as v4;
 
 import 'package:familyvault/core/database/ledger_guards.dart';
 
@@ -19,12 +20,12 @@ void main() {
   test('fresh encrypted database matches the versioned schema', () async {
     final f = await VaultFixture.create(bootstrap: false);
     try {
-      await verifier.migrateAndValidate(f.db, 4);
+      await verifier.migrateAndValidate(f.db, 5);
     } finally {
       await f.dispose();
     }
   });
-  test('generated v1 snapshot migrates to v4 with operations, conflicts and checkpoints intact', () async {
+  test('generated v1 snapshot migrates to v5 with operations, conflicts and checkpoints intact', () async {
     final f = await VaultFixture.create(bootstrap: false);
     await f.db.close();
     final old = v1.DatabaseAtV1(
@@ -74,7 +75,7 @@ void main() {
     }
     f.db = AppDatabase.encrypted(file: f.file, key: f.key);
     try {
-      await verifier.migrateAndValidate(f.db, 4);
+      await verifier.migrateAndValidate(f.db, 5);
       final pending = (await f.db.select(f.db.pendingMutations).get()).single;
       expect(pending.state, 'conflicted');
       expect(pending.baseRevision, 3);
@@ -91,7 +92,7 @@ void main() {
       await f.dispose();
     }
   });
-  test('populated encrypted v2 ledger migrates to v4 with posted facts and audit intact', () async {
+  test('populated encrypted v2 ledger migrates to v5 with posted facts and audit intact', () async {
     final f = await VaultFixture.create(bootstrap: false);
     await f.db.close();
     final old = v2.DatabaseAtV2(
@@ -207,7 +208,7 @@ void main() {
     }
     f.db = AppDatabase.encrypted(file: f.file, key: f.key);
     try {
-      await verifier.migrateAndValidate(f.db, 4);
+      await verifier.migrateAndValidate(f.db, 5);
       expect(
         (await f.db.select(f.db.ledgerJournals).get()).single.status,
         'posted',
@@ -244,7 +245,7 @@ void main() {
     }
   });
   test(
-    'encrypted v3 wealth records are kept during the v4 document migration',
+    'encrypted v3 wealth records are kept during the v5 document migration',
     () async {
       final f = await VaultFixture.create(bootstrap: false);
       await f.db.close();
@@ -274,7 +275,7 @@ void main() {
       }
       f.db = AppDatabase.encrypted(file: f.file, key: f.key);
       try {
-        await verifier.migrateAndValidate(f.db, 4);
+        await verifier.migrateAndValidate(f.db, 5);
         expect(
           (await f.db.select(f.db.wealthAssets).getSingle()).purchaseTotalMinor,
           9007199254740993,
@@ -283,6 +284,71 @@ void main() {
         expect(
           await f.db.customSelect('PRAGMA foreign_key_check').get(),
           isEmpty,
+        );
+      } finally {
+        await f.dispose();
+      }
+    },
+  );
+
+  test(
+    'v4 document provenance and version data survive the v5 queue migration',
+    () async {
+      final f = await VaultFixture.create(bootstrap: false);
+      await f.db.close();
+      final old = v4.DatabaseAtV4(
+        openEncryptedConnection(file: f.file, key: f.key),
+      );
+      final identity = f.identity;
+      try {
+        await old.customStatement(
+          "INSERT INTO family_spaces(id,name,mode,created_at_us) VALUES (?, 'Synthetic v4 vault', 'offline', 1)",
+          [identity.familyId],
+        );
+        await old.customStatement(
+          "INSERT INTO family_members(id,family_id,display_name,relationship,role,created_at_us) VALUES (?, ?, 'Synthetic owner', 'administrator', 'administrator', 1)",
+          [identity.memberId, identity.familyId],
+        );
+        await old.customStatement(
+          "INSERT INTO vault_devices(id,family_id,member_id,state,created_at_us) VALUES (?, ?, ?, 'enrolled', 1)",
+          [identity.deviceId, identity.familyId, identity.memberId],
+        );
+        await old.customStatement(
+          "INSERT INTO vault_documents(id,family_id,owner_id,created_by,updated_by,created_at_us,updated_at_us,title,category) VALUES ('synthetic-doc', ?, ?, ?, ?, 1, 1, 'Synthetic prior document', 'general')",
+          [
+            identity.familyId,
+            identity.memberId,
+            identity.memberId,
+            identity.memberId,
+          ],
+        );
+        await old.customStatement(
+          "INSERT INTO vault_document_versions(id,family_id,document_id,version,mime_type,plaintext_bytes,ciphertext_digest,wrapped_key,created_by,device_id,created_at_us) VALUES ('synthetic-version', ?, 'synthetic-doc', 1, 'application/pdf', 20, ?, zeroblob(72), ?, ?, 1)",
+          [identity.familyId, '4' * 64, identity.memberId, identity.deviceId],
+        );
+      } finally {
+        await old.close();
+      }
+      f.db = AppDatabase.encrypted(file: f.file, key: f.key);
+      try {
+        await verifier.migrateAndValidate(f.db, 5);
+        expect(
+          (await f.db.select(f.db.vaultDocuments).getSingle()).ownerId,
+          identity.memberId,
+        );
+        final version = await f.db
+            .select(f.db.vaultDocumentVersions)
+            .getSingle();
+        expect(version.id, 'synthetic-version');
+        expect(version.ciphertextDigest, '4' * 64);
+        expect(await f.db.select(f.db.vaultDocumentUploads).get(), isEmpty);
+        expect(
+          await f.db.customSelect('PRAGMA foreign_key_check').get(),
+          isEmpty,
+        );
+        await expectLater(
+          f.db.delete(f.db.vaultDocumentVersions).go(),
+          throwsA(anything),
         );
       } finally {
         await f.dispose();

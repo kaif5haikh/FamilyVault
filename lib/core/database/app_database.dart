@@ -123,6 +123,7 @@ class SyncConflicts extends Table {
     VaultDocuments,
     VaultDocumentVersions,
     VaultDocumentLinks,
+    VaultDocumentUploads,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -134,7 +135,7 @@ class AppDatabase extends _$AppDatabase {
   }) => AppDatabase._(openEncryptedConnection(file: file, key: key));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -146,7 +147,7 @@ class AppDatabase extends _$AppDatabase {
       await customStatement('PRAGMA user_version = $schemaVersion');
     }),
     onUpgrade: (migrator, from, to) async {
-      if (from < 1 || from >= 4 || to != 4) {
+      if (from < 1 || from >= schemaVersion || to != schemaVersion) {
         throw StateError('An explicit database migration is required');
       }
       await transaction(() async {
@@ -187,9 +188,13 @@ class AppDatabase extends _$AppDatabase {
             await migrator.createTable(table);
           }
         }
-        await migrator.createTable(vaultDocuments);
-        await migrator.createTable(vaultDocumentVersions);
-        await migrator.createTable(vaultDocumentLinks);
+        if (from < 4) {
+          await migrator.createTable(vaultDocuments);
+          await migrator.createTable(vaultDocumentVersions);
+          await migrator.createTable(vaultDocumentLinks);
+        }
+        await migrator.createTable(vaultDocumentUploads);
+        await migrator.createIndex(vaultDocumentUploadRetry);
         await _installLedgerGuards();
         await _installWealthGuards();
         await _installDocumentGuards();
