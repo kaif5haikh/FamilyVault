@@ -1,6 +1,6 @@
 part of 'document_repository.dart';
 
-enum _DocumentReplay { ready, awaitingKeys, awaitingTransactions }
+enum _DocumentReplay { ready, awaitingKeys, awaitingRecords }
 
 Future<void> _replayDocuments(
   _SharedDocumentSync sync,
@@ -18,10 +18,10 @@ Future<void> _replayDocuments(
     }
   }
   if (failure != null) throw failure;
-  if (waiting.contains(_DocumentReplay.awaitingTransactions)) {
+  if (waiting.contains(_DocumentReplay.awaitingRecords)) {
     throw const AppFailure(
       FailureCode.network,
-      'Waiting for linked family transactions to sync.',
+      'Waiting for linked family records to sync.',
     );
   }
   if (waiting.contains(_DocumentReplay.awaitingKeys)) {
@@ -175,10 +175,11 @@ Future<_DocumentReplay> _replayDocument(
               document.createdAtUs != existing.createdAtUs))) {
     throw _invalidSharedDocument;
   }
-  final links = _readJournalLinks(document, row['links'] ?? const []);
+  final links = _readRecordLinks(document, row['links'] ?? const []);
   return db.transaction(() async {
     await repository._authorize();
-    final journalIds = {for (final link in links) link.journalId!};
+    final journalIds = {for (final link in links) ?link.journalId};
+    final assetIds = {for (final link in links) ?link.assetId};
     if (journalIds.isNotEmpty) {
       final journals =
           await (db.selectOnly(db.ledgerJournals)
@@ -189,7 +190,20 @@ Future<_DocumentReplay> _replayDocument(
                 ))
               .get();
       if (journals.length != journalIds.length) {
-        return _DocumentReplay.awaitingTransactions;
+        return _DocumentReplay.awaitingRecords;
+      }
+    }
+    if (assetIds.isNotEmpty) {
+      final assets =
+          await (db.selectOnly(db.wealthAssets)
+                ..addColumns([db.wealthAssets.id])
+                ..where(
+                  db.wealthAssets.familyId.equals(sync._family) &
+                      db.wealthAssets.id.isIn(assetIds),
+                ))
+              .get();
+      if (assets.length != assetIds.length) {
+        return _DocumentReplay.awaitingRecords;
       }
     }
     if (existing == null) {
@@ -200,7 +214,7 @@ Future<_DocumentReplay> _replayDocument(
     for (final version in versions) {
       await db.into(db.vaultDocumentVersions).insert(version);
     }
-    await _applyJournalLinks(db, document, links);
+    await _applyRecordLinks(db, document, links);
     sync._check();
     return _DocumentReplay.ready;
   });

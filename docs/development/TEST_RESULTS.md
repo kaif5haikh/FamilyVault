@@ -448,3 +448,17 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `bash tool/check.sh` passed analyzer, 123 Flutter tests, five Deno tests,
   both SQL gates and 183 resolved package queries. Transcript
   `.cache/checks/m06-loan-full-20261119-a.txt`.
+
+## M08c3 Shared asset document links on 2026-11-19
+
+- `bash tool/check_backend.sh` applied the asset-link migration and
+  passed the existing journal link and authorization probes. Transcript
+  `.cache/checks/m08-asset-links-sql-20261119-a.txt`.
+- `python3 -B tool/check_supabase.py --mobile --storage` passed. A device
+  queued a synthetic holding and document link before connecting. A second
+  device received both, removed and reattached the link, and preserved the
+  earlier tombstone. A clean local backup restore kept the active asset link.
+  Transcript `.cache/checks/m08-asset-links-provider-20261119-a.txt`.
+- `bash tool/check.sh` passed 123 Flutter tests, five Deno tests, analyzer,
+  both SQL gates and the package audit. Transcript
+  `.cache/checks/m08-asset-links-full-20261119-a.txt`.

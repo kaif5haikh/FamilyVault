@@ -580,19 +580,36 @@ final class DocumentRepository {
       if (existing != null) return existing.id;
       final id = _uuid.v4(), now = _writer.now;
       if (session.identity.isCloud) {
-        if (journalId == null) throw _sharedAssetLink;
-        final journal =
-            await (_db.select(_db.ledgerJournals)..where(
-                  (t) =>
-                      t.familyId.equals(_familyId) &
-                      t.id.equals(journalId) &
-                      t.status.equals('posted') &
-                      t.deletedAtUs.isNull() &
-                      t.kind.equals('reversal').not(),
-                ))
-                .getSingleOrNull();
-        if (journal == null) throw _missing;
-        await _stageChange(document, 'link', linkId: id, journalId: journalId);
+        if (journalId != null) {
+          final journal =
+              await (_db.select(_db.ledgerJournals)..where(
+                    (t) =>
+                        t.familyId.equals(_familyId) &
+                        t.id.equals(journalId) &
+                        t.status.equals('posted') &
+                        t.deletedAtUs.isNull() &
+                        t.kind.equals('reversal').not(),
+                  ))
+                  .getSingleOrNull();
+          if (journal == null) throw _missing;
+        } else {
+          final asset =
+              await (_db.select(_db.wealthAssets)..where(
+                    (t) =>
+                        t.familyId.equals(_familyId) &
+                        t.id.equals(assetId!) &
+                        t.deletedAtUs.isNull(),
+                  ))
+                  .getSingleOrNull();
+          if (asset == null) throw _missing;
+        }
+        await _stageChange(
+          document,
+          'link',
+          linkId: id,
+          journalId: journalId,
+          assetId: assetId,
+        );
         return id;
       }
       await _db
@@ -635,13 +652,12 @@ final class DocumentRepository {
       if (old == null) throw _missing;
       if (old.deletedAtUs != null) return;
       if (session.identity.isCloud) {
-        final journalId = old.journalId;
-        if (journalId == null) throw _sharedAssetLink;
         await _stageChange(
           await _load(old.documentId),
           'unlink',
           linkId: id,
-          journalId: journalId,
+          journalId: old.journalId,
+          assetId: old.assetId,
         );
         return;
       }
@@ -698,11 +714,6 @@ final class DocumentRepository {
       )..where((t) => t.id.equals(id))).write(updated);
       await _audit(id, action);
     }),
-  );
-
-  static const _sharedAssetLink = AppFailure(
-    FailureCode.configuration,
-    'Asset links are available in the local vault. You can link a shared transaction here.',
   );
 
   List<int> _context(String doc, String version, String mimeType, int length) =>

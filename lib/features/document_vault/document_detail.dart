@@ -79,13 +79,9 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
     final db = repository.session.db;
     final family = repository.session.identity.familyId;
     final snapshot = await repository.session.ledger.snapshot();
-    final shared = repository.session.identity.isCloud;
-    final assets = shared
-        ? <WealthAsset>[]
-        : await (db.select(db.wealthAssets)..where(
-                (t) => t.familyId.equals(family) & t.deletedAtUs.isNull(),
-              ))
-              .get();
+    final assets = await (db.select(
+      db.wealthAssets,
+    )..where((t) => t.familyId.equals(family) & t.deletedAtUs.isNull())).get();
     if (!mounted || repository.session.closed) return;
     final choices = <({String label, String? journal, String? asset})>[
       for (final asset in assets)
@@ -108,11 +104,7 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
               if (choices.isEmpty)
                 Padding(
                   padding: EdgeInsets.all(24),
-                  child: Text(
-                    shared
-                        ? 'Add a transaction first.'
-                        : 'Add an asset or transaction first.',
-                  ),
+                  child: Text('Add an asset or transaction first.'),
                 ),
               for (final choice in choices)
                 SimpleDialogOption(

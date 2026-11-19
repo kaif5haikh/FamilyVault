@@ -25,10 +25,11 @@ final class DocumentChangeRequest {
     this.metadataBox,
     this.linkId,
     this.journalId,
+    this.assetId,
   });
   final String operationId, documentId, versionId, action;
   final int baseRevision;
-  final String? ownerId, metadataBox, linkId, journalId;
+  final String? ownerId, metadataBox, linkId, journalId, assetId;
 }
 
 /// All calls use the same approved device and Auth session.

@@ -416,3 +416,12 @@ separately. Continue with the business UI and executable backend policies.
   opening receivable cases, overpayment rejection, corrected principal and
   repayments, soft archive and restoration with two independent devices.
 - Continue with asset document links and shared business accounting.
+
+## 2026-11-19 Links from shared documents to holdings
+
+- Verified `4c905a4` on the public SSH origin. Added an approved-device
+  endpoint and family-scoped references for asset links. Kept the existing
+  journal link endpoint and response shape.
+- The local provider tests queued a synthetic asset and link together,
+  replayed both on another device and checked reattachment, tombstone
+  retention and clean backup recovery. Continue with shared business records.

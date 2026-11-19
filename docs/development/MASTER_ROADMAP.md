@@ -49,7 +49,7 @@ No production deployment, real family data, paid services or destructive history
     - [ ] M08c3 Shared metadata edits, archive and record links with conflict recovery.
       - [x] Durable metadata edits, archive and restore with independent revision and file history.
       - [x] Shared transaction links and user-directed retry of a preserved draft.
-      - [ ] Shared asset links after the typed wealth backend is available.
+      - [x] Shared asset links, tombstones and recovery after the referenced record synchronizes.
 - [ ] M09 Authenticated archive/local backup/export/restore, independent Drive adapter and complete clean-environment recovery tests.
   - [x] M09a Consistent rekeyed snapshot, authenticated envelope and verified local artifact.
   - [x] M09b Clean-install activation, recovery UI and verified Files destination adapters.

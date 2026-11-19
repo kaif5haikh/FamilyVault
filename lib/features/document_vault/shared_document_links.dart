@@ -1,15 +1,19 @@
 part of 'document_repository.dart';
 
-List<VaultDocumentLink> _readJournalLinks(
+List<VaultDocumentLink> _readRecordLinks(
   VaultDocument document,
   Object? value,
 ) {
   if (value is! List<Object?>) throw _invalidSharedDocument;
   final results = <VaultDocumentLink>[];
-  final seen = <String>{}, active = <String>{};
+  final seen = <String>{}, active = <(String?, String?)>{};
   for (final row in value) {
     if (row is! DocumentWire) throw _invalidSharedDocument;
-    final id = _docId(row, 'id'), journal = _docId(row, 'journal_id');
+    final id = _docId(row, 'id');
+    final journal = row['journal_id'] == null
+        ? null
+        : _docId(row, 'journal_id');
+    final asset = row['asset_id'] == null ? null : _docId(row, 'asset_id');
     final revision = _docInt(row, 'revision');
     final created = _docTime(row, 'created_at'),
         updated = _docTime(row, 'updated_at');
@@ -17,7 +21,8 @@ List<VaultDocumentLink> _readJournalLinks(
         ? null
         : _docTime(row, 'deleted_at');
     if (!seen.add(id) ||
-        removed == null && !active.add(journal) ||
+        (journal == null) == (asset == null) ||
+        removed == null && !active.add((journal, asset)) ||
         updated < created ||
         updated > document.updatedAtUs ||
         (removed == null
@@ -31,6 +36,7 @@ List<VaultDocumentLink> _readJournalLinks(
         familyId: document.familyId,
         documentId: document.id,
         journalId: journal,
+        assetId: asset,
         createdBy: _docId(row, 'created_by'),
         updatedBy: _docId(row, 'updated_by'),
         revision: revision,
@@ -43,7 +49,7 @@ List<VaultDocumentLink> _readJournalLinks(
   return results;
 }
 
-Future<void> _applyJournalLinks(
+Future<void> _applyRecordLinks(
   AppDatabase db,
   VaultDocument document,
   List<VaultDocumentLink> links,
@@ -57,7 +63,7 @@ Future<void> _applyJournalLinks(
           .get();
   final known = {for (final link in local) link.id: link};
   final incoming = {for (final link in links) link.id: link};
-  // Apply removals before new active links to the same transaction.
+  // Apply removals before new active links to the same record.
   for (final old in local) {
     final next = incoming[old.id];
     if (next == old) continue;

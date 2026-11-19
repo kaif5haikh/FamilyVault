@@ -8,6 +8,7 @@ import 'package:familyvault/core/errors/app_failure.dart';
 import 'package:familyvault/core/finance/money.dart';
 import 'package:familyvault/core/security/vault_identity.dart';
 import 'package:familyvault/core/security/vault_lifecycle.dart';
+import 'package:familyvault/features/assets/data/asset_repository.dart';
 import 'package:familyvault/features/auth/cloud_access_gateway.dart';
 import 'package:familyvault/features/auth/cloud_cache.dart';
 import 'package:familyvault/features/auth/cloud_connection.dart';
@@ -360,6 +361,58 @@ void main() {
         ),
         bytes,
       );
+      final asset = await AssetRepository(receiver.ledger).create(
+        const AssetDraft(
+          name: 'Synthetic Ballia land record',
+          kind: AssetKind.land,
+          property: PropertyDraft(city: 'Ballia', location: 'Synthetic land'),
+        ),
+      );
+      final assetLink = await receiver.documents.link(
+        staged.documentId,
+        assetId: asset,
+      );
+      expect(
+        (await receiver.documents.links(staged.documentId))
+            .map((link) => link.id),
+        isNot(contains(assetLink)),
+      );
+      await receiver.sync!.check();
+      await later.sync!.check();
+      expect(later.sync!.status.documentFailure, isNull);
+      expect(
+        (await later.documents.watchLinked(assetId: asset).first).single.id,
+        staged.documentId,
+      );
+      expect(
+        (await later.documents.links(staged.documentId))
+            .singleWhere((link) => link.id == assetLink)
+            .createdBy,
+        receiver.identity.memberId,
+      );
+      await later.documents.unlink(assetLink);
+      await later.sync!.check();
+      expect(await later.documents.watchLinked(assetId: asset).first, isEmpty);
+      final renewedAssetLink = await later.documents.link(
+        staged.documentId,
+        assetId: asset,
+      );
+      await later.sync!.check();
+      await receiver.sync!.check();
+      expect(receiver.sync!.status.documentFailure, isNull);
+      expect(renewedAssetLink, isNot(assetLink));
+      final linkHistory = await receiver.db
+          .select(receiver.db.vaultDocumentLinks)
+          .get();
+      expect(
+        linkHistory.singleWhere((link) => link.id == assetLink).revision,
+        2,
+      );
+      expect(
+        (await receiver.documents.links(staged.documentId))
+            .map((link) => link.id),
+        unorderedEquals([relinked, renewedAssetLink]),
+      );
       final recovery = BackupRecoveryKey.generate();
       addTearDown(recovery.destroy);
       final backups = VaultBackup(Directory('${root.path}/backup-stage'));
@@ -389,6 +442,10 @@ void main() {
       expect(
         (await local.ledger.snapshot()).balances()[cash.id],
         BigInt.from(4123),
+      );
+      expect(
+        (await local.documents.watchLinked(assetId: asset).first).single.id,
+        staged.documentId,
       );
       expect(
         await local.documents.read(

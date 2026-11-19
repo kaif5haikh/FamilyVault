@@ -73,6 +73,7 @@ extension SharedDocumentEdits on DocumentRepository {
     VaultDocument? metadata,
     String? linkId,
     String? journalId,
+    String? assetId,
   }) async {
     await _checkOperationSlot(old.id);
     final version =
@@ -114,6 +115,7 @@ extension SharedDocumentEdits on DocumentRepository {
         'metadata_box': box,
         'link_id': linkId,
         'journal_id': journalId,
+        'asset_id': assetId,
       },
     );
   }
@@ -135,6 +137,15 @@ DocumentChangeRequest _changeRequest(PendingMutation job) {
   if (!linking && !['metadata', 'archive', 'restore'].contains(action)) {
     throw _invalidSharedDocument;
   }
+  final journal = record['journal_id'] == null
+      ? null
+      : _docId(record, 'journal_id');
+  final asset = record['asset_id'] == null ? null : _docId(record, 'asset_id');
+  if (linking
+      ? (journal == null) == (asset == null)
+      : journal != null || asset != null) {
+    throw _invalidSharedDocument;
+  }
   return DocumentChangeRequest(
     operationId: job.operationId,
     documentId: job.entityId,
@@ -144,7 +155,8 @@ DocumentChangeRequest _changeRequest(PendingMutation job) {
     ownerId: action == 'metadata' ? _docId(record, 'owner_id') : null,
     metadataBox: action == 'metadata' ? _docText(record, 'metadata_box') : null,
     linkId: linking ? _docId(record, 'link_id') : null,
-    journalId: linking ? _docId(record, 'journal_id') : null,
+    journalId: journal,
+    assetId: asset,
   );
 }
 
@@ -176,6 +188,7 @@ extension on _SharedDocumentSync {
             receipt['action'] != request.action ||
             receipt['link_id'] != request.linkId ||
             receipt['journal_id'] != request.journalId ||
+            receipt['asset_id'] != request.assetId ||
             receipt['revision'] != job.baseRevision + 1) {
           throw _invalidSharedDocument;
         }

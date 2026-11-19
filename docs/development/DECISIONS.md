@@ -138,3 +138,6 @@ scoped journal effects and review of conflicting accepted revisions.
 
 ADR 0024 records shared loan terms, constrained principal and interest
 postings, and retained corrections and repayments.
+
+ADR 0025 records family-scoped asset links, the existing transaction
+contract and deferred local replay until the referenced record is present.
