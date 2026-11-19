@@ -187,6 +187,48 @@ void main() {
         bytes,
       );
 
+      await receiver.documents.update(
+        staged.documentId,
+        2,
+        DocumentDetails(
+          title: 'Synthetic renamed document',
+          category: DocumentCategory.general,
+          ownerId: owner.identity.memberId,
+        ),
+      );
+      expect(
+        (await receiver.documents.watchDocumentEdits().first).single.state,
+        'pending',
+      );
+      await expectLater(
+        receiver.documents.addVersion(staged.documentId, 2, file),
+        throwsA(
+          isA<AppFailure>().having((e) => e.code, 'code', FailureCode.conflict),
+        ),
+      );
+      await owner.documents.archive(staged.documentId, 2);
+      await receiver.sync!.check();
+      expect(receiver.sync!.status.documentFailure?.code, isNull);
+      expect(await receiver.documents.watchDocumentEdits().first, isEmpty);
+      await owner.sync!.check();
+      final renamed = await owner.documents.document(staged.documentId);
+      expect(renamed.revision, 3);
+      expect(renamed.title, 'Synthetic renamed document');
+      expect(renamed.ownerId, owner.identity.memberId);
+      expect(renamed.updatedBy, receiver.identity.memberId);
+      expect(
+        (await owner.documents.watchDocumentEdits().first).single.state,
+        'conflicted',
+      );
+      await owner.documents.archive(staged.documentId, 3);
+      await owner.sync!.check();
+      expect(owner.sync!.status.documentFailure?.code, isNull);
+      expect(await owner.documents.watch().first, isEmpty);
+      expect(
+        (await owner.documents.watch(archived: true).first).single.revision,
+        4,
+      );
+
       final http = HttpClient();
       addTearDown(() => http.close(force: true));
       final response = await (await http.postUrl(
@@ -208,6 +250,10 @@ void main() {
       await later.sync!.check();
       expect(later.sync!.status.documentFailure?.code, isNull);
       expect(
+        (await later.documents.watch(archived: true).first).single.revision,
+        4,
+      );
+      expect(
         (await later.documents.versions(staged.documentId))
             .map((item) => item.id),
         [accepted.id, staged.id],
@@ -219,6 +265,15 @@ void main() {
           DocumentAccess.download,
         ),
         bytes,
+      );
+      await later.documents.archive(staged.documentId, 4, restore: true);
+      await later.sync!.check();
+      await receiver.sync!.check();
+      expect(receiver.sync!.status.documentFailure?.code, isNull);
+      expect((await receiver.documents.watch().first).single.revision, 5);
+      expect(
+        await receiver.documents.versions(staged.documentId),
+        hasLength(2),
       );
     },
     skip: fixturePath == null

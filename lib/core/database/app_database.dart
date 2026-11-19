@@ -19,6 +19,8 @@ part 'app_database.g.dart';
   name: 'pending_mutations_retry',
   columns: {#state, #nextAttemptAtUs},
 )
+@TableIndex.sql('''CREATE UNIQUE INDEX pending_document_change ON pending_mutations(family_id, entity_id)
+  WHERE entity_type = 'document_change' AND state = 'pending' ''')
 class PendingMutations extends Table {
   TextColumn get operationId => text()();
   TextColumn get familyId => text()();
@@ -135,7 +137,7 @@ class AppDatabase extends _$AppDatabase {
   }) => AppDatabase._(openEncryptedConnection(file: file, key: key));
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -193,8 +195,17 @@ class AppDatabase extends _$AppDatabase {
           await migrator.createTable(vaultDocumentVersions);
           await migrator.createTable(vaultDocumentLinks);
         }
-        await migrator.createTable(vaultDocumentUploads);
-        await migrator.createIndex(vaultDocumentUploadRetry);
+        if (from < 5) {
+          await migrator.createTable(vaultDocumentUploads);
+          await migrator.createIndex(vaultDocumentUploadRetry);
+        }
+        await migrator.createIndex(pendingDocumentChange);
+        // The connected projection can receive several accepted revisions at
+        // once. Replace the two local guards inside this additive migration.
+        await customStatement('DROP TRIGGER IF EXISTS vault_document_identity');
+        await customStatement(
+          'DROP TRIGGER IF EXISTS vault_document_version_sequence',
+        );
         await _installLedgerGuards();
         await _installWealthGuards();
         await _installDocumentGuards();

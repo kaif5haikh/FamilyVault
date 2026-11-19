@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
@@ -340,7 +341,7 @@ final class CloudWorkspaceCache {
         );
         await db.transaction(() async {
           await directory.apply(db);
-          await _restoreDocumentTransfers(existing, session);
+          await _restoreDocumentCache(existing, session);
         });
         await session.ledger.mutations.audit(
           operationId: const Uuid().v4(),
@@ -365,16 +366,20 @@ final class CloudWorkspaceCache {
     }
   });
 
-  Future<void> _restoreDocumentTransfers(
-    File source,
-    VaultSession session,
-  ) async {
+  Future<void> _restoreDocumentCache(File source, VaultSession session) async {
     final previous = AppDatabase.encrypted(
       file: source,
       key: VaultDatabaseKey.fromBytes(session.keys.database),
     );
     try {
       await previous.customStatement('PRAGMA query_only = ON');
+      final documents = await previous.select(previous.vaultDocuments).get();
+      final versions = await (previous.select(
+        previous.vaultDocumentVersions,
+      )..orderBy([(t) => OrderingTerm.asc(t.version)])).get();
+      final edits = await (previous.select(
+        previous.pendingMutations,
+      )..where((t) => t.entityType.equals('document_change'))).get();
       final uploads = await previous
           .select(previous.vaultDocumentUploads)
           .get();
@@ -384,13 +389,17 @@ final class CloudWorkspaceCache {
                   'document',
                   'document_transfer',
                   'document_receipt',
+                  'document_change',
                   'document_access',
                   'document_link',
                 ]),
               ))
               .get();
       await session.db.batch((batch) {
+        batch.insertAll(session.db.vaultDocuments, documents);
+        batch.insertAll(session.db.vaultDocumentVersions, versions);
         batch.insertAll(session.db.vaultDocumentUploads, uploads);
+        batch.insertAll(session.db.pendingMutations, edits);
         batch.insertAll(session.db.localAuditEvents, audit);
       });
     } finally {
@@ -432,6 +441,7 @@ final class CloudWorkspaceCache {
         for (final row in outbox.where(
           (row) =>
               row.familyId == session.identity.familyId &&
+              row.entityType != 'document_change' &&
               row.state != 'acknowledged',
         )) {
           saved.add((local: row, competing: conflicts[row.operationId]));

@@ -188,6 +188,42 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
               );
             },
           ),
+          StreamBuilder<List<DocumentEditStatus>>(
+            stream: repository.watchDocumentEdits(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) return FailureNotice(snapshot.error!);
+              final edits = snapshot.data;
+              if (edits == null || edits.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return Column(
+                children: [
+                  for (final edit in edits)
+                    Card.outlined(
+                      child: ListTile(
+                        leading: const Icon(Icons.edit_outlined),
+                        title: Text(edit.title),
+                        subtitle: Text(switch (edit.state) {
+                          'conflicted' =>
+                            'The family document changed. Open it to review.',
+                          'rejected' => 'Could not share this edit.',
+                          'acknowledged' =>
+                            'Shared. Waiting for the family list to refresh.',
+                          _ => switch (edit.action) {
+                            'archive' => 'Waiting to confirm the archive.',
+                            'restore' => 'Waiting to confirm the restore.',
+                            _ => 'Waiting to confirm the edited details.',
+                          },
+                        }),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () =>
+                            context.push('/document/${edit.documentId}'),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
         ],
         if (selection?.belongsTo(repository.session.identity) == true)
           ListTile(

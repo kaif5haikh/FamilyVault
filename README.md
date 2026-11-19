@@ -14,10 +14,11 @@ FamilyVault is a Flutter app I am building to help a family keep track of money 
 - Sign in with a family account and sync accounts, transactions, budgets and bank statement checks. I tested this with two test accounts using Supabase on my computer.
 - Keep PDFs, photos and scans in the encrypted vault on your device. You can search by title, keep old versions and link a file to a transaction or asset.
 - Share encrypted documents with approved family devices. Add a file without internet and the app will share it when it can connect again. I tested this with sample files on a local Supabase server.
+- Edit shared document details, archive files and bring them back with their old versions.
 
 ## What I am still building
 
-I am working on shared sync for assets, loans and business records. Editing document details across devices and encrypted backups for the device and Google Drive are also in progress.
+I am working on shared sync for assets, loans and business records. Shared links to financial records and encrypted backups for the device and Google Drive are also in progress.
 
 ## Run it
 

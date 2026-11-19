@@ -41,7 +41,7 @@ void main() {
         (await f.db.customSelect('PRAGMA user_version').getSingle()).read<int>(
           'user_version',
         ),
-        5,
+        6,
       );
       expect(
         await f.db.customSelect('PRAGMA foreign_key_check').get(),

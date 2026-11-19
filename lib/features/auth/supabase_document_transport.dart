@@ -118,6 +118,17 @@ final class _SupabaseDocuments implements DocumentTransport {
   });
 
   @override
+  Future<DocumentWire> change(DocumentChangeRequest request) => _rpc('change', {
+    'p_operation': request.operationId,
+    'p_document': request.documentId,
+    'p_version': request.versionId,
+    'p_base': request.baseRevision,
+    'p_action': request.action,
+    'p_owner': request.ownerId,
+    'p_metadata': request.metadataBox,
+  });
+
+  @override
   Future<List<DocumentWire>> list() async =>
       cloudRows(await _rpc<Object?>('list'));
 

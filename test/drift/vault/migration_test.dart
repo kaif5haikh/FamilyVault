@@ -10,6 +10,7 @@ import 'generated/schema_v1.dart' as v1;
 import 'generated/schema_v2.dart' as v2;
 import 'generated/schema_v3.dart' as v3;
 import 'generated/schema_v4.dart' as v4;
+import 'generated/schema_v5.dart' as v5;
 
 import 'package:familyvault/core/database/ledger_guards.dart';
 
@@ -20,12 +21,12 @@ void main() {
   test('fresh encrypted database matches the versioned schema', () async {
     final f = await VaultFixture.create(bootstrap: false);
     try {
-      await verifier.migrateAndValidate(f.db, 5);
+      await verifier.migrateAndValidate(f.db, 6);
     } finally {
       await f.dispose();
     }
   });
-  test('generated v1 snapshot migrates to v5 with operations, conflicts and checkpoints intact', () async {
+  test('generated v1 snapshot migrates to v6 with operations, conflicts and checkpoints intact', () async {
     final f = await VaultFixture.create(bootstrap: false);
     await f.db.close();
     final old = v1.DatabaseAtV1(
@@ -75,7 +76,7 @@ void main() {
     }
     f.db = AppDatabase.encrypted(file: f.file, key: f.key);
     try {
-      await verifier.migrateAndValidate(f.db, 5);
+      await verifier.migrateAndValidate(f.db, 6);
       final pending = (await f.db.select(f.db.pendingMutations).get()).single;
       expect(pending.state, 'conflicted');
       expect(pending.baseRevision, 3);
@@ -92,7 +93,7 @@ void main() {
       await f.dispose();
     }
   });
-  test('populated encrypted v2 ledger migrates to v5 with posted facts and audit intact', () async {
+  test('populated encrypted v2 ledger migrates to v6 with posted facts and audit intact', () async {
     final f = await VaultFixture.create(bootstrap: false);
     await f.db.close();
     final old = v2.DatabaseAtV2(
@@ -208,7 +209,7 @@ void main() {
     }
     f.db = AppDatabase.encrypted(file: f.file, key: f.key);
     try {
-      await verifier.migrateAndValidate(f.db, 5);
+      await verifier.migrateAndValidate(f.db, 6);
       expect(
         (await f.db.select(f.db.ledgerJournals).get()).single.status,
         'posted',
@@ -245,7 +246,7 @@ void main() {
     }
   });
   test(
-    'encrypted v3 wealth records are kept during the v5 document migration',
+    'encrypted v3 wealth records are kept during the v6 document migration',
     () async {
       final f = await VaultFixture.create(bootstrap: false);
       await f.db.close();
@@ -275,7 +276,7 @@ void main() {
       }
       f.db = AppDatabase.encrypted(file: f.file, key: f.key);
       try {
-        await verifier.migrateAndValidate(f.db, 5);
+        await verifier.migrateAndValidate(f.db, 6);
         expect(
           (await f.db.select(f.db.wealthAssets).getSingle()).purchaseTotalMinor,
           9007199254740993,
@@ -291,70 +292,110 @@ void main() {
     },
   );
 
-  test(
-    'v4 document provenance and version data survive the v5 queue migration',
-    () async {
-      final f = await VaultFixture.create(bootstrap: false);
-      await f.db.close();
-      final old = v4.DatabaseAtV4(
-        openEncryptedConnection(file: f.file, key: f.key),
-      );
-      final identity = f.identity;
-      try {
-        await old.customStatement(
-          "INSERT INTO family_spaces(id,name,mode,created_at_us) VALUES (?, 'Synthetic v4 vault', 'offline', 1)",
-          [identity.familyId],
-        );
-        await old.customStatement(
-          "INSERT INTO family_members(id,family_id,display_name,relationship,role,created_at_us) VALUES (?, ?, 'Synthetic owner', 'administrator', 'administrator', 1)",
-          [identity.memberId, identity.familyId],
-        );
-        await old.customStatement(
-          "INSERT INTO vault_devices(id,family_id,member_id,state,created_at_us) VALUES (?, ?, ?, 'enrolled', 1)",
-          [identity.deviceId, identity.familyId, identity.memberId],
-        );
-        await old.customStatement(
-          "INSERT INTO vault_documents(id,family_id,owner_id,created_by,updated_by,created_at_us,updated_at_us,title,category) VALUES ('synthetic-doc', ?, ?, ?, ?, 1, 1, 'Synthetic prior document', 'general')",
-          [
-            identity.familyId,
+  for (final previous in [4, 5]) {
+    test(
+      'v$previous document provenance and version data survive the v6 document migration',
+      () async {
+        final f = await VaultFixture.create(bootstrap: false);
+        await f.db.close();
+        final executor = openEncryptedConnection(file: f.file, key: f.key);
+        final GeneratedDatabase old = previous == 4
+            ? v4.DatabaseAtV4(executor)
+            : v5.DatabaseAtV5(executor);
+        final identity = f.identity;
+        try {
+          await old.customStatement(
+            "INSERT INTO family_spaces(id,name,mode,created_at_us) VALUES (?, 'Synthetic prior vault', ?, 1)",
+            [identity.familyId, previous == 4 ? 'offline' : 'cloud'],
+          );
+          await old.customStatement(
+            "INSERT INTO family_members(id,family_id,display_name,relationship,role,created_at_us) VALUES (?, ?, 'Synthetic owner', 'administrator', 'administrator', 1)",
+            [identity.memberId, identity.familyId],
+          );
+          await old.customStatement(
+            "INSERT INTO vault_devices(id,family_id,member_id,state,created_at_us) VALUES (?, ?, ?, 'enrolled', 1)",
+            [identity.deviceId, identity.familyId, identity.memberId],
+          );
+          await old.customStatement(
+            "INSERT INTO vault_documents(id,family_id,owner_id,created_by,updated_by,created_at_us,updated_at_us,title,category) VALUES ('synthetic-doc', ?, ?, ?, ?, 1, 1, 'Synthetic prior document', 'general')",
+            [
+              identity.familyId,
+              identity.memberId,
+              identity.memberId,
+              identity.memberId,
+            ],
+          );
+          await old.customStatement(
+            "INSERT INTO vault_document_versions(id,family_id,document_id,version,mime_type,plaintext_bytes,ciphertext_digest,wrapped_key,created_by,device_id,created_at_us) VALUES ('synthetic-version', ?, 'synthetic-doc', 1, 'application/pdf', 20, ?, zeroblob(72), ?, ?, 1)",
+            [identity.familyId, '4' * 64, identity.memberId, identity.deviceId],
+          );
+          if (previous == 5) {
+            await old.customStatement(
+              "INSERT INTO vault_document_uploads(id,operation_id,family_id,document_id,owner_id,member_id,device_id,base_revision,version,title,metadata_box,mime_type,plaintext_bytes,ciphertext_digest,wrapped_key,created_at_us) VALUES ('staged-version','staged-operation',?,'synthetic-doc',?,?,?,1,2,'Synthetic pending file',?,'application/pdf',40,?,zeroblob(72),2)",
+              [
+                identity.familyId,
+                identity.memberId,
+                identity.memberId,
+                identity.deviceId,
+                'A' * 60,
+                '6' * 64,
+              ],
+            );
+            await old.customStatement(
+              '''CREATE TRIGGER vault_document_identity BEFORE UPDATE ON vault_documents
+            WHEN NEW.revision <> OLD.revision + 1 BEGIN SELECT RAISE(ABORT, 'Prior document revision guard'); END''',
+            );
+            await expectLater(
+              old.customStatement('UPDATE vault_documents SET revision = 3'),
+              throwsA(anything),
+            );
+          }
+        } finally {
+          await old.close();
+        }
+        f.db = AppDatabase.encrypted(file: f.file, key: f.key);
+        try {
+          await verifier.migrateAndValidate(f.db, 6);
+          expect(
+            (await f.db.select(f.db.vaultDocuments).getSingle()).ownerId,
             identity.memberId,
-            identity.memberId,
-            identity.memberId,
-          ],
-        );
-        await old.customStatement(
-          "INSERT INTO vault_document_versions(id,family_id,document_id,version,mime_type,plaintext_bytes,ciphertext_digest,wrapped_key,created_by,device_id,created_at_us) VALUES ('synthetic-version', ?, 'synthetic-doc', 1, 'application/pdf', 20, ?, zeroblob(72), ?, ?, 1)",
-          [identity.familyId, '4' * 64, identity.memberId, identity.deviceId],
-        );
-      } finally {
-        await old.close();
-      }
-      f.db = AppDatabase.encrypted(file: f.file, key: f.key);
-      try {
-        await verifier.migrateAndValidate(f.db, 5);
-        expect(
-          (await f.db.select(f.db.vaultDocuments).getSingle()).ownerId,
-          identity.memberId,
-        );
-        final version = await f.db
-            .select(f.db.vaultDocumentVersions)
-            .getSingle();
-        expect(version.id, 'synthetic-version');
-        expect(version.ciphertextDigest, '4' * 64);
-        expect(await f.db.select(f.db.vaultDocumentUploads).get(), isEmpty);
-        expect(
-          await f.db.customSelect('PRAGMA foreign_key_check').get(),
-          isEmpty,
-        );
-        await expectLater(
-          f.db.delete(f.db.vaultDocumentVersions).go(),
-          throwsA(anything),
-        );
-      } finally {
-        await f.dispose();
-      }
-    },
-  );
+          );
+          final version = await f.db
+              .select(f.db.vaultDocumentVersions)
+              .getSingle();
+          expect(version.id, 'synthetic-version');
+          expect(version.ciphertextDigest, '4' * 64);
+          final uploads = await f.db.select(f.db.vaultDocumentUploads).get();
+          if (previous == 5) {
+            expect(uploads.single.operationId, 'staged-operation');
+            await f.db.customStatement(
+              'UPDATE vault_documents SET revision = 3',
+            );
+            expect(
+              (await f.db.select(f.db.vaultDocuments).getSingle()).revision,
+              3,
+            );
+          } else {
+            expect(uploads, isEmpty);
+            await expectLater(
+              f.db.customStatement('UPDATE vault_documents SET revision = 3'),
+              throwsA(anything),
+            );
+          }
+          expect(
+            await f.db.customSelect('PRAGMA foreign_key_check').get(),
+            isEmpty,
+          );
+          await expectLater(
+            f.db.delete(f.db.vaultDocumentVersions).go(),
+            throwsA(anything),
+          );
+        } finally {
+          await f.dispose();
+        }
+      },
+    );
+  }
 
   test('failed v3 DDL rolls back all additions and retains the v2 version and user table', () async {
     final f = await VaultFixture.create(bootstrap: false);

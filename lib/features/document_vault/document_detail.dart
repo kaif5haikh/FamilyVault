@@ -62,7 +62,12 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
     });
     try {
       await apply();
-      if (mounted) setState(() => _record = _load(repository));
+      if (mounted && repository.sharingAvailable) {
+        context.go('/documents');
+        unawaited(repository.session.sync?.check());
+      } else if (mounted) {
+        setState(() => _record = _load(repository));
+      }
     } catch (error) {
       if (mounted) setState(() => _error = error);
     } finally {
@@ -151,21 +156,19 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                 if (_error != null) FailureNotice(_error!),
                 const SizedBox(height: 12),
                 if (!repository.session.identity.isCloud ||
-                    repository.sharingAvailable && !archived)
+                    repository.sharingAvailable)
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
                       if (!archived) ...[
-                        if (!repository.session.identity.isCloud)
-                          OutlinedButton.icon(
-                            onPressed: _busy
-                                ? null
-                                : () =>
-                                      context.push('/document/${doc.id}/edit'),
-                            icon: const Icon(Icons.edit_outlined),
-                            label: const Text('Edit details'),
-                          ),
+                        OutlinedButton.icon(
+                          onPressed: _busy
+                              ? null
+                              : () => context.push('/document/${doc.id}/edit'),
+                          icon: const Icon(Icons.edit_outlined),
+                          label: const Text('Edit details'),
+                        ),
                         OutlinedButton.icon(
                           onPressed: _busy
                               ? null
@@ -190,27 +193,26 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                             label: const Text('Link record'),
                           ),
                       ],
-                      if (!repository.session.identity.isCloud)
-                        TextButton.icon(
-                          onPressed: _busy
-                              ? null
-                              : () => _change(
-                                  repository,
-                                  () => repository.archive(
-                                    doc.id,
-                                    doc.revision,
-                                    restore: archived,
-                                  ),
+                      TextButton.icon(
+                        onPressed: _busy
+                            ? null
+                            : () => _change(
+                                repository,
+                                () => repository.archive(
+                                  doc.id,
+                                  doc.revision,
+                                  restore: archived,
                                 ),
-                          icon: Icon(
-                            archived
-                                ? Icons.unarchive_outlined
-                                : Icons.archive_outlined,
-                          ),
-                          label: Text(
-                            archived ? 'Restore document' : 'Archive document',
-                          ),
+                              ),
+                        icon: Icon(
+                          archived
+                              ? Icons.unarchive_outlined
+                              : Icons.archive_outlined,
                         ),
+                        label: Text(
+                          archived ? 'Restore document' : 'Archive document',
+                        ),
+                      ),
                     ],
                   ),
                 const SizedBox(height: 18),

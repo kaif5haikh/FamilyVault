@@ -21681,6 +21681,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'pending_mutations_retry',
     'CREATE INDEX pending_mutations_retry ON pending_mutations (state, next_attempt_at_us)',
   );
+  late final Index pendingDocumentChange = Index(
+    'pending_document_change',
+    'CREATE UNIQUE INDEX pending_document_change ON pending_mutations (family_id, entity_id) WHERE entity_type = \'document_change\' AND state = \'pending\'',
+  );
   late final Index vaultDocumentUploadRetry = Index(
     'vault_document_upload_retry',
     'CREATE INDEX vault_document_upload_retry ON vault_document_uploads (state, next_attempt_at_us)',
@@ -21723,6 +21727,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     vaultDocumentLinks,
     vaultDocumentUploads,
     pendingMutationsRetry,
+    pendingDocumentChange,
     vaultDocumentUploadRetry,
   ];
 }

@@ -28,6 +28,5 @@ holder can give a newly approved device the keys to older versions.
 
 The migration, upload queue, receiver and backfill passed development tests
 with real local Supabase services. A version conflict preserves the draft for
-preview and export. Shared metadata changes, archive and record links require
-their own synchronization commands. Deployment and physical device checks
-remain pending.
+preview and export. ADR 0018 covers shared edits to metadata and archive state.
+Shared record links, deployment and physical device checks remain pending.

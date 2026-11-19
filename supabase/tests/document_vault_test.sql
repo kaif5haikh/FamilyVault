@@ -24,6 +24,9 @@ DECLARE owner_id uuid;
 DECLARE reservation uuid:=gen_random_uuid();
 DECLARE document uuid:=gen_random_uuid();
 DECLARE version_id uuid:=gen_random_uuid();
+DECLARE metadata_op uuid:=gen_random_uuid();
+DECLARE archive_op uuid:=gen_random_uuid();
+DECLARE restore_op uuid:=gen_random_uuid();
 DECLARE invitation uuid;
 DECLARE expected_digest text:=repeat('a',64);
 DECLARE grants jsonb;
@@ -106,7 +109,32 @@ BEGIN
   received:=public.fv_document_list(dev_member,proof_member)->0;
   ASSERT received->>'owner_id'=owner_id::text AND received->>'created_by'=member_id::text;
   ASSERT received->'key_grant'->>'recipient_device_id'=dev_member::text;
+  received:=public.fv_document_change(dev_member,proof_member,metadata_op,document,version_id,1,'metadata',member_id,repeat('C',64));
+  ASSERT received->>'revision'='2';
+  ASSERT public.fv_document_change(dev_member,proof_member,metadata_op,document,version_id,1,'metadata',member_id,repeat('C',64))=received;
+  BEGIN
+    PERFORM public.fv_document_change(dev_member,proof_member,metadata_op,document,version_id,1,'metadata',member_id,repeat('D',64));
+    RAISE EXCEPTION 'A reused document operation ID accepted different bytes';
+  EXCEPTION WHEN unique_violation THEN NULL;
+  END;
+  BEGIN
+    PERFORM public.fv_document_change(dev_member,proof_member,archive_op,document,version_id,1,'archive',NULL,NULL);
+    RAISE EXCEPTION 'A stale archive changed the document';
+  EXCEPTION WHEN SQLSTATE 'PT409' THEN NULL;
+  END;
+  ASSERT public.fv_document_change(dev_member,proof_member,archive_op,document,version_id,2,'archive',NULL,NULL)->>'revision'='3';
+  ASSERT public.fv_document_list(dev_member,proof_member)->0->>'archived_at' IS NOT NULL;
+  BEGIN
+    PERFORM public.fv_document_reserve(dev_member,proof_member,gen_random_uuid(),document,gen_random_uuid(),member_id,3,
+      'application/pdf',100,expected_digest,repeat('C',64));
+    RAISE EXCEPTION 'An archived document accepted a replacement file';
+  EXCEPTION WHEN SQLSTATE 'PT409' THEN NULL;
+  END;
   PERFORM pg_temp.document_session(owner_user,owner_session);
+  ASSERT public.fv_document_change(dev_owner,proof_owner,restore_op,document,version_id,3,'restore',NULL,NULL)->>'revision'='4';
+  received:=public.fv_document_list(dev_owner,proof_owner)->0;
+  ASSERT received->>'archived_at' IS NULL AND received->>'metadata_box'=repeat('C',64);
+  ASSERT received->>'owner_id'=member_id::text AND received->>'updated_by'=owner_id::text;
   received:=public.fv_document_versions(dev_owner,proof_owner,document)->0;
   ASSERT received->'key_grant'->>'recipient_device_id'=dev_owner::text;
   ASSERT public.fv_document_download_plan(dev_owner,proof_owner,version_id)->>'ciphertext_digest'=expected_digest;
@@ -127,6 +155,11 @@ BEGIN
   END;
   ASSERT public.fv_document_missing_grants(dev_later,proof_later)='[]'::jsonb;
   ASSERT public.fv_document_versions(dev_later,proof_later,document)->0->'key_grant'='null'::jsonb;
+  BEGIN
+    PERFORM public.fv_document_change(dev_later,proof_later,gen_random_uuid(),document,version_id,4,'archive',NULL,NULL);
+    RAISE EXCEPTION 'A device without a version key changed document history';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
   PERFORM pg_temp.document_session(owner_user,owner_session);
   received:=jsonb_build_object('version',1,'sender_device_id',dev_owner,'recipient_device_id',dev_later,
     'ephemeral_public',repeat('9',64),'wrapped_key',repeat('B',96),'signature',repeat('c',128));
@@ -145,7 +178,8 @@ BEGIN
   END;
   RESET ROLE;
   ASSERT (SELECT count(*) FROM fv_data.document_versions WHERE family_id=family)=1;
-  ASSERT (SELECT count(*) FROM fv_data.document_access_events WHERE family_id=family)=3;
+  ASSERT (SELECT count(*) FROM fv_data.document_changes WHERE family_id=family)=3;
+  ASSERT (SELECT count(*) FROM fv_data.document_access_events WHERE family_id=family)=6;
 END;
 $$;
 ROLLBACK;

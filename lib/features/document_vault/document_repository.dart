@@ -12,6 +12,7 @@ import '../../core/database/mutation_writer.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/security/sealed_file.dart';
 import '../../core/security/vault_lifecycle.dart';
+import '../../core/sync/sync_protocol.dart';
 import '../finance/data/ledger_repository.dart';
 import 'document_key_grant.dart';
 import 'document_transport.dart';
@@ -19,6 +20,7 @@ import 'document_transport.dart';
 part 'document_transfer_queue.dart';
 part 'shared_document_sync.dart';
 part 'shared_document_replay.dart';
+part 'shared_document_changes.dart';
 
 enum DocumentFormat {
   pdf('application/pdf', 'pdf'),
@@ -136,7 +138,7 @@ final class DocumentRepository {
     if (writing && session.identity.isCloud) {
       throw const AppFailure(
         FailureCode.configuration,
-        'Add documents in your local vault while shared document storage is in development.',
+        'Record links are available in the local vault.',
       );
     }
     await _writer.authorize();
@@ -212,6 +214,17 @@ final class DocumentRepository {
               ..orderBy([(t) => OrderingTerm.desc(t.version)]))
             .get();
       });
+
+  Future<VaultDocumentVersion?> _latestVersion(String documentId) =>
+      (_db.select(_db.vaultDocumentVersions)
+            ..where(
+              (t) =>
+                  t.familyId.equals(_familyId) &
+                  t.documentId.equals(documentId),
+            )
+            ..orderBy([(t) => OrderingTerm.desc(t.version)])
+            ..limit(1))
+          .getSingleOrNull();
 
   String _title(DocumentDetails details) {
     final title = details.title.trim();
@@ -292,15 +305,8 @@ final class DocumentRepository {
         }
         final latest = current == null
             ? null
-            : await (_db.select(_db.vaultDocumentVersions)
-                    ..where(
-                      (t) =>
-                          t.familyId.equals(_familyId) &
-                          t.documentId.equals(documentId),
-                    )
-                    ..orderBy([(t) => OrderingTerm.desc(t.version)])
-                    ..limit(1))
-                  .getSingle();
+            : await _latestVersion(documentId);
+        if (current != null && latest == null) throw SealedFile.invalid;
         final version = VaultDocumentVersion(
           id: id,
           familyId: _familyId,
@@ -629,7 +635,7 @@ final class DocumentRepository {
     required VaultDocumentsCompanion Function(VaultDocument) change,
   }) => storageBoundary(
     () => _db.transaction(() async {
-      await _authorize(writing: true);
+      await _authorize();
       final old = await _load(id);
       if (old.revision != expectedRevision ||
           (action == 'metadata' && old.deletedAtUs != null)) {
@@ -642,6 +648,10 @@ final class DocumentRepository {
             updatedBy: _memberId,
             updatedAtUs: _writer.now,
           );
+      if (session.identity.isCloud) {
+        await _stageChange(old, updated, action);
+        return;
+      }
       await (_db.update(
         _db.vaultDocuments,
       )..where((t) => t.id.equals(id))).write(updated);

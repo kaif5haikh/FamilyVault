@@ -310,3 +310,14 @@ separately. Continue with the business UI and executable backend policies.
   three synthetic device profiles to verify a lost reply, a competing version,
   late key delivery and actual ciphertext download.
 - Continue with shared changes to document details, archive and record links.
+
+## 2026-11-19 — durable document edits
+
+- Verified `cc9ebfa` on the public SSH origin and built the connected document
+  Android debug APK. Added an immutable PostgreSQL receipt for metadata, archive
+  and restore, and Drift v6 for queued edits and family revision replay.
+- The native database probe, 27 targeted tests and the connected three-device
+  test passed. The first full run stopped at analyzer during an execution
+  interruption. Its process was gone on resume. The rerun passed 109 Flutter
+  tests, five Deno tests and both database gates.
+- Continue with shared record links and preserve access to competing drafts.

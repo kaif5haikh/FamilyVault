@@ -143,7 +143,8 @@ const documentGuards = <String>[
   '''CREATE TRIGGER IF NOT EXISTS vault_document_version_sequence BEFORE INSERT ON vault_document_versions
      WHEN NEW.version <> (SELECT coalesce(max(version), 0) + 1 FROM vault_document_versions
        WHERE family_id = NEW.family_id AND document_id = NEW.document_id)
-       OR NOT EXISTS (SELECT 1 FROM vault_documents WHERE family_id = NEW.family_id AND id = NEW.document_id AND deleted_at_us IS NULL)
+       OR NOT EXISTS (SELECT 1 FROM vault_documents d JOIN family_spaces f ON f.id = d.family_id
+         WHERE d.family_id = NEW.family_id AND d.id = NEW.document_id AND (d.deleted_at_us IS NULL OR f.mode = 'cloud'))
      BEGIN SELECT RAISE(ABORT, 'The document version needs an active document and consecutive version number'); END''',
   '''CREATE TRIGGER IF NOT EXISTS vault_document_version_no_update BEFORE UPDATE ON vault_document_versions
      BEGIN SELECT RAISE(ABORT, 'Document versions are immutable'); END''',
@@ -153,7 +154,8 @@ const documentGuards = <String>[
      BEGIN SELECT RAISE(ABORT, 'Archive documents to keep their history'); END''',
   '''CREATE TRIGGER IF NOT EXISTS vault_document_identity BEFORE UPDATE ON vault_documents
      WHEN NEW.id IS NOT OLD.id OR NEW.family_id IS NOT OLD.family_id OR NEW.created_by IS NOT OLD.created_by
-       OR NEW.created_at_us IS NOT OLD.created_at_us OR NEW.revision <> OLD.revision + 1
+       OR NEW.created_at_us IS NOT OLD.created_at_us OR NEW.revision <= OLD.revision
+       OR (NEW.revision <> OLD.revision + 1 AND (SELECT mode FROM family_spaces WHERE id = NEW.family_id) <> 'cloud')
      BEGIN SELECT RAISE(ABORT, 'Document identity and origin are immutable'); END''',
   '''CREATE UNIQUE INDEX IF NOT EXISTS active_document_journal ON vault_document_links(family_id, document_id, journal_id)
      WHERE deleted_at_us IS NULL AND journal_id IS NOT NULL''',

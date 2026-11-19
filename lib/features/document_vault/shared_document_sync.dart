@@ -59,12 +59,7 @@ final class _SharedDocumentSync {
         await _record(job, 'acknowledged');
       } on AppFailure catch (error) {
         _check();
-        final state = switch (error.code) {
-          FailureCode.conflict => 'conflicted',
-          FailureCode.integrity || FailureCode.validation => 'rejected',
-          FailureCode.network || FailureCode.configuration => 'pending',
-          _ => throw error,
-        };
+        final state = _stateForFailure(error);
         await _record(job, state);
         if (state == 'pending') {
           feedback = error;
@@ -72,10 +67,23 @@ final class _SharedDocumentSync {
         }
       }
     }
+    final editFeedback = await _sendEdits();
+    feedback ??= editFeedback;
     await _backfill(roster);
     await _pull(roster);
     if (feedback != null) throw feedback;
   }
+
+  String _stateForFailure(AppFailure error) => switch (error.code) {
+    FailureCode.conflict => 'conflicted',
+    FailureCode.integrity || FailureCode.validation => 'rejected',
+    FailureCode.network || FailureCode.configuration => 'pending',
+    _ => throw error,
+  };
+
+  int _retryAt(int attempts) =>
+      repository._writer.now +
+      Duration(seconds: 2 << min(attempts, 7)).inMicroseconds;
 
   Future<void> _reserve(VaultDocumentUpload job) async {
     if (job.memberId != repository._memberId ||
@@ -146,7 +154,6 @@ final class _SharedDocumentSync {
   Future<void> _record(VaultDocumentUpload job, String state) =>
       _db.transaction(() async {
         _check();
-        final delay = Duration(seconds: 2 << min(job.attempts, 7));
         final changed =
             await (_db.update(_db.vaultDocumentUploads)..where(
                   (t) => t.id.equals(job.id) & t.state.equals('pending'),
@@ -156,9 +163,7 @@ final class _SharedDocumentSync {
                     state: Value(state),
                     attempts: Value(job.attempts + 1),
                     nextAttemptAtUs: Value(
-                      state == 'pending'
-                          ? repository._writer.now + delay.inMicroseconds
-                          : null,
+                      state == 'pending' ? _retryAt(job.attempts) : null,
                     ),
                   ),
                 );

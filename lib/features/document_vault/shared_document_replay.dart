@@ -38,14 +38,15 @@ Future<bool> _replayDocument(
           .getSingleOrNull();
   if (revision <= (existing?.revision ?? 0)) return true;
   if (row['key_grant'] == null) return false;
-  if (row['archived_at'] != null) throw _invalidSharedDocument;
+  final latestNumber = _docInt(row, 'latest_version');
+  if (latestNumber > revision) throw _invalidSharedDocument;
   final latest = _docId(row, 'latest_version_id'),
       owner = _docId(row, 'owner_id');
   final history = [...await sync._call(() => sync.transport.versions(id))]
     ..sort((a, b) => _docInt(a, 'version').compareTo(_docInt(b, 'version')));
   // A new version could have finalized between the list and history calls.
-  if (history.length > revision) return true;
-  if (history.length != revision || history.last['id'] != latest) {
+  if (history.length > latestNumber) return true;
+  if (history.length != latestNumber || history.last['id'] != latest) {
     throw _invalidSharedDocument;
   }
   final seen = <String>{};
@@ -61,7 +62,9 @@ Future<bool> _replayDocument(
             )
             ..orderBy([(t) => OrderingTerm.asc(t.version)]))
           .get();
-  if (local.length != (existing?.revision ?? 0)) throw _invalidSharedDocument;
+  if (local.length > latestNumber || (local.isEmpty != (existing == null))) {
+    throw _invalidSharedDocument;
+  }
   for (final (index, saved) in local.indexed) {
     if (saved.id != history[index]['id'] ||
         saved.ciphertextDigest != history[index]['ciphertext_digest']) {
@@ -125,22 +128,39 @@ Future<bool> _replayDocument(
       key.destroy();
     }
   }
-  final details = metadata ?? (throw _invalidSharedDocument);
+  if (metadata == null) {
+    final version = local.last;
+    final key = await repository._unwrap(
+      version.wrappedKey,
+      repository._context(id, latest, version.mimeType, version.plaintextBytes),
+    );
+    try {
+      metadata = await _openMetadata(row, key, sync._family, id, latest, owner);
+    } finally {
+      key.destroy();
+    }
+  }
+  final archived = row['archived_at'] == null
+      ? null
+      : _docTime(row, 'archived_at');
   final document = VaultDocument(
     id: id,
     familyId: sync._family,
     revision: revision,
-    title: details.title,
-    category: details.category.name,
+    title: metadata.title,
+    category: metadata.category.name,
     ownerId: owner,
-    expiryOn: details.expiryOn,
+    expiryOn: metadata.expiryOn,
     createdBy: _docId(row, 'created_by'),
     updatedBy: _docId(row, 'updated_by'),
     createdAtUs: _docTime(row, 'created_at'),
     updatedAtUs: _docTime(row, 'updated_at'),
+    deletedAtUs: archived,
   );
-  if (document.updatedBy != versions.last.createdBy ||
-      document.updatedAtUs != versions.last.createdAtUs ||
+  if (document.createdBy != history.first['created_by'] ||
+      document.createdAtUs != _docTime(history.first, 'finalized_at') ||
+      document.updatedAtUs < _docTime(history.last, 'finalized_at') ||
+      (archived != null && archived != document.updatedAtUs) ||
       (existing != null &&
           (document.createdBy != existing.createdBy ||
               document.createdAtUs != existing.createdAtUs))) {
@@ -150,21 +170,10 @@ Future<bool> _replayDocument(
     await repository._authorize();
     if (existing == null) {
       await db.into(db.vaultDocuments).insert(document);
+    } else {
+      await db.update(db.vaultDocuments).replace(document);
     }
     for (final version in versions) {
-      if (existing != null) {
-        // Each increment corresponds to a validated immutable server version.
-        // Only the completed transaction exposes the newest metadata.
-        await db
-            .update(db.vaultDocuments)
-            .replace(
-              document.copyWith(
-                revision: version.version,
-                updatedBy: version.createdBy,
-                updatedAtUs: version.createdAtUs,
-              ),
-            );
-      }
       await db.into(db.vaultDocumentVersions).insert(version);
     }
     sync._check();

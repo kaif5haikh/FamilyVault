@@ -113,3 +113,6 @@ reservations, worker-only byte verification and authenticated ciphertext reads.
 
 ADR 0017 records the separation of device-private staged versions from accepted
 family history and the additive Drift v5 migration.
+
+ADR 0018 records shared metadata and archive receipts, additive Drift v6,
+independent file version numbering and preservation across finance recovery.

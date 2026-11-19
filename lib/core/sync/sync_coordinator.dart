@@ -100,7 +100,7 @@ final class SyncCoordinator {
     // These rows are append-only. Use insertion order even when timestamps tie.
     final result = await db
         .customSelect(
-          "SELECT * FROM pending_mutations WHERE family_id = ? AND state <> 'acknowledged' ORDER BY rowid LIMIT 1",
+          "SELECT * FROM pending_mutations WHERE family_id = ? AND state <> 'acknowledged' AND entity_type <> 'document_change' ORDER BY rowid LIMIT 1",
           variables: [Variable(identity.familyId)],
           readsFrom: {db.pendingMutations},
         )

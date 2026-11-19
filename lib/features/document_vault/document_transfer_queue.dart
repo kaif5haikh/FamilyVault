@@ -33,46 +33,9 @@ extension DocumentTransferQueue on DocumentRepository {
     DocumentDetails details,
     SecretKeyData key,
   ) async {
-    final pending =
-        await (_db.select(_db.vaultDocumentUploads)..where(
-              (t) =>
-                  t.familyId.equals(_familyId) &
-                  t.documentId.equals(version.documentId) &
-                  t.state.equals('pending'),
-            ))
-            .getSingleOrNull();
-    if (pending != null) {
-      throw const AppFailure(
-        FailureCode.conflict,
-        'Wait for the current version to finish sharing before adding another.',
-      );
-    }
+    await _checkOperationSlot(version.documentId);
     final title = _title(details);
-    final clear = Uint8List.fromList(
-      utf8.encode(
-        jsonEncode({
-          'title': title,
-          'category': details.category.name,
-          'expiry_on': details.expiryOn,
-        }),
-      ),
-    );
-    final String metadata;
-    try {
-      final box = await SealedFile.algorithm.encrypt(
-        clear,
-        secretKey: key,
-        aad: _metadataContext(
-          _familyId,
-          version.documentId,
-          version.id,
-          details.ownerId,
-        ),
-      );
-      metadata = base64Encode(box.concatenation());
-    } finally {
-      clear.fillRange(0, clear.length, 0);
-    }
+    final metadata = await _sealMetadata(version, details, key);
     final operation = DocumentRepository._uuid.v4();
     await _db
         .into(_db.vaultDocumentUploads)
@@ -103,6 +66,37 @@ extension DocumentTransferQueue on DocumentRepository {
       action: 'queue',
       after: {'version_id': version.id},
     );
+  }
+
+  Future<String> _sealMetadata(
+    VaultDocumentVersion version,
+    DocumentDetails details,
+    SecretKey key,
+  ) async {
+    final clear = Uint8List.fromList(
+      utf8.encode(
+        jsonEncode({
+          'title': _title(details),
+          'category': details.category.name,
+          'expiry_on': details.expiryOn,
+        }),
+      ),
+    );
+    try {
+      final box = await SealedFile.algorithm.encrypt(
+        clear,
+        secretKey: key,
+        aad: _metadataContext(
+          _familyId,
+          version.documentId,
+          version.id,
+          details.ownerId,
+        ),
+      );
+      return base64Encode(box.concatenation());
+    } finally {
+      clear.fillRange(0, clear.length, 0);
+    }
   }
 }
 

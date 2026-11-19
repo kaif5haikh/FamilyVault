@@ -309,3 +309,19 @@ Record exact command, date, outcome and material platform/provider limits below.
   PostgreSQL, proposal checks and the package advisory query. Two provider
   tests were opt-in. The Deno test rejects a truncated or longer object stream
   using the authorized length. Transcript `.cache/checks/m08-mobile-doc-full-20261119-a.txt`.
+
+## M08c3a — 2026-11-19 shared edits, archive and restore
+
+- `bash tool/check.sh` passed 109 Flutter tests, analyzer, PostgreSQL,
+  dependency and proposal checks and five Deno tests. The two provider tests
+  were opt-in. Transcript `.cache/checks/m08-change-full-20261119-b.txt`.
+- The 27 targeted tests cover v1 through v6 migration, preserved v5 upload
+  rows, independent document revision and version guards, offline device cache
+  and existing native input flows. Transcript `.cache/checks/m08-change-targeted-20261119-a.txt`.
+- `python3 -B tool/check_supabase.py --mobile --storage` passed on the three
+  synthetic devices. A metadata edit from one device preserved creator
+  attribution, rejected a competing stale archive, and retained both file
+  versions through archive, backfill and restore. Transcript
+  `.cache/checks/m08-change-provider-20261119-a.txt`.
+- The prior connected document Android debug build passed in 23.9 seconds.
+  Transcript `.cache/checks/m08-shared-doc-android-20261119-a.txt`.
