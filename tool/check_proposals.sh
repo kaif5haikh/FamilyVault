@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Validate design DDL on isolated, empty local databases only. Preserve scratch data.
+# Validate design DDL on isolated, disposable local databases only.
 set -euo pipefail
 cd -- "$(dirname -- "$0")/.."
-mkdir -p .cache/checks
+mkdir -p .cache
 python3 - <<'PY'
 from pathlib import Path
 import sqlite3
@@ -22,13 +22,21 @@ else:
 print('SQLite proposal: schema/integrity/foreign-key checks passed')
 PY
 scratch="$(mktemp -d "$PWD/.cache/pg-review-XXXXXXXX")"
-chmod 700 "$scratch"
-mkdir "$scratch/socket"
-initdb -D "$scratch/data" -A trust --no-locale --encoding=UTF8 > "$scratch/init.log"
 cleanup() {
-  pg_ctl -D "$scratch/data" -m fast -w stop > "$scratch/stop.log" 2>&1 || true
+  local status=$?
+  if [[ -s "$scratch/data/postmaster.pid" ]] &&
+    ! pg_ctl -D "$scratch/data" -m fast -w stop > "$scratch/stop.log" 2>&1; then
+    printf 'Could not stop the design test cluster at %s\n' "$scratch" >&2
+    exit 1
+  fi
+  rm -r -- "$scratch" || exit 1
+  exit "$status"
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+mkdir "$scratch/socket"
+initdb -D "$scratch/data" -A trust --no-locale --encoding=UTF8 > "$scratch/init.log"
 pg_ctl -D "$scratch/data" -l "$scratch/server.log" -o "-F -h '' -k '$scratch/socket' -p 15439" -w start > "$scratch/start.log"
 psql_args=(-X -v ON_ERROR_STOP=1 -h "$scratch/socket" -p 15439 -d postgres)
 psql "${psql_args[@]}" -f docs/design/postgresql.sql > "$scratch/schema.log"

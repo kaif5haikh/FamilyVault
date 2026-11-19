@@ -4,13 +4,21 @@ set -euo pipefail
 cd -- "$(dirname -- "$0")/.."
 mkdir -p .cache
 scratch=$(mktemp -d "$PWD/.cache/pg-familyvault-XXXXXXXX")
-chmod 700 "$scratch"
-mkdir "$scratch/socket"
-initdb -D "$scratch/data" -U postgres --auth=trust --encoding=UTF8 --no-locale > "$scratch/init.log"
 cleanup() {
-  pg_ctl -D "$scratch/data" -m fast -w stop > "$scratch/stop.log" 2>&1 || true
+  local status=$?
+  if [[ -s "$scratch/data/postmaster.pid" ]] &&
+    ! pg_ctl -D "$scratch/data" -m fast -w stop > "$scratch/stop.log" 2>&1; then
+    printf 'Could not stop the test cluster at %s\n' "$scratch" >&2
+    exit 1
+  fi
+  rm -r -- "$scratch" || exit 1
+  exit "$status"
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+mkdir "$scratch/socket"
+initdb -D "$scratch/data" -U postgres --auth=trust --encoding=UTF8 --no-locale > "$scratch/init.log"
 pg_ctl -D "$scratch/data" -l "$scratch/server.log" \
   -o "-h '' -k '$scratch/socket' -p 15443 -c log_parameter_max_length_on_error=0" \
   -w start > "$scratch/start.log"
