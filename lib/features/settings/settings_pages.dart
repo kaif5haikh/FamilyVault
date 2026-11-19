@@ -190,6 +190,13 @@ class SettingsPage extends ConsumerWidget {
         ],
         ListTile(
           contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.backup_outlined),
+          title: const Text('Encrypted backups'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push('/backups'),
+        ),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.info_outline),
           title: const Text('About & open-source licences'),
           trailing: const Icon(Icons.chevron_right),

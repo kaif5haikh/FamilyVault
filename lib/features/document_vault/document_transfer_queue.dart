@@ -24,7 +24,9 @@ extension DocumentTransferQueue on DocumentRepository {
           ])
           ..where(
             uploads.familyId.equals(_familyId) &
-                uploads.deviceId.equals(_deviceId) &
+                (session.identity.isCloud
+                    ? uploads.deviceId.equals(_deviceId)
+                    : uploads.memberId.equals(_memberId)) &
                 audit.id.isNull() &
                 (uploads.state.equals('acknowledged').not() |
                     versions.id.isNull()),
@@ -42,7 +44,9 @@ extension DocumentTransferQueue on DocumentRepository {
                 t.familyId.equals(_familyId) &
                 t.documentId.equals(documentId) &
                 t.id.equals(id) &
-                t.deviceId.equals(_deviceId),
+                (session.identity.isCloud
+                    ? t.deviceId.equals(_deviceId)
+                    : t.memberId.equals(_memberId)),
           ))
           .getSingleOrNull();
 
@@ -62,6 +66,7 @@ extension DocumentTransferQueue on DocumentRepository {
     int expectedRevision,
   ) => storageBoundary(() async {
     await _authorize();
+    if (!session.identity.isCloud) throw DocumentRepository._missing;
     final draft = await _findUpload(documentId, versionId);
     if (draft == null || draft.state != 'conflicted' || await _retried(draft)) {
       throw DocumentRepository._missing;

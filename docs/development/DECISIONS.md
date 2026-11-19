@@ -121,3 +121,6 @@ independent file version numbering and preservation across finance recovery.
 
 ADR 0019 records the rekeyed SQLite snapshot, independently wrapped archive
 key, authenticated manifest and complete file verification before publication.
+
+ADR 0020 records verified Files receipts and restartable recovery into a local
+vault with independent device identity and preserved financial IDs.

@@ -12,6 +12,8 @@ import 'package:familyvault/features/auth/cloud_access_gateway.dart';
 import 'package:familyvault/features/auth/cloud_cache.dart';
 import 'package:familyvault/features/auth/cloud_connection.dart';
 import 'package:familyvault/features/auth/cloud_device_registration.dart';
+import 'package:familyvault/features/backup/backup_archive.dart';
+import 'package:familyvault/features/backup/vault_backup.dart';
 import 'package:familyvault/features/document_vault/document_repository.dart';
 import 'package:familyvault/features/finance/data/ledger_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -352,6 +354,44 @@ void main() {
       expect(await receiver.documents.watchUploads().first, isEmpty);
       expect(
         await receiver.documents.read(
+          staged.documentId,
+          competing.id,
+          DocumentAccess.preview,
+        ),
+        bytes,
+      );
+      final recovery = BackupRecoveryKey.generate();
+      addTearDown(recovery.destroy);
+      final backups = VaultBackup(Directory('${root.path}/backup-stage'));
+      final artifact = await backups.capture(
+        session: receiver,
+        destination: Directory('${root.path}/backup-copy'),
+        recovery: recovery,
+      );
+      final verified = await backups.verify(artifact.file, recovery);
+      addTearDown(verified.close);
+      final restored = VaultLifecycle(
+        store: MemorySecureStore(),
+        gate: FakeDeviceGate(),
+        root: () async => Directory('${root.path}/restored-cloud-copy'),
+      );
+      addTearDown(restored.dispose);
+      await restored.initialize();
+      await restored.restoreBackup(verified);
+      final local = restored.status.session!;
+      expect(local.identity.isCloud, isFalse);
+      expect(local.identity.deviceId, isNot(receiver.identity.deviceId));
+      expect(local.sync, isNull);
+      expect(
+        local.ledger.chartId('opening'),
+        receiver.ledger.chartId('opening'),
+      );
+      expect(
+        (await local.ledger.snapshot()).balances()[cash.id],
+        BigInt.from(4123),
+      );
+      expect(
+        await local.documents.read(
           staged.documentId,
           competing.id,
           DocumentAccess.preview,

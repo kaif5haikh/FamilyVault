@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
+import '../../features/backup/restore_vault.dart';
+import '../../features/backup/vault_backup.dart';
 import '../../features/document_vault/document_repository.dart';
 import '../../features/finance/data/ledger_repository.dart';
 import '../database/app_database.dart';
@@ -138,7 +140,7 @@ final class VaultLifecycle {
     try {
       final result = jsonDecode(value) as Map<String, Object?>;
       if (result['version'] != 1 ||
-          !['initializing', 'ready'].contains(result['state'])) {
+          !['initializing', 'restoring', 'ready'].contains(result['state'])) {
         throw const FormatException();
       }
       final identity = VaultIdentity.fromJson(
@@ -149,7 +151,8 @@ final class VaultLifecycle {
             identity.memberId,
             identity.deviceId,
           ].every((id) => Uuid.isValidUUID(fromString: id)) ||
-          !['offline', 'cloud'].contains(identity.mode)) {
+          !['offline', 'cloud'].contains(identity.mode) ||
+          (result['state'] == 'restoring' && identity.isCloud)) {
         throw const FormatException();
       }
       return result;
@@ -166,6 +169,80 @@ final class VaultLifecycle {
     required String ownerName,
   }) => _open(create: true, familyName: familyName, ownerName: ownerName);
   Future<void> unlock() => _open();
+
+  Future<void> restoreBackup(VerifiedVaultBackup backup) async {
+    const existing = AppFailure(
+      FailureCode.conflict,
+      'Restore this backup on a device without an existing local vault.',
+    );
+    if (_busy || _disposed || _status.phase != VaultPhase.setup) throw existing;
+    _busy = true;
+    final epoch = ++_epoch;
+    _set(const VaultStatus(VaultPhase.opening));
+    PreparedVaultRestore? prepared;
+    var attempted = false, saved = false;
+    try {
+      await _closing;
+      _checkEpoch(epoch);
+      if (!await gate.authenticate()) {
+        throw const AppFailure(
+          FailureCode.locked,
+          'Device verification was cancelled.',
+        );
+      }
+      _checkEpoch(epoch);
+      final support = await root();
+      final vaults = Directory(p.join(support.path, 'vaults'));
+      if (await _readCatalog() != null ||
+          (await vaults.exists() && !await vaults.list().isEmpty)) {
+        throw existing;
+      }
+      prepared = await PreparedVaultRestore.prepare(backup, support);
+      _checkEpoch(epoch);
+      attempted = true;
+      await store.write(
+        catalogKey,
+        jsonEncode({
+          'version': 1,
+          'state': 'restoring',
+          'identity': prepared.identity.toJson(),
+          'keys': prepared.keys.toJson(),
+        }),
+      );
+      saved = true;
+      _set(const VaultStatus(VaultPhase.locked, hasVault: true));
+      _checkEpoch(epoch);
+    } catch (error) {
+      final failure = _safe(error);
+      if (epoch == _epoch) {
+        _set(
+          VaultStatus(
+            saved ? VaultPhase.locked : VaultPhase.setup,
+            hasVault: saved,
+            failure: failure,
+          ),
+        );
+      }
+      throw failure;
+    } finally {
+      try {
+        prepared?.keys.destroy();
+        if (prepared != null && !attempted) {
+          await prepared.directory.delete(recursive: true);
+        }
+      } finally {
+        _busy = false;
+      }
+    }
+    await _open(deviceVerified: true);
+    if (_status.phase != VaultPhase.open) {
+      throw _status.failure ??
+          const AppFailure(
+            FailureCode.locked,
+            'Unlock the recovered vault to continue.',
+          );
+    }
+  }
 
   Future<void> openConnected(Future<VaultSession> Function() open) async {
     if (_busy || _disposed || _status.session != null) {
@@ -219,6 +296,7 @@ final class VaultLifecycle {
 
   Future<void> _open({
     bool create = false,
+    bool deviceVerified = false,
     String? familyName,
     String? ownerName,
   }) async {
@@ -233,7 +311,7 @@ final class VaultLifecycle {
     try {
       await _closing;
       _checkEpoch(epoch);
-      if (!await gate.authenticate()) {
+      if (!deviceVerified && !await gate.authenticate()) {
         throw const AppFailure(
           FailureCode.locked,
           'Device verification was cancelled.',
@@ -298,11 +376,16 @@ final class VaultLifecycle {
       final identity = VaultIdentity.fromJson(
         catalog['identity']! as Map<String, Object?>,
       );
+      final support = await root();
       final directory = Directory(
-        p.join((await root()).path, 'vaults', identity.familyId),
+        p.join(support.path, 'vaults', identity.familyId),
       );
+      if (catalog['state'] == 'restoring') {
+        _checkEpoch(epoch);
+        await _mountRestore(support, identity, directory);
+      }
       final file = File(p.join(directory.path, 'vault.sqlite3'));
-      if (catalog['state'] == 'ready' && !await file.exists()) {
+      if (catalog['state'] != 'initializing' && !await file.exists()) {
         throw const AppFailure(
           FailureCode.integrity,
           'The vault database is missing. Restore an encrypted backup.',
@@ -367,6 +450,25 @@ final class VaultLifecycle {
       }
     } finally {
       _busy = false;
+    }
+  }
+
+  Future<void> _mountRestore(
+    Directory support,
+    VaultIdentity identity,
+    Directory destination,
+  ) async {
+    final stage = PreparedVaultRestore.stage(support, identity);
+    final staged = await stage.exists(), installed = await destination.exists();
+    if (staged == installed) {
+      throw const AppFailure(
+        FailureCode.integrity,
+        'The recovery files need review. Existing files are preserved.',
+      );
+    }
+    if (staged) {
+      await destination.parent.create(recursive: true);
+      await stage.rename(destination.path);
     }
   }
 

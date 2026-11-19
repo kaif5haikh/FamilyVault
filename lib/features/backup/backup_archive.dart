@@ -214,7 +214,41 @@ final class ExtractedBackup {
 /// The manifest, keys and file index are authenticated inside the chunk stream.
 final class BackupArchive {
   static final _magic = ascii.encode('FVBACK01');
-  static const _prefixSize = 80, _manifestLimit = 2 * 1024 * 1024;
+  static const prefixSize = 80;
+  static const _manifestLimit = 2 * 1024 * 1024;
+
+  static Future<void> authenticatePrefix(
+    List<int> prefix,
+    BackupRecoveryKey recovery,
+  ) async {
+    (await _unwrapPrefix(prefix, recovery)).destroy();
+  }
+
+  static Future<SecretKeyData> _unwrapPrefix(
+    List<int> prefix,
+    BackupRecoveryKey recovery,
+  ) async {
+    if (prefix.length != prefixSize ||
+        Mac(prefix.take(_magic.length).toList()) != Mac(_magic)) {
+      throw invalidBackup;
+    }
+    try {
+      return SecretKeyData(
+        await SealedFile.algorithm.decrypt(
+          SecretBox.fromConcatenation(
+            prefix.sublist(_magic.length),
+            nonceLength: 24,
+            macLength: 16,
+          ),
+          secretKey: recovery._key,
+          aad: _magic,
+        ),
+        overwriteWhenDestroyed: true,
+      );
+    } on SecretBoxAuthenticationError {
+      throw invalidBackup;
+    }
+  }
 
   static Future<String> write({
     required Directory source,
@@ -272,33 +306,13 @@ final class BackupArchive {
   }) async {
     final length = await SealedFile.inspectLength(
       archive,
-      prefixLength: _prefixSize,
+      prefixLength: prefixSize,
     );
     final prefix = await archive
-        .openRead(0, _prefixSize)
+        .openRead(0, prefixSize)
         .expand((block) => block)
         .toList();
-    if (prefix.length != _prefixSize ||
-        Mac(prefix.take(_magic.length).toList()) != Mac(_magic)) {
-      throw invalidBackup;
-    }
-    final SecretKeyData key;
-    try {
-      key = SecretKeyData(
-        await SealedFile.algorithm.decrypt(
-          SecretBox.fromConcatenation(
-            prefix.sublist(_magic.length),
-            nonceLength: 24,
-            macLength: 16,
-          ),
-          secretKey: recovery._key,
-          aad: _magic,
-        ),
-        overwriteWhenDestroyed: true,
-      );
-    } on SecretBoxAuthenticationError {
-      throw invalidBackup;
-    }
+    final key = await _unwrapPrefix(prefix, recovery);
     _BackupReader? reader;
     var done = false;
     try {
@@ -312,7 +326,7 @@ final class BackupArchive {
         expectedDigest: digest,
         key: key,
         context: prefix,
-        prefixLength: _prefixSize,
+        prefixLength: prefixSize,
         write: reader.write,
       );
       final manifest = reader.finish();

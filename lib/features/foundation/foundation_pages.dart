@@ -219,6 +219,12 @@ class _AccessPageState extends ConsumerState<AccessPage> {
             icon: const Icon(Icons.add),
             label: const Text('Create a local vault'),
           ),
+        if (status.phase == VaultPhase.setup && !_creating)
+          TextButton.icon(
+            onPressed: () => context.push('/restore'),
+            icon: const Icon(Icons.restore),
+            label: const Text('Restore an encrypted backup'),
+          ),
         if (!status.hasVault && _creating)
           Form(
             key: _form,

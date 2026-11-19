@@ -416,14 +416,17 @@ final class DocumentRepository {
             canRetry: false,
           );
         }
-        if (session.identity.isCloud) {
+        if (session.identity.isCloud || session.identity.sharedChart) {
           final job = await _findUpload(documentId, versionId);
           if (job != null) {
             return (
               version: job.fileVersion,
               title: job.title,
               confirmed: false,
-              canRetry: job.state == 'conflicted' && !await _retried(job),
+              canRetry:
+                  session.identity.isCloud &&
+                  job.state == 'conflicted' &&
+                  !await _retried(job),
             );
           }
         }

@@ -6,6 +6,8 @@ import '../features/assets/presentation/asset_action_editor.dart';
 import '../features/assets/presentation/asset_editor.dart';
 import '../features/assets/presentation/assets_pages.dart';
 import '../features/auth/sync_recovery_page.dart';
+import '../features/backup/backups_page.dart';
+import '../features/backup/restore_backup_page.dart';
 import '../features/business/presentation/business_detail_pages.dart';
 import '../features/business/presentation/business_entry_editor.dart';
 import '../features/business/presentation/business_pages.dart';
@@ -41,10 +43,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       final session = ref.read(vaultProvider).session;
       final open = session != null && !session.closed;
       final path = route.uri.path;
-      if (!{'/', '/access', '/about'}.contains(path) && !open) {
+      if (!{'/', '/access', '/about', '/restore'}.contains(path) && !open) {
         return '/access';
       }
-      if (open && (path == '/' || path == '/access')) {
+      if (open && (path == '/' || path == '/access' || path == '/restore')) {
         final selection = ref.read(documentIntakeProvider);
         if (selection?.belongsTo(session.identity) == true) {
           return '/document/import';
@@ -56,6 +58,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: '/', builder: (context, state) => const WelcomePage()),
       GoRoute(path: '/access', builder: (context, state) => const AccessPage()),
+      GoRoute(path: '/restore', builder: (_, _) => const RestoreBackupPage()),
       GoRoute(path: '/about', builder: (context, state) => const AboutPage()),
       _workspaceRoute('/home', const FinanceHomePage()),
       _workspaceRoute('/transactions', const TransactionsPage()),
@@ -67,6 +70,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       _workspaceRoute('/planning', const PlanningPage()),
       _workspaceRoute('/reports', const ReportsPage()),
       _workspaceRoute('/settings', const SettingsPage()),
+      GoRoute(path: '/backups', builder: (_, _) => const BackupsPage()),
       _workspaceRoute('/more', const MorePage()),
       GoRoute(
         path: '/document/import',

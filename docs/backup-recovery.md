@@ -10,8 +10,27 @@ The versioned archive engine and local verification are implemented. They
 snapshot encrypted SQLite, seal document files and the manifest, and verify the
 archive with a separately held key. A clean-directory test reopened the exact
 paise balance and decrypted an older document version after the source vault
-closed. App restore, independent destination delivery and scheduling remain
-pending. [ADR 0019](decisions/0019-encrypted-backup-envelope.md)
+closed. The restore flow installs a separate local vault with a fresh device
+identity. The app has a verified local copy workflow. Drive and scheduling
+remain in development. [ADR 0019](decisions/0019-encrypted-backup-envelope.md) · [ADR 0020](decisions/0020-local-backup-restore.md)
+
+## Create or restore a local copy
+
+Open **Settings**, then **Encrypted backups**. Enter your existing recovery
+key or create a new one and store it separately. Create the backup, then use
+**Save a verified copy** to choose a Files destination. Keep the copy somewhere
+you can access after losing this device. The app records a verified export
+after reading the destination bytes back and matching their digest and length.
+
+On a fresh install, choose **Restore an encrypted backup** under **Family
+access**. Pick the file, enter the recovery key and choose **Verify backup**.
+After verification, choose **Restore vault** and complete device verification.
+The recovered local copy retains the financial IDs, history and saved changes.
+To open the live family workspace, sign in and enroll through **Family access**.
+
+Flutter tests use the actual archive and SQLite engine with a file picker fixture.
+Android compilation passed. Testing the native picker on physical devices and
+building the iOS implementation remain pending.
 
 ## Snapshot and archive
 
@@ -140,8 +159,9 @@ Test **both** destinations on clean devices: missing/wrong recovery key, absent
 source device/catalog, corrupted/truncated copy, missing document/key envelope,
 pending already-accepted operations, stale schema/cursor, revoked membership/device,
 Drive consent revoked/quota failure and interrupted copy. Record an actual restore
-drill and recovery time before claiming production readiness. The requirement is
-confirmed; no such drill has yet been performed.
+drill and recovery time before declaring production readiness. The host drill
+verified a local archive after restoring into a separate app directory. A Drive
+and physical-device recovery drill remain pending.
 
 ## Export, retention and deletion
 

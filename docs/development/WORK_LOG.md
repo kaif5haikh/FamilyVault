@@ -347,3 +347,15 @@ separately. Continue with the business UI and executable backend policies.
   protection tests passed. The archive tests reopened data in a clean directory
   and rejected missing documents, wrong keys, altered data and truncation.
 - Continue with clean installation of a verified archive and local delivery.
+
+## 2026-11-19 — app recovery and a verified Files copy
+
+- Verified `03942b2` on the public SSH origin. Wired backup and restore pages,
+  restartable catalog activation, fresh device keys and independent local
+  recovery of a connected cache. Android and iOS Files adapters stream an
+  encrypted copy and measure the saved bytes before recording a receipt.
+- Corrected the fixture assumption about the local chart size. The recovery
+  widget test needed the native SQLite setup outside its simulated clock and
+  then verified the local dashboard. Real local Supabase and Storage, the full
+  116-test check and the Android debug build passed.
+- Continue with Drive upload, verified independent copies and scheduling.

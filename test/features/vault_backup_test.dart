@@ -2,19 +2,40 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' show driftRuntimeOptions;
-import 'package:familyvault/core/database/app_database.dart';
-import 'package:familyvault/core/database/encrypted_connection.dart';
+import 'package:familyvault/core/database/app_database.dart'
+    show DocumentCategory;
 import 'package:familyvault/core/errors/app_failure.dart';
 import 'package:familyvault/core/finance/money.dart';
-import 'package:familyvault/core/security/vault_keys.dart';
+import 'package:familyvault/core/security/sealed_file.dart';
 import 'package:familyvault/core/security/vault_lifecycle.dart';
 import 'package:familyvault/features/backup/backup_archive.dart';
+import 'package:familyvault/features/backup/backup_file_io.dart';
+import 'package:familyvault/features/backup/local_backup_destination.dart';
 import 'package:familyvault/features/backup/vault_backup.dart';
 import 'package:familyvault/features/document_vault/document_repository.dart';
 import 'package:familyvault/features/finance/data/ledger_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/security_fakes.dart';
+
+final class _Files implements BackupFileDestination {
+  _Files(this.root);
+  final Directory root;
+  bool cancel = false, alter = false;
+  @override
+  Future<({int bytes, String digest})?> copy(BackupArtifact artifact) async {
+    if (cancel) return null;
+    await root.create(recursive: true);
+    final file = File('${root.path}/saved-copy.fvbackup');
+    await artifact.file.copy(file.path);
+    if (alter) {
+      final changed = await file.open(mode: FileMode.append);
+      await changed.writeByte(0);
+      await changed.close();
+    }
+    return (bytes: await file.length(), digest: await SealedFile.digest(file));
+  }
+}
 
 void main() {
   late Directory root;
@@ -94,40 +115,96 @@ void main() {
     expect(restored.contents.digest, artifact.digest);
     expect(restored.documents, 1);
     expect(restored.pending, greaterThan(0));
-    final manifest = restored.contents.manifest;
-    final session = VaultSession(
-      db: AppDatabase.encrypted(
-        file: File('${restored.contents.directory.path}/vault.sqlite3'),
-        key: VaultDatabaseKey.fromBytes(manifest.databaseKey),
-      ),
-      identity: manifest.identity,
-      directory: restored.contents.directory,
-      keys: VaultKeys.fromRecovery(
-        database: manifest.databaseKey,
-        documents: manifest.documentKey,
-      ),
+    final cleanSupport = Directory('${root.path}/clean-device');
+    final recovered = VaultLifecycle(
+      store: MemorySecureStore(),
+      gate: FakeDeviceGate(),
+      root: () async => cleanSupport,
     );
-    try {
-      expect(
-        (await session.ledger.snapshot()).balances()[account.id],
-        BigInt.from(9007199254740993),
-      );
-      expect(
-        (await session.documents.versions(first.documentId)).map((v) => v.id),
-        [second.id, first.id],
-      );
-      expect(
-        await session.documents.read(
-          first.documentId,
-          first.id,
-          DocumentAccess.preview,
-        ),
-        bytes,
-      );
-    } finally {
-      await session.close();
-    }
+    addTearDown(recovered.dispose);
+    await recovered.initialize();
+    await recovered.restoreBackup(restored);
+    final session = recovered.status.session!;
+    expect(session.identity.deviceId, isNot(source.identity.deviceId));
+    expect(session.identity.familyId, source.identity.familyId);
+    expect(session.identity.isCloud, isFalse);
+    expect(
+      (await session.ledger.snapshot()).balances()[account.id],
+      BigInt.from(9007199254740993),
+    );
+    expect(
+      (await session.documents.versions(first.documentId)).map((v) => v.id),
+      [second.id, first.id],
+    );
+    expect(
+      await session.documents.read(
+        first.documentId,
+        first.id,
+        DocumentAccess.preview,
+      ),
+      bytes,
+    );
+    await expectLater(
+      recovered.restoreBackup(restored),
+      throwsA(isA<AppFailure>()),
+    );
+    await recovered.lock();
+    await recovered.unlock();
+    expect(
+      recovered.status.session!.identity.deviceId,
+      session.identity.deviceId,
+    );
   });
+
+  test(
+    'restore can resume after secure storage fails to record final activation',
+    () async {
+      final artifact = await engine.capture(
+        session: source,
+        destination: destination,
+        recovery: key,
+      );
+      final verified = await engine.verify(artifact.file, key);
+      addTearDown(verified.close);
+      final store = MemorySecureStore()..failWrite = 2;
+      final support = Directory('${root.path}/restart-target');
+      final first = VaultLifecycle(
+        store: store,
+        gate: FakeDeviceGate(),
+        root: () async => support,
+      );
+      await first.initialize();
+      await expectLater(
+        first.restoreBackup(verified),
+        throwsA(isA<AppFailure>()),
+      );
+      expect(first.status.phase, VaultPhase.locked);
+      final retained = jsonDecode(
+        (await store.read(VaultLifecycle.catalogKey))!,
+      ) as Map<String, Object?>;
+      expect(retained['state'], 'restoring');
+      await first.dispose();
+
+      final resumed = VaultLifecycle(
+        store: store,
+        gate: FakeDeviceGate(),
+        root: () async => support,
+      );
+      addTearDown(resumed.dispose);
+      await resumed.initialize();
+      expect(resumed.status.phase, VaultPhase.locked);
+      await resumed.unlock();
+      expect(resumed.status.phase, VaultPhase.open);
+      expect(
+        resumed.status.session!.identity.familyId,
+        source.identity.familyId,
+      );
+      expect(
+        (await resumed.status.session!.ledger.snapshot()).accounts.length,
+        (await source.ledger.snapshot()).accounts.length,
+      );
+    },
+  );
 
   test('wrong keys, altered archives, truncated copies and missing documents fail closed', () async {
     final input = await File('${root.path}/mock.pdf')
@@ -155,6 +232,13 @@ void main() {
     final bad = File('${root.path}/corrupt.fvbackup');
     await bad.writeAsBytes(raw.sublist(0, raw.length - 1));
     await expectLater(engine.verify(bad, key), rejected);
+    final scratch = Directory('${root.path}/picker-stage');
+    final wrongInput = (
+      length: () async => 112,
+      openRead: () => Stream<List<int>>.value(List.filled(112, 65)),
+    );
+    await expectLater(stageSelectedBackup(wrongInput, scratch, key), rejected);
+    expect(await scratch.exists(), isFalse);
     raw[raw.length - 16] ^= 1;
     await bad.writeAsBytes(raw);
     await expectLater(engine.verify(bad, key), rejected);
@@ -167,5 +251,40 @@ void main() {
     );
     expect((await destination.list().toList()).single.path, artifact.file.path);
     await held.rename(absent.path);
+  });
+
+  test('a file export needs a matching readback before recording a verified receipt', () async {
+    final store = MemorySecureStore(),
+        files = _Files(Directory('${root.path}/selected-destination'));
+    LocalBackupDestination make() => LocalBackupDestination(
+      root: () async => root,
+      store: store,
+      files: files,
+    );
+    final service = make();
+    final latest = await service.create(source, key);
+    expect((await make().read(source.identity))?.exportedAtUs, isNull);
+    files.cancel = true;
+    expect(await service.export(source.identity, latest), isNull);
+    files.cancel = false;
+    files.alter = true;
+    await expectLater(
+      service.export(source.identity, latest),
+      throwsA(isA<AppFailure>()),
+    );
+    expect((await make().read(source.identity))?.exportedAtUs, isNull);
+    files.alter = false;
+    final completed = (await service.export(source.identity, latest))!;
+    expect(
+      (await make().read(source.identity))?.exportedAtUs,
+      completed.exportedAtUs,
+    );
+    expect(completed.exportedAtUs, isNotNull);
+    final clean = VaultBackup(Directory('${root.path}/independent-restore'));
+    final verified = await clean.verify(
+      File('${files.root.path}/saved-copy.fvbackup'),
+      key,
+    );
+    await verified.close();
   });
 }

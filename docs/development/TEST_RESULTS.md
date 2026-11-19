@@ -357,3 +357,20 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `bash tool/check.sh` passed 113 Flutter tests, five Deno tests, analyzer,
   both SQL gates and the advisory review. Two provider tests were opt-in.
   Transcript `.cache/checks/m09-archive-full-20261119-a.txt`.
+
+## M09b — 2026-11-19 local Files and app recovery
+
+- `bash tool/check.sh` passed 116 Flutter tests, five Deno tests, analyzer,
+  both SQL gates and the package advisory check. The Flutter tests exercised the
+  encrypted backup picker, activation through device verification, interrupted
+  catalog writes, destination readback, wrong key and invalid input handling.
+  Transcript `.cache/checks/m09-restore-full-20261119-c.txt`.
+- `python3 -B tool/check_supabase.py --mobile --storage` passed. The recovery
+  extension restores a connected device snapshot in a separate clean app
+  directory, keeps the shared chart IDs, exact 4,123 paise and the saved draft,
+  and opens with a fresh local identity. Transcript
+  `.cache/checks/m09-cloud-restore-provider-20261119-a.txt`.
+- `flutter build apk --debug --no-pub` compiled the Android Files adapter and
+  backup screens. The final incremental build took 14.1 seconds. Transcript
+  `.cache/checks/m09-restore-android-20261119-b.txt`. Xcode and both platforms'
+  physical Files behavior remain unverified.
