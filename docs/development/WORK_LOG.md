@@ -464,3 +464,18 @@ separately. Continue with the business UI and executable backend policies.
 - Targeted host tests passed and Android compiled the native adapter. The
   iOS adapter is included and needs Xcode. Continue with signed Android
   release artifacts and the installation, migration and user guides.
+
+## 2026-11-19 Signed development release
+
+- Verified `7fa8f6b` on the public SSH origin. Generated a local Android
+  development signer in ignored storage with owner-only permissions. Added
+  build and verification commands and verified the pinned bundletool download
+  against its published digest.
+- The initial release build identified a missing Cupertino icon font. Added the
+  reviewed asset dependency and original launcher artwork, then rebuilt and
+  confirmed the font in the APK. The two signed outputs and the APK produced
+  from the bundle verified under the same certificate.
+- The final Flutter, SQL, provider, Deno and package checks passed. Reviewed
+  the indexed content, native dependency report and redacted Git history scan.
+  Recorded the installation and migration steps and the pending hardware and
+  hosted-service checks.

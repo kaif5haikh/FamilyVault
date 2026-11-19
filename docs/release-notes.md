@@ -1,0 +1,31 @@
+# FamilyVault 0.1.0
+
+This development release is for testing with sample records. The Android APK
+and App Bundle use a project-local development certificate. Existing vaults
+keep their history through Drift v6.
+
+## Included
+
+- Offline INR ledger, budgets, reconciliation, exact balances and reports.
+- Shared family accounts, device approval, financial corrections and private
+  PostgreSQL sync.
+- Properties, metals, loans, business revenue, stock and worker payments.
+- Encrypted documents with versions, search, record links, expiry dates and
+  opt-in local notifications.
+- Verified encrypted backups, daily or weekly capture while unlocked, Google
+  Drive backup support and clean local restore.
+
+## Verification
+
+The host checks include Flutter analysis and tests, populated Drift migrations,
+PostgreSQL constraints and authorization, and Deno gateway tests. The joined
+local Supabase fixture drives independent Dart clients through Auth, Data API
+and private Storage. The Drive fixture tests retry, independent file checks and
+clean recovery with a separate key. [Test results](development/TEST_RESULTS.md).
+
+Live Supabase and Google Drive use require the operator's authorized service and
+OAuth configuration. Android camera, Files, notification delivery and device
+installation need physical testing. The available Android emulator crashed
+before boot. iOS build and runtime validation require macOS with Xcode.
+
+[Installation](installation.md). [User guide](user-guide.md). [Migration guide](migration-guide.md). [Recovery](backup-recovery.md).

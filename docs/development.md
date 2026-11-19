@@ -79,11 +79,12 @@ schema snapshots under `drift_schemas/`; once version 1 is released, retain it a
 add explicit, tested steps for later versions. Commit generated Drift Dart and
 the lockfile. Do not use generator deletion/reset flags to bypass conflicts.
 
-The app shell does not connect to a backend or open a vault. Start it on a
-deliberately selected authorized development device with `flutter run -d <id>`.
-The provisional bundle/application identifier is `app.familyvault.familyvault`;
-Android minimum API is Flutter's 24, target/compile API 36. Distribution identities
-and support policy still need review. Release signing is intentionally absent.
+The default build can open a local encrypted vault. Configured clients connect
+to an approved Supabase workspace. Start on a selected development device with
+`flutter run -d <id>`. The bundle and application identifier is
+`app.familyvault.familyvault`. Android uses minimum API 24 and target API 36.
+Release signing reads the ignored Android signing configuration.
+[Install and build releases](installation.md).
 
 The Android debug artifact is `build/app/outputs/flutter-apk/app-debug.apk` when
 the build succeeds. It is excluded from Git. Building is distinct from installing
@@ -97,8 +98,9 @@ before an iOS validation claim can be made.
 
 ## Configuration and deployment boundary
 
-There is no configured Supabase backend, no API key and no service-role credential.
-Cloud provisioning, executable financial migrations, auth redirects and key
-recovery need their own reviewed milestone. Never run `docs/design/postgresql.sql`
-against Supabase. Public client configuration is not secret, but the mobile app
-must never contain privileged keys. No automatic production deployment is set up.
+The default build uses local storage. Executable Supabase migrations and the
+private Storage gateway passed the local provider tests. Use approved test
+credentials with the [Supabase guide](supabase-development.md) and
+[migration guide](migration-guide.md). The mobile app accepts publishable
+client configuration. Keep privileged keys in the server runtime. Production
+deployment is an independent, authorized operation.

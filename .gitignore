@@ -129,7 +129,7 @@ Thumbs.db
 !assets/**/*.png
 !assets/**/*.jpg
 !assets/**/*.jpeg
-# Stock launcher images from the official Flutter template, reviewed in Phase 3.
+# App launcher images and launch screen assets.
 !android/app/src/main/res/mipmap-*/ic_launcher.png
 !ios/Runner/Assets.xcassets/AppIcon.appiconset/*.png
 !ios/Runner/Assets.xcassets/LaunchImage.imageset/*.png

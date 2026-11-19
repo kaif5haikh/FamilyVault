@@ -1,8 +1,19 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val localSigning = rootProject.file("key.properties").takeIf { it.isFile }?.let { config ->
+    Properties().apply { config.inputStream().use { load(it) } }
+}
+
+fun Properties.releaseValue(key: String): String =
+    requireNotNull(getProperty(key)?.takeIf { it.isNotBlank() }) {
+        "Set $key in the local android/key.properties file."
+    }
 
 android {
     namespace = "app.familyvault.familyvault"
@@ -29,11 +40,19 @@ android {
         versionName = flutter.versionName
     }
 
+    val releaseSigning = localSigning?.let { config ->
+        signingConfigs.create("release") {
+            storeFile = rootProject.file(config.releaseValue("storeFile"))
+            storeType = config.getProperty("storeType", "PKCS12")
+            storePassword = config.releaseValue("storePassword")
+            keyAlias = config.releaseValue("keyAlias")
+            keyPassword = config.releaseValue("keyPassword")
+        }
+    }
+
     buildTypes {
         release {
-            // Distribution signing is deliberately unconfigured in this foundation.
-            // Never label an artifact signed with a development key as a release.
-            signingConfig = null
+            signingConfig = releaseSigning
         }
     }
 }

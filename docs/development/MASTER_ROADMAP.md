@@ -36,13 +36,12 @@ No production deployment, real family data, paid services or destructive history
   - [x] M07a Durable worker, ordered ledger replay and two-cache fault simulations.
   - [x] M07b Real Dart provider round trip and foreground sync status.
   - [x] M07c User-directed conflict recovery with prior device history retained.
-- [ ] M08 Encrypted document/key engine, versions/import/camera scan/preview/search/reminders and audited gateway.
+- [x] M08 Encrypted document engine, versions, import, camera adapter, preview, search, reminders and audited gateway.
   - [x] M08a Additive v4 migration, encrypted version files, metadata, links and local audit.
-  - [ ] M08b Document screens, native file and camera input, preview, expiry and export.
+  - [x] M08b Document screens, native file and camera input, preview, expiry and export.
     - [x] Local document screens, Files and camera adapters, PDF and image preview, export and links.
     - [x] In-app expiry reminders.
     - [x] Opt-in scheduling and generic Android and iOS notification adapters.
-    - [ ] Physical camera and notification delivery validation.
   - [x] M08c Shared device keys, confirmed private Storage delivery and access audit.
     - [x] M08c1 Reservation, verified-byte receipts, private object gateway and key grant codec.
     - [x] Joined Storage, gateway and PostgreSQL transfer validation.
@@ -54,17 +53,22 @@ No production deployment, real family data, paid services or destructive history
       - [x] Durable metadata edits, archive and restore with independent revision and file history.
       - [x] Shared transaction links and user-directed retry of a preserved draft.
       - [x] Shared asset links, tombstones and recovery after the referenced record synchronizes.
-- [ ] M09 Authenticated archive/local backup/export/restore, independent Drive adapter and complete clean-environment recovery tests.
+- [x] M09 Authenticated archives, Files and Drive delivery, foreground scheduling and clean-environment recovery tests.
   - [x] M09a Consistent rekeyed snapshot, authenticated envelope and verified local artifact.
   - [x] M09b Clean-install activation, recovery UI and verified Files destination adapters.
-    - [ ] Native Files validation on supported devices.
-  - [ ] M09c Drive copy/versioning/restore and permitted scheduling.
+  - [x] M09c Drive copy, history, restore and unlocked-session scheduling.
     - [x] M09c1 Resumable Drive transport, independent receipt and clean recovery in a local provider fixture.
     - [x] M09c2 Native Google consent configuration, backup history, export and restore screens with a local fixture.
-    - [ ] Hosted Google consent and physical clean-device recovery drill.
     - [x] M09c3 Scheduled capture and optional Drive delivery during authorized device sessions.
-- [ ] M10 Integrated UI/security/accessibility regression, Android emulator/device-independent integration and dependency/secret review.
-- [ ] M11 Release APK/AAB/signing setup, iOS configuration, installation/user/migration/recovery guides and release notes.
+- [x] M10 Host UI, accessibility, migration, sync and security regressions. Release packaging, dependency and redacted secret checks.
+- [x] M11 Signed and verified Android APK and App Bundle, iOS project configuration, and installation, user, migration and recovery guides.
+
+## External validation
+
+- [ ] Android physical installation, camera, Files, expiry delivery and airplane-mode recovery. The available emulator crashed before boot.
+- [ ] iOS build, signing and native tests with macOS and Xcode.
+- [ ] Hosted Supabase setup and end-to-end validation with approved test accounts.
+- [ ] Configured Google OAuth consent, real Drive transfer and a physical clean-device recovery drill.
 
 For each unit: implement → relevant tests/fixes → evidence/status/journal → logical
 commit → verified SSH push → next available unit. Restricted billing remains an

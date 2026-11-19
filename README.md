@@ -1,32 +1,17 @@
 # FamilyVault
 
-FamilyVault is a Flutter app I am building to help a family keep track of money and important documents in one place. It uses rupees and Indian number formatting, including lakh and crore.
+FamilyVault is my Flutter project for keeping family money records and important documents in one place. It uses rupees and shows amounts in lakh and crore.
 
 ## What works now
 
-- Add cash and bank accounts, income, expenses and transfers.
-- Set monthly budgets and see where the money goes.
-- Record property, gold, silver and other assets with ownership details and a history of their values.
-- Record loans and repayments. See principal, interest paid and the amount still due.
-- Track business income, expenses, stock, worker payments and profit.
-- Correct a transaction while keeping the original entry in its history.
-- Save records on the device without internet. The app encrypts the local database and uses your device lock to open it.
-- Sign in with a family account and sync accounts, transactions, budgets and bank statement checks. I tested this with two test accounts using Supabase on my computer.
-- Share properties, gold and other asset records with family members. I tested changes to ownership, value and rent between two accounts on my computer.
-- Share loans and repayments with family members. Corrections keep the old entries and show the updated amount due.
-- Share a business profile, its income, expenses, stock and worker payments with family members.
-- Keep PDFs, photos and scans in the encrypted vault on your device. You can search by title, keep old versions and link a file to a transaction or asset.
-- Share encrypted documents with approved family devices. Add a file without internet and the app will share it when it can connect again. I tested this with sample files on a local Supabase server.
-- Edit shared document details, archive files and bring them back with their old versions.
-- Set expiry dates and turn on phone reminders to review them.
-- Link a shared document to a family transaction or asset. If two people add a new version at the same time, you can keep your saved copy and share it as the next version.
-- Create an encrypted backup and save a copy in Files. On a fresh install, use the backup file and your separate recovery key. I tested this with sample records on my computer.
-- Save encrypted backups to Google Drive and choose an older copy to restore. This needs Google Drive setup for your build. I tested the upload and restore with a local test server.
-- Set daily or weekly backups that run while the vault is open. You can also copy them to the Google account you choose.
-
-## What I am still building
-
-I am checking the Android release build and testing the app with sample records.
+- Add income, expenses, transfers and bank accounts. Set a monthly budget and see how much you saved.
+- Track property, gold, silver, other assets and loans. See old values and payments.
+- Track business income, costs, stock, worker payments and profit.
+- Correct a transaction and keep the original entry in its history.
+- Save records without internet. The app encrypts the local database and opens it with your device lock.
+- Use separate family accounts to share records between approved phones.
+- Store PDFs, photos and scans in an encrypted vault. Search by title, keep old versions, add expiry dates and link files to records.
+- Create an encrypted backup and save it to Files or Google Drive. Keep the recovery key separately. Daily or weekly backups can run while the vault is open.
 
 ## Run it
 
@@ -37,8 +22,8 @@ flutter pub get --enforce-lockfile
 flutter run
 ```
 
-Set a screen lock on the device before creating a vault. The local app works without a Supabase account. For the tool versions and checks, see the [setup guide](docs/development.md).
+Set a screen lock before creating a vault. The local app works without a Supabase account. Family sync and Google Drive need their own setup. [Installation guide](docs/installation.md).
 
-The Android debug build has been tested. The iOS project is included and needs a Mac with Xcode for build testing. Please use sample data while the app is in development.
+## Testing
 
-See the [project status](docs/development/IMPLEMENTATION_STATUS.md) for what has been tested so far.
+I tested family sync and backup restore with sample data on my computer. I also built and checked a signed Android APK and App Bundle. Phone testing is still pending. The iOS project needs a Mac with Xcode for build testing. [Project status](docs/development/IMPLEMENTATION_STATUS.md).

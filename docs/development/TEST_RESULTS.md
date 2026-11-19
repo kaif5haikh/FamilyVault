@@ -512,3 +512,31 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `bash tool/check.sh` passed 125 Flutter tests, five Deno tests, analyzer,
   both SQL gates and the Pub advisory query. Transcript
   `.cache/checks/m10-reminders-full-20261119-a.txt`.
+
+## M10 and M11 Final development release on 2026-11-19
+
+- `bash tool/check.sh` passed analyzer, 125 Flutter tests, five Deno tests,
+  proposal and runtime PostgreSQL checks, and the advisory query for 184 Pub
+  packages. Transcript `.cache/checks/m11-final-checks-20261119-a.txt`.
+- `python3 -B tool/check_supabase.py --mobile --storage` passed both opt-in
+  Dart scenarios through live local Auth, Data API and private Storage. The
+  tests exercised member sessions, exact shared finance, crossed edits,
+  encrypted document delivery, retained history and clean archive recovery.
+  Transcript `.cache/checks/m11-final-provider-20261119-a.txt`.
+- `bash tool/build_android_release.sh` built the signed 0.1.0 APK and App
+  Bundle. APK signature, ZIP alignment, matching bundle signer and bundletool
+  validation passed. Manifest inspection confirmed minimum API 24, target
+  API 36 and ARM64, ARMv7 and x86-64 ABIs. Cupertino glyphs were packaged and
+  all 14 native 64-bit libraries met the 16 KiB segment alignment check.
+  Bundletool generated a universal APK with the same verified certificate.
+  Transcripts `.cache/checks/m11-release-20261119-b.txt`,
+  `.cache/checks/m11-apk-assets-20261119-a.json` and
+  `.cache/checks/m11-bundle-apks-20261119-a.txt`.
+- An OSV query of 121 resolved release Maven coordinates returned no matches.
+  A redacted scan of the 39 Git commits present before the release commit
+  found no leaks. Transcripts `.cache/checks/m11-native-osv-20261119-a.json`
+  and `.cache/checks/m11-history-gitleaks-20261119-a.txt`.
+- iOS property lists and icon dimensions passed static checks. Android
+  physical installation, camera, Files and notification delivery remain
+  unverified. iOS compilation and live Google consent require their own
+  environments.

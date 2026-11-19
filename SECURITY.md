@@ -1,7 +1,8 @@
 # Security policy
 
-FamilyVault handles financial and identity information. The initial foundation
-has not passed a production security review and must not hold real family data.
+FamilyVault handles financial and identity information. This development
+release is for synthetic records. Hosted configuration and a production
+security review are separate from the verified local release checks.
 
 Report suspected vulnerabilities through GitHub private vulnerability
 reporting when enabled, or contact the repository owner through
@@ -29,6 +30,25 @@ documents, paste access tokens or upload database dumps.
 
 See the [threat model](docs/security-threat-model.md),
 [permissions](docs/permissions.md) and [recovery design](docs/backup-recovery.md).
+
+## Export and removal
+
+Create a verified encrypted export from **Settings**, then **Encrypted
+backups**. Keep the recovery key separately and verify that the copy opens
+on a clean installation. Individual document exports are decrypted copies
+managed by the chosen file destination.
+
+Revoke a member's device and sessions from an authorized administrator account
+when access ends. Archive records to retain the financial audit history.
+Sign out of the phone and confirm active sessions separately. To permanently
+remove a local copy, confirm a verified independent backup and approve any
+app data removal on the intended device.
+
+For hosted deletion, the operator must agree the affected family, retained
+history, synchronized copies and backup destinations with the owner before
+any irreversible change. Membership revocation leaves shared records and
+existing backups intact. Full hosted deletion and recovery are operator
+procedures that need separate review.
 
 ## Incident response
 

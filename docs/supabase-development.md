@@ -27,7 +27,9 @@ the previous member token loses access after Auth sign-out.
 Run `python3 -B tool/check_supabase.py --mobile` for the two-client Dart round
 trip. The disposable pod provides live Auth and Data API endpoints. Each client
 uses its own encrypted SQLite test file and app repository and verifies the
-shared record, exact balance, original creator and latest editor.
+shared record, exact balance, original creator and latest editor. The suite
+also exercises holdings, loans, revenue, expenses, weighted stock costs and
+worker payments, including corrections and history on the receiving device.
 
 ## Provision a development family
 
@@ -70,8 +72,8 @@ exercise actual signed upload, verification and download with
 `python3 -B tool/check_supabase.py --storage`. Add `--mobile` to run the Dart
 client through those local endpoints. The combined check uses OpenSSL to
 generate test device public keys. It exercises a lost finalization reply, a
-competing version and backfill to a newly approved third device. All object
-bytes and accounts are disposable fixtures.
+competing version, backfill to a newly approved third device, record links and
+clean archive recovery. All object bytes and accounts are disposable fixtures.
 
 The gateway is designed for an isolated Supabase development project with
 Storage enabled. Apply the app migrations, then apply

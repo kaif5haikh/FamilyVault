@@ -147,3 +147,6 @@ attribution on revenue, expenses and corrections.
 
 ADR 0027 records opt-in local expiry notifications with generic content and
 only scheduled times passed to the operating system.
+
+ADR 0028 records Android release signing, artifact verification, the
+Cupertino font and original launcher assets for both platforms.

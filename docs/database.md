@@ -245,6 +245,16 @@ asset_ownerships, asset_valuations, debt_contracts, debt_repayments, businesses,
 stock_items, stock_movements, stock_positions, workers, salary_payments and
 aggregate_journal_links. See ADR 0008 and the committed v3 schema snapshot.
 
+## Current implemented schemas
+
+Local Drift v6 retains the original sync queue and the populated upgrades from
+v1 through v5. Documents arrived in v4, staged uploads in v5 and shared edit
+indexes and replay guards in v6. The generated local schemas are under
+`drift_schemas/vault/`. PostgreSQL runtime schemas are defined by the additive
+files in `supabase/migrations/`. They cover membership, device sessions, ordered
+receipts, shared finance and private documents. The separate proposal schemas
+remain available for design review. [Migration guide](migration-guide.md).
+
 ```mermaid
 erDiagram
   WEALTH_ASSETS ||--|| LEDGER_ACCOUNTS : values_in
