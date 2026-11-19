@@ -4,12 +4,14 @@
 import argparse
 import base64
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 import hashlib
 import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
 import re
+import select
 from pathlib import Path
 import secrets
 import subprocess
@@ -17,6 +19,7 @@ import tempfile
 from threading import Thread
 import time
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from uuid import uuid4
 
@@ -31,6 +34,7 @@ PODMAN = [
 DB_IMAGE = 'docker.io/supabase/postgres@sha256:5a4314708484bec672de2c09653a5c01fb1c84a998564ac231b0325e2238ed5b'
 AUTH_IMAGE = 'docker.io/supabase/gotrue@sha256:839f529492d116b4e8b7777c953a27c381d34c15a744b1bcefde5eefaa1f9f9f'
 REST_IMAGE = 'docker.io/postgrest/postgrest@sha256:c847127074bd26e1b8d3f7c0e6e01e5346f4b85dd34f5d699fd230af960827c0'
+STORAGE_IMAGE = 'docker.io/supabase/storage-api@sha256:4a71028f91060c8d2e86d7426faa6841947d63f4ee97f9683d058d3ec367fb6c'
 
 
 def podman(*args: str, source: str | None = None, check: bool = True) -> subprocess.CompletedProcess:
@@ -48,9 +52,9 @@ def base64url(raw: bytes) -> str:
     return base64.urlsafe_b64encode(raw).rstrip(b'=').decode()
 
 
-def admin_token(signing_key: str) -> str:
+def role_token(signing_key: str, role: str) -> str:
     head = base64url(b'{"alg":"HS256","typ":"JWT"}')
-    body = base64url(json.dumps({'role': 'service_role', 'exp': int(time.time()) + 300}).encode())
+    body = base64url(json.dumps({'role': role, 'exp': int(time.time()) + 3600}).encode())
     signature = hmac.digest(signing_key.encode(), f'{head}.{body}'.encode(), 'sha256')
     return f'{head}.{body}.{base64url(signature)}'
 
@@ -59,15 +63,20 @@ def request(url: str, body: dict | None = None, *, token: str | None = None, sta
     headers = {'Content-Type': 'application/json'}
     if token:
         headers['Authorization'] = f'Bearer {token}'
+    raw = exchange(Request(url, data=None if body is None else json.dumps(body).encode(), headers=headers), status)
+    return json.loads(raw) if raw else None
+
+
+def exchange(call: Request, status: int | tuple[int, ...] = 200) -> bytes:
     try:
-        with urlopen(Request(url, data=None if body is None else json.dumps(body).encode(), headers=headers), timeout=10) as reply:
+        with urlopen(call, timeout=30) as reply:
             actual, raw = reply.status, reply.read()
     except HTTPError as e:
         actual, raw = e.code, e.read()
     if actual not in (status if isinstance(status, tuple) else (status,)):
         # Never print response details from login, MFA or database requests.
-        raise AssertionError(f'{url.split("?")[0]} returned HTTP {actual}, expected {status}')
-    return json.loads(raw) if raw else None
+        raise AssertionError(f'{call.full_url.split("?")[0]} returned HTTP {actual}, expected {status}')
+    return raw
 
 
 def wait_for(check, description: str, timeout: float = 75):
@@ -176,33 +185,78 @@ def check_ledger(rpc, family: str, owner: dict, owner_session: str, member: dict
     print('Real Data API passed shared budgets, stale statement refusal and atomic reconciliation.')
 
 
-def check_document_access(rpc, family: str, owner: dict, owner_token: str, member: dict, member_token: str, worker: str):
+@contextmanager
+def local_gateway(scratch: Path, rest_url: str, storage_url: str, anon: str, worker: str):
+    env = {'FAMILYVAULT_FIXTURE_REST': rest_url, 'FAMILYVAULT_FIXTURE_STORAGE': storage_url,
+           'FAMILYVAULT_FIXTURE_ANON': anon, 'FAMILYVAULT_FIXTURE_WORKER': worker}
+    with (scratch / 'gateway.log').open('w') as log:
+        child = subprocess.Popen(['deno', 'run', '--no-prompt', '--allow-net=127.0.0.1',
+            '--allow-env=' + ','.join(env), 'tool/document_gateway_fixture.ts'],
+            cwd=ROOT, env={**os.environ, **env}, stdout=subprocess.PIPE, stderr=log, text=True)
+        try:
+            if not select.select([child.stdout], [], [], 20)[0]:
+                raise RuntimeError('Local document gateway did not report a port')
+            port = child.stdout.readline().strip()
+            if not port.isdecimal():
+                raise RuntimeError('Local document gateway could not start')
+
+            def gateway(action: str, target: str, device: dict, jwt: str, *, status: int | tuple[int, ...] = 200):
+                return exchange(Request(f'http://127.0.0.1:{port}', headers={'Authorization': f'Bearer {jwt}',
+                    'Content-Type': 'application/json', 'x-fv-device': device['p_device'], 'x-fv-proof': device['p_proof']},
+                    data=json.dumps({'action': action, 'id': target}).encode()), status)
+
+            yield gateway
+        finally:
+            child.terminate()
+            child.wait(timeout=10)
+
+
+def check_document_access(rpc, family: str, owner: dict, owner_token: str, member: dict, member_token: str,
+                          worker: str, *, gateway=None, storage_url: str | None = None):
     """Drive document RPCs with genuine Auth. The dedicated gateway test measures bytes."""
     owner_id = rpc('workspace', owner, owner_token)['member_id']
     member_id = rpc('workspace', member, member_token)['member_id']
     operation, doc, version = (str(uuid4()) for _ in range(3))
-    fixture_digest = hashlib.sha256(b'Synthetic stored object for the RPC receipt fixture').hexdigest()
+    synthetic_bytes = secrets.token_bytes(148)
+    fixture_digest = hashlib.sha256(synthetic_bytes).hexdigest()
     reserved = rpc('document_reserve', {**member, 'p_operation': operation, 'p_document': doc,
         'p_version': version, 'p_owner': owner_id, 'p_base': 0, 'p_mime': 'application/pdf',
         'p_bytes': 100, 'p_digest': fixture_digest, 'p_metadata': base64.b64encode(secrets.token_bytes(72)).decode()}, member_token)
     assert reserved == operation
     readback = {'p_family': family, 'p_reservation': operation, 'p_size': 148, 'p_digest': fixture_digest}
     rpc('document_mark_bytes', readback, member_token, status=403)
-    args = {**member, 'p_reservation': operation, 'p_grants': []}
+    args = {**member, 'p_reservation': operation, 'p_grants': [
+        {'version': 1, 'sender_device_id': member['p_device'], 'recipient_device_id': device['p_device'],
+         'ephemeral_public': secrets.token_hex(32), 'wrapped_key': base64.b64encode(secrets.token_bytes(72)).decode(),
+         'signature': secrets.token_hex(64)} for device in (owner, member)]}
     rpc('document_finalize', args, member_token, status=409)
-    rpc('document_mark_bytes', readback, worker, status=204)
+    path = f'familyvault-ciphertext/{family}/{operation}.fvdoc'
+    if gateway is None:
+        rpc('document_mark_bytes', readback, worker, status=204)
+    else:
+        gateway('verify', operation, member, member_token, status=(409, 502))
+        ticket = json.loads(gateway('ticket', operation, member, member_token))
+        assert ticket['object_path'] == f'{family}/{operation}.fvdoc'
+        query = urlencode({'token': ticket['token']})
+        exchange(Request(f'{storage_url}/object/upload/sign/{path}?{query}', data=synthetic_bytes,
+                         headers={'Content-Type': 'application/octet-stream'}, method='PUT'), (200, 201))
+        rpc('document_finalize', args, member_token, status=409)
+        assert json.loads(gateway('verify', operation, member, member_token))['verified'] is True
     assert rpc('document_list', owner, owner_token) == []
-    args['p_grants'] = [{'version': 1, 'sender_device_id': member['p_device'], 'recipient_device_id': device['p_device'],
-                        'ephemeral_public': secrets.token_hex(32),
-                        'wrapped_key': base64.b64encode(secrets.token_bytes(72)).decode(),
-                        'signature': secrets.token_hex(64)} for device in (owner, member)]
     receipt = rpc('document_finalize', args, member_token)
     assert receipt['version_id'] == version and receipt == rpc('document_finalize', args, member_token)
     summary = rpc('document_list', owner, owner_token)[0]
     assert (summary['owner_id'], summary['created_by']) == (owner_id, member_id)
     assert summary['key_grant']['recipient_device_id'] == owner['p_device']
     assert rpc('document_download_plan', {**owner, 'p_version': version}, owner_token)['ciphertext_digest'] == fixture_digest
-    print('Real Data API passed document membership, worker-only verification and addressed key grants with a receipt fixture.')
+    if gateway is None:
+        print('Real Data API passed document membership, worker-only verification and addressed key grants with a receipt fixture.')
+    else:
+        assert gateway('download', version, owner, owner_token) == synthetic_bytes
+        exchange(Request(f'{storage_url}/object/public/{path}'), (400, 403, 404))
+        exchange(Request(f'{storage_url}/object/{path}', headers={'Authorization': f'Bearer {owner_token}'}), (400, 403, 404))
+        gateway('download', version, {**owner, 'p_proof': secrets.token_hex(32)}, owner_token, status=403)
+        print('Real Storage and Deno gateway passed signed upload, readback receipt and authorized private download.')
 
 
 def check_mobile(scratch: Path, auth_url: str, rest_url: str, family: str, users: list[dict]):
@@ -259,12 +313,13 @@ def check_mobile(scratch: Path, auth_url: str, rest_url: str, family: str, users
             thread.join(timeout=5)
 
 
-def run(scratch: Path, *, mobile: bool):
+def run(scratch: Path, *, mobile: bool, objects: bool):
     name = 'fv-check-' + uuid4().hex[:10]
-    db, auth, rest = (f'{name}-{service}' for service in ('db', 'auth', 'rest'))
+    db, auth, rest, storage = (f'{name}-{service}' for service in ('db', 'auth', 'rest', 'storage'))
     password = secrets.token_hex(32)
     signing_key = secrets.token_hex(48)
-    podman('pod', 'create', '--name', name, '-p', '127.0.0.1::9999', '-p', '127.0.0.1::3000')
+    podman('pod', 'create', '--name', name, '-p', '127.0.0.1::9999', '-p', '127.0.0.1::3000',
+           *(['-p', '127.0.0.1::5000'] if objects else []))
     try:
         def psql(sql: str, *, user: str = 'postgres') -> str:
             proc = podman('exec', '-i', db, 'psql', '-X', '-qAt', '-U', user, '-v', 'ON_ERROR_STOP=1', source=sql, check=False)
@@ -315,6 +370,21 @@ def run(scratch: Path, *, mobile: bool):
             'PGRST_LOG_LEVEL': 'crit',
         }), REST_IMAGE)
         wait_for(lambda: request(rest_url + '/') is not None, 'PostgREST')
+        anon, worker = (role_token(signing_key, role) for role in ('anon', 'service_role'))
+        storage_url = None
+        if objects:
+            psql(f"ALTER ROLE supabase_storage_admin PASSWORD '{password}';", user='supabase_admin')
+            storage_url = f'http://127.0.0.1:{ports["5000"]}'
+            podman('run', '-d', '--pull=never', '--pod', name, '--name', storage, '--env-file', env_file(scratch / 'storage.env', {
+                'ANON_KEY': anon, 'SERVICE_KEY': worker, 'POSTGREST_URL': 'http://127.0.0.1:3000',
+                'AUTH_JWT_SECRET': signing_key, 'DATABASE_URL': f'postgres://supabase_storage_admin:{password}@127.0.0.1:5432/postgres',
+                'STORAGE_PUBLIC_URL': storage_url, 'FILE_SIZE_LIMIT': '25167392', 'STORAGE_BACKEND': 'file',
+                'FILE_STORAGE_BACKEND_PATH': '/tmp/fv-private-objects', 'GLOBAL_S3_BUCKET': 'fixture', 'TENANT_ID': 'fixture',
+                'REGION': 'local', 'ENABLE_IMAGE_TRANSFORMATION': 'false', 'DB_INSTALL_ROLES': 'false', 'LOG_LEVEL': 'error',
+            }), STORAGE_IMAGE)
+            wait_for(lambda: exchange(Request(storage_url + '/status')) is not None, 'Supabase Storage')
+            psql('SET ROLE supabase_storage_admin;\n' + (ROOT / 'supabase/storage/document_bucket.sql').read_text(),
+                 user='supabase_admin')
 
         def create_user(email: str, admin: str):
             pw = secrets.token_urlsafe(32)
@@ -325,7 +395,7 @@ def run(scratch: Path, *, mobile: bool):
         def rpc(endpoint: str, fields: dict, token: str, status: int | tuple[int, ...] = 200):
             return request(rest_url + '/rpc/fv_' + endpoint, fields, token=token, status=status)
 
-        admin = admin_token(signing_key)
+        admin = worker
         owner, owner_session, owner_password = create_user('owner@example.invalid', admin)
         member, member_session, member_password = create_user('member@example.invalid', admin)
         outsider, outsider_session, _ = create_user('outside@example.invalid', admin)
@@ -362,7 +432,13 @@ def run(scratch: Path, *, mobile: bool):
         rpc('admin_access', member_fields, member_session, status=403)
         rpc('workspace', {**member_fields, 'p_proof': secrets.token_hex(32)}, member_session, status=403)
         check_ledger(rpc, family, owner_fields, owner_session, member_fields, member_session)
-        check_document_access(rpc, family, owner_fields, owner_session, member_fields, member_session, admin_token(signing_key))
+        rpc('document_list', owner_fields, outsider_session, status=403)
+        if storage_url is None:
+            check_document_access(rpc, family, owner_fields, owner_session, member_fields, member_session, worker)
+        else:
+            with local_gateway(scratch, rest_url, storage_url, anon, worker) as gateway:
+                check_document_access(rpc, family, owner_fields, owner_session, member_fields, member_session, worker,
+                                      gateway=gateway, storage_url=storage_url)
         if mobile:
             check_mobile(scratch, auth_url, rest_url, family, [
                 {'email': 'owner@example.invalid', 'password': owner_password, **owner_fields},
@@ -374,7 +450,7 @@ def run(scratch: Path, *, mobile: bool):
         rpc('document_list', member_fields, member_session, status=403)
         print('Real Supabase Auth and PostgREST passed sign-in, MFA, invitation, enrollment and stale-token denial.')
     except Exception:
-        for service in (db, auth, rest):
+        for service in (db, auth, rest, storage) if objects else (db, auth, rest):
             logs = podman('logs', '--tail', '8', service, check=False)
             if logs.returncode == 0:
                 details = (logs.stdout + logs.stderr).replace(password, '[redacted]').replace(signing_key, '[redacted]')
@@ -388,7 +464,8 @@ def run(scratch: Path, *, mobile: bool):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mobile', action='store_true', help='run the Dart transport against the same provider pod')
+    parser.add_argument('--storage', action='store_true', help='also test real Storage with the Deno document gateway')
     args = parser.parse_args()
     CACHE.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='fv-supabase-', dir=CACHE) as scratch_dir:
-        run(Path(scratch_dir), mobile=args.mobile)
+        run(Path(scratch_dir), mobile=args.mobile, objects=args.storage)

@@ -270,4 +270,11 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `python3 -B tool/check_supabase.py` passed with real local Auth and PostgREST.
   Its document exercise wrote a synthetic worker receipt to test the database
   role boundary. Transcript `.cache/checks/m08-cloud-provider-20261119-a.txt`.
-  A joined Storage service transfer and connected Flutter views remain pending.
+- `python3 -B tool/check_supabase.py --storage` passed with the pinned Storage
+  1.89.12 image alongside Auth, PostgreSQL, PostgREST and the Deno gateway.
+  With complete recipient grants, finalization failed before upload and again
+  after the signed upload. The trusted gateway read and verified the exact bytes,
+  the database returned a stable finalization receipt, and a second member on
+  an approved device downloaded the same ciphertext. Public and direct Storage
+  reads failed. Transcript `.cache/checks/m08-storage-joined-20261119-b.txt`.
+  Connected Flutter views remain pending.

@@ -268,3 +268,14 @@ separately. Continue with the business UI and executable backend policies.
   The full check passed 106 Flutter and four Deno tests.
 - Next verify the gateway and PostgreSQL receipt together with the real local
   Storage service, then connect the client queue, backfill and shared views.
+
+## 2026-11-19 — joined private Storage transfer
+
+- Verified `04a7a06` on the public origin. Added `--storage` to the disposable
+  provider check and passed a signed upload, byte readback, finalization and a
+  second device's authenticated download through the actual Deno gateway.
+- The first run reached Storage health and failed while applying the bucket
+  SQL because peer authentication mapped the container user to a different
+  database role. Applying it as the Storage owner through `SET ROLE` in the
+  existing local administrator session fixed the fixture. The rerun passed.
+- Continue with the durable mobile document queue and receiving device cache.

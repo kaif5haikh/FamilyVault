@@ -38,7 +38,8 @@ No production deployment, real family data, paid services or destructive history
     - [ ] Scheduled OS reminders and physical camera validation.
   - [ ] M08c Shared device keys, confirmed private Storage delivery and access audit.
     - [x] M08c1 Reservation, verified-byte receipts, private object gateway and key grant codec.
-    - [ ] M08c2 Mobile queue, shared metadata and ciphertext, historical key backfill and joined transfer validation.
+    - [x] Joined Storage, gateway and PostgreSQL transfer validation.
+    - [ ] M08c2 Mobile queue, shared metadata and ciphertext and historical key backfill.
 - [ ] M09 Authenticated archive/local backup/export/restore, independent Drive adapter and complete clean-environment recovery tests.
 - [ ] M10 Integrated UI/security/accessibility regression, Android emulator/device-independent integration and dependency/secret review.
 - [ ] M11 Release APK/AAB/signing setup, iOS configuration, installation/user/migration/recovery guides and release notes.
