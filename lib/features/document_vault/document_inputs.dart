@@ -8,7 +8,9 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../app/vault_providers.dart';
+import '../../core/database/document_tables.dart' show documentByteLimit;
 import '../../core/errors/app_failure.dart';
+import '../../core/files/android_picked_file.dart';
 import '../../core/security/vault_identity.dart';
 import 'document_repository.dart';
 
@@ -51,6 +53,19 @@ final class NativeDocumentIo implements DocumentIo {
           'Scanned document',
           DocumentInput(length: photo.length, openRead: photo.openRead),
           cleanUp: () => _removeCapture(photo.path),
+        );
+      }
+      if (Platform.isAndroid) {
+        final file = await AndroidPickedFile.pick(
+          DocumentFormat.values.map((format) => format.mime).toList(),
+        );
+        if (file == null) return null;
+        return SelectedDocument(
+          p.basenameWithoutExtension(file.name),
+          DocumentInput(
+            length: () => file.length(probeLimit: documentByteLimit),
+            openRead: file.openRead,
+          ),
         );
       }
       final file = await FilePicker.pickFile(

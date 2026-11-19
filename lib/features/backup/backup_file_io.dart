@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../core/errors/app_failure.dart';
+import '../../core/files/android_picked_file.dart';
 import 'backup_archive.dart';
 
 typedef BackupInput = ({
@@ -28,6 +29,12 @@ final class NativeBackupFilePicker implements BackupFilePicker {
   @override
   Future<BackupInput?> pick() async {
     try {
+      if (Platform.isAndroid) {
+        final file = await AndroidPickedFile.pick(['*/*']);
+        return file == null
+            ? null
+            : (length: file.length, openRead: file.openRead);
+      }
       final result = await FilePicker.pickFile(type: FileType.any);
       if (result == null) return null;
       return (

@@ -13,6 +13,7 @@ import java.io.File
 import java.security.MessageDigest
 
 class MainActivity : FlutterFragmentActivity() {
+    private val fileImports = FileImports(this)
     private data class Export(val file: File, val length: Long, val reply: MethodChannel.Result)
     private var export: Export? = null
     private var notificationPermission: MethodChannel.Result? = null
@@ -47,6 +48,7 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        fileImports.configure(flutterEngine.dartExecutor.binaryMessenger)
         configureDocumentReminders(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app.familyvault/backup-files").setMethodCallHandler { call, reply ->
             if (call.method != "export") {
@@ -70,6 +72,11 @@ class MainActivity : FlutterFragmentActivity() {
                 reply.error("picker_unavailable", "No file destination is available.", null)
             }
         }
+    }
+
+    override fun onDestroy() {
+        fileImports.close()
+        super.onDestroy()
     }
 
     private fun configureDocumentReminders(flutterEngine: FlutterEngine) {
