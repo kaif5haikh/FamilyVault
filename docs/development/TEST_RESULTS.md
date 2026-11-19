@@ -474,3 +474,16 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `bash tool/check.sh` passed 123 Flutter tests, five Deno tests, analyzer,
   both SQL checks and the audit of 183 Pub packages. Transcript
   `.cache/checks/m06-business-full-20261119-a.txt`.
+
+## M06c3c Shared inventory on 2026-11-19
+
+- `bash tool/check_backend.sh` applied the private stock tables and operation
+  guards. Transcript `.cache/checks/m06-inventory-sql-20261119-a.txt`.
+- `python3 -B tool/check_supabase.py --mobile` passed opening stock, purchase,
+  weighted issue cost, refusal of an incorrect cost, exact reversal and
+  replacement, a complete stock reduction, archive and restore. Both devices
+  agreed on the derived position and profit report. Transcript
+  `.cache/checks/m06-inventory-provider-20261119-a.txt`.
+- `bash tool/check.sh` passed 123 Flutter tests, five Deno tests, analyzer
+  and database and dependency checks. Transcript
+  `.cache/checks/m06-inventory-full-20261119-a.txt`.

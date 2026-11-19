@@ -54,6 +54,8 @@ final class LedgerReplay {
         before = await _debt(change);
       case 'business':
         before = await _business(change);
+      case 'stock':
+        before = await _stock(change);
       default:
         throw syncIntegrityFailure;
     }

@@ -192,4 +192,31 @@ extension _LedgerModuleReplay on LedgerReplay {
         .insertOnConflictUpdate(business.toCompanion(false));
     return prior == null ? null : databaseRecord(prior);
   }
+
+  Future<SyncJson?> _stock(SyncChange change) async {
+    final envelope = change.envelope;
+    final item = readDatabaseRecord(envelope.record, StockItem.fromJson);
+    final prior = await (db.select(
+      db.stockItems,
+    )..where((t) => t.id.equals(item.id))).getSingleOrNull();
+    _moduleRevision(
+      envelope,
+      item.id,
+      item.familyId,
+      item.revision,
+      prior?.revision,
+    );
+    await db
+        .into(db.stockItems)
+        .insertOnConflictUpdate(item.toCompanion(false));
+    await _moduleJournals(change);
+    for (final row in _rows(envelope.bundle, 'stock_movements')) {
+      final movement = readDatabaseRecord(row, StockMovement.fromJson);
+      if (movement.familyId != familyId || movement.stockItemId != item.id) {
+        throw syncIntegrityFailure;
+      }
+      await db.into(db.stockMovements).insert(movement);
+    }
+    return prior == null ? null : databaseRecord(prior);
+  }
 }

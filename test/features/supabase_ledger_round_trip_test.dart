@@ -662,4 +662,152 @@ Future<void> _sharedBusiness(_Client first, _Client second, String cash) async {
   expect(profit.revenue, BigInt.from(100001));
   expect(profit.operatingExpenses, BigInt.from(2502));
   expect(profit.net, BigInt.from(97499));
+  await _sharedInventory(first, second, shop, cash);
+}
+
+Future<void> _sharedInventory(
+  _Client first,
+  _Client second,
+  String shop,
+  String cash,
+) async {
+  final local = BusinessRepository(first.vault.ledger);
+  final remote = BusinessRepository(second.vault.ledger);
+  final item = await local.saveItem(
+    businessId: shop,
+    name: 'Synthetic tyre item',
+    sku: 'FIXTURE-TYRE',
+  );
+  await local.moveStock(
+    item,
+    (await local.item(item)).revision,
+    const StockEntryDraft(
+      kind: StockEntryKind.opening,
+      units: 3,
+      costMinor: 101,
+      date: '2026-07-01',
+    ),
+  );
+  await local.moveStock(
+    item,
+    (await local.item(item)).revision,
+    StockEntryDraft(
+      kind: StockEntryKind.purchase,
+      units: 2,
+      costMinor: 105,
+      date: '2026-07-02',
+      cashAccountId: cash,
+    ),
+  );
+  await first.sync.run();
+  await second.sync.run();
+  final current = await remote.item(item);
+  expect((await remote.snapshot()).positions[item]!.costPoolMinor, 206);
+  await remote.moveStock(
+    item,
+    current.revision,
+    const StockEntryDraft(
+      kind: StockEntryKind.stockOut,
+      units: 2,
+      date: '2026-07-03',
+    ),
+  );
+  final attempted =
+      await (second.vault.db.select(second.vault.db.pendingMutations)..where(
+            (t) =>
+                t.entityId.equals(item) &
+                t.baseRevision.equals(current.revision),
+          ))
+          .getSingle();
+  final envelope = SyncEnvelope.verify(
+    attempted.payloadJson,
+    attempted.payloadDigest,
+  );
+  final movement = syncObject(
+    (envelope.bundle['stock_movements']! as List<Object?>).single,
+  );
+  final invalid = canonicalJson({
+    ...envelope.fields,
+    'bundle': {
+      ...envelope.bundle,
+      'stock_movements': [
+        {...movement, 'value_delta_minor': -81},
+      ],
+    },
+  });
+  await expectLater(
+    second.sync.transport.push(
+      SyncEnvelope.verify(invalid, payloadDigest(invalid)),
+    ),
+    throwsA(
+      isA<AppFailure>().having(
+        (error) => error.code,
+        'code',
+        FailureCode.validation,
+      ),
+    ),
+  );
+  await second.sync.run();
+  await first.sync.run();
+  final firstIssue = (await local.snapshot())
+      .activeMovements(item)
+      .firstWhere((event) => event.kind == 'stock_out');
+  expect(firstIssue.valueDeltaMinor, -82);
+  await local.correctStock(
+    item,
+    (await local.item(item)).revision,
+    firstIssue.id,
+    'Synthetic count correction',
+    replacement: const StockEntryDraft(
+      kind: StockEntryKind.stockOut,
+      units: 1,
+      date: '2026-07-03',
+    ),
+  );
+  await first.sync.run();
+  await second.sync.run();
+  final corrected = await remote.snapshot();
+  expect(corrected.positions[item]!.quantity, 4);
+  expect(corrected.positions[item]!.costPoolMinor, 165);
+  expect(
+    corrected.movements
+        .singleWhere((event) => event.reversesId == firstIssue.id)
+        .valueDeltaMinor,
+    82,
+  );
+  await remote.moveStock(
+    item,
+    (await remote.item(item)).revision,
+    const StockEntryDraft(
+      kind: StockEntryKind.adjustment,
+      units: 4,
+      date: '2026-07-04',
+    ),
+  );
+  await remote.archiveItem(
+    item,
+    (await remote.item(item)).revision,
+    restore: false,
+  );
+  await second.sync.run();
+  await first.sync.run();
+  expect((await local.item(item, active: false)).deletedAtUs, isNotNull);
+  await remote.archiveItem(
+    item,
+    (await remote.item(item, active: false)).revision,
+    restore: true,
+  );
+  await second.sync.run();
+  await first.sync.run();
+  final ended = await local.snapshot();
+  expect((await local.item(item)).deletedAtUs, isNull);
+  expect(ended.positions[item]!.quantity, 0);
+  expect(ended.positions[item]!.costPoolMinor, 0);
+  final profit = BusinessProfit.forPeriod(
+    await local.business(shop),
+    await first.vault.ledger.snapshot(),
+    from: '2026-07-01',
+    through: '2026-07-31',
+  );
+  expect(profit.costOfGoods, BigInt.from(206));
 }

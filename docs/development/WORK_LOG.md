@@ -435,3 +435,12 @@ separately. Continue with the business UI and executable backend policies.
   profile and two cash entries queued together, then a second member
   corrected the expense. The first device reported the exact resulting profit.
   Continue with weighted inventory costs and wages.
+
+## 2026-11-19 Shared inventory and cost of goods
+
+- Verified `d8e3b0a` on the public SSH origin. Added same-family stock
+  positions, immutable movements and the backend's exact weighted issue cost.
+  Shared replay uses the existing Drift inventory triggers.
+- Local Supabase rejected a fabricated issue cost and accepted the valid
+  movement, retained correction and archival history. Both caches reached
+  the same zero position and business stock cost. Continue with wages.
