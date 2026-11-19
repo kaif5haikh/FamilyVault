@@ -382,3 +382,14 @@ separately. Continue with the business UI and executable backend policies.
   widget clock allowed the six targeted cases to pass. The full 121-test check,
   dependency review and Android debug build passed.
 - Continue with scheduled local capture and separately authorized Drive delivery.
+
+## 2026-11-19 Scheduled encrypted backups
+
+- Verified `a9d8c50` on the public SSH origin. Added opt-in daily and weekly
+  checks while the vault is open with independent Files and Drive results.
+  Schedule secrets and attempt records use the device's secure store.
+- The first fixture run found that local failure status depended on timestamps
+  from two clocks. Bound the failure to the last verified snapshot instead.
+  Corrected the short-upload fixture to fail before storing the final block.
+  The 11 targeted tests and the full 123-test check passed.
+- Continue with scoped journals and typed shared finance records.

@@ -127,3 +127,6 @@ vault with independent device identity and preserved financial IDs.
 
 ADR 0021 records Drive file IDs allocated before upload, account-scoped
 resumable attempts, independent verified receipts and clean fixture recovery.
+
+ADR 0022 records opt-in capture while the vault is open, per-schedule keys
+and receipts, and optional delivery to the explicitly selected Drive account.

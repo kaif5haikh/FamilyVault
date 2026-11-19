@@ -404,3 +404,17 @@ Record exact command, date, outcome and material platform/provider limits below.
   list parsed with the expected local settings references. Xcode and real
   Google consent are pending. Transcript
   `.cache/checks/m09-drive-native-android-20261119-a.txt`.
+
+## M09c3 Scheduled encrypted copies on 2026-11-19
+
+- Eleven targeted Flutter tests passed. Schedule tests reopened a successful
+  archive in a clean vault after an interrupted receipt, suppressed runs
+  while locked or obscured and retried without concurrent capture in one
+  scheduler. The Drive fixture withheld upload for a different account and
+  completed a resumed upload of the original snapshot under the selected
+  account. Transcript `.cache/checks/m09-schedule-tests-20261119-b.txt`.
+- `bash tool/check.sh` passed 123 Flutter tests, five Deno tests, analyzer,
+  SQL gates and the audit of 183 Pub packages. Transcript
+  `.cache/checks/m09-schedule-full-20261119-a.txt`.
+- `flutter build apk --debug --no-pub` passed in 15.5 seconds. Transcript
+  `.cache/checks/m09-schedule-android-20261119-a.txt`.

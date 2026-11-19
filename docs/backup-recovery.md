@@ -12,7 +12,8 @@ archive with a separately held key. A clean-directory test reopened the exact
 paise balance and decrypted an older document version after the source vault
 closed. The restore flow installs a separate local vault with a fresh device
 identity. The app has independent Files and Drive copy workflows. The Drive
-workflow requires platform OAuth setup. Scheduled capture remains in development.
+workflow requires platform OAuth setup. Daily and weekly capture are available
+while the vault is open.
 [ADR 0019](decisions/0019-encrypted-backup-envelope.md) · [ADR 0020](decisions/0020-local-backup-restore.md)
 
 ## Create or restore a local copy
@@ -32,6 +33,21 @@ To open the live family workspace, sign in and enroll through **Family access**.
 Flutter tests use the actual archive and SQLite engine with a file picker fixture.
 Android compilation passed. Testing the native picker on physical devices and
 building the iOS implementation remain pending.
+
+## Scheduled backups
+
+Open **Scheduled backups** under **Encrypted backups**. Choose daily or weekly
+and provide a recovery key that you already saved elsewhere. If you connected
+Google Drive, you can include the displayed account as an independent destination.
+The app checks for a due capture while your vault is open. Use **Save scheduled
+backup to Files** to keep an independent local copy. The selected Drive account
+must be connected in the app before a pending upload can resume.
+
+The schedule reports local verification and Drive verification separately.
+Failed attempts can retry after ten minutes when the vault is open. Turning
+off the schedule removes its stored recovery key and stops future scheduled
+work. Keep your separately saved key so you can recover backups you already
+exported. [ADR 0022](decisions/0022-unlocked-backup-schedules.md).
 
 ## Snapshot and archive
 

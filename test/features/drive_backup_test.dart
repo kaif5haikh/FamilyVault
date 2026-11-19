@@ -10,9 +10,11 @@ import 'package:familyvault/core/security/sealed_file.dart';
 import 'package:familyvault/core/security/vault_identity.dart';
 import 'package:familyvault/core/security/vault_lifecycle.dart';
 import 'package:familyvault/features/backup/backup_archive.dart';
+import 'package:familyvault/features/backup/backup_scheduler.dart';
 import 'package:familyvault/features/backup/drive_backup_api.dart';
 import 'package:familyvault/features/backup/drive_backup_destination.dart';
 import 'package:familyvault/features/backup/drive_sign_in.dart';
+import 'package:familyvault/features/backup/local_backup_destination.dart';
 import 'package:familyvault/features/backup/vault_backup.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -146,6 +148,12 @@ final class _DriveFixture {
             return;
           }
           offsets.add(start);
+          if (interrupt && int.parse(match.group(2)!) + 1 == state.size) {
+            interrupt = false;
+            await request.drain<void>();
+            response.statusCode = 503;
+            return;
+          }
           await for (final block in request) {
             state.bytes.add(block);
           }
@@ -204,15 +212,14 @@ void main() {
     );
   }
 
-  DriveBackupDestination destination({MemorySecureStore? catalog}) =>
-      DriveBackupDestination(
-        api: GoogleDriveBackupApi.test(
-          () async => 'synthetic-drive',
-          drive.root,
-        ),
-        store: catalog ?? store,
-        accountId: 'fixture-account',
-      );
+  DriveBackupDestination destination({
+    MemorySecureStore? catalog,
+    String accountId = 'fixture-account',
+  }) => DriveBackupDestination(
+    api: GoogleDriveBackupApi.test(() async => 'synthetic-drive', drive.root),
+    store: catalog ?? store,
+    accountId: accountId,
+  );
 
   setUp(() async {
     root = await (await Directory('.cache/test-vaults').create(recursive: true))
@@ -387,6 +394,80 @@ void main() {
       restored.status.session!.identity.familyId,
       verified.contents.manifest.identity.familyId,
     );
+  });
+
+  driveTest('a scheduled Drive copy waits for its selected account and verifies the same snapshot on retry', () async {
+    final lifecycle = VaultLifecycle(
+      store: store,
+      gate: FakeDeviceGate(),
+      root: () async => Directory('${root.path}/scheduled'),
+    );
+    addTearDown(lifecycle.dispose);
+    await lifecycle.initialize();
+    await lifecycle.createOffline(
+      familyName: 'Synthetic scheduled Drive family',
+      ownerName: 'Synthetic owner',
+    );
+    final connected = DriveBackupConnection(
+      'drive-fixture@example.invalid',
+      destination(),
+    );
+    final other = DriveBackupConnection(
+      'other-fixture@example.invalid',
+      destination(accountId: 'other-fixture'),
+    );
+    final local = LocalBackupDestination(
+      root: lifecycle.root,
+      store: store,
+      files: const NativeBackupDestination(),
+    );
+    var clock = DateTime.now().subtract(const Duration(days: 7));
+    BackupScheduler scheduler() =>
+        BackupScheduler(store, local, clock: () => clock);
+    final session = lifecycle.status.session!;
+    final key = BackupRecoveryKey.generate();
+    addTearDown(key.destroy);
+    await scheduler().enable(
+      session,
+      BackupCadence.weekly,
+      key,
+      drive: connected,
+    );
+    clock = clock.add(const Duration(days: 7, seconds: 5));
+    expect(
+      await scheduler().runDue(session, foreground: () => true, drive: other),
+      isTrue,
+    );
+    final status = (await scheduler().status(session.identity))!;
+    expect(status.local, isNotNull);
+    expect(status.driveVerifiedAtUs, isNull);
+    expect(drive.allocated, 0);
+
+    drive.interrupt = true;
+    expect(
+      await scheduler().runDue(
+        session,
+        foreground: () => true,
+        drive: connected,
+      ),
+      isTrue,
+    );
+    expect((await scheduler().status(session.identity))?.driveFailed, isTrue);
+    expect(drive.files, isEmpty);
+    clock = clock.add(const Duration(minutes: 11));
+    expect(
+      await scheduler().runDue(
+        session,
+        foreground: () => true,
+        drive: connected,
+      ),
+      isTrue,
+    );
+    final complete = (await scheduler().status(session.identity))!;
+    expect(complete.driveVerifiedAtUs, isNotNull);
+    expect(drive.allocated, 1);
+    expect(drive.files.length, 1);
+    expect(complete.local!.artifact.id, status.local!.artifact.id);
   });
 
   testWidgets(

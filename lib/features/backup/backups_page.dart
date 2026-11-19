@@ -9,6 +9,7 @@ import '../foundation/foundation_pages.dart' show VaultPage;
 import 'backup_archive.dart';
 import 'drive_backups_panel.dart';
 import 'local_backup_destination.dart';
+import 'scheduled_backups_panel.dart';
 
 class BackupsPage extends ConsumerStatefulWidget {
   const BackupsPage({super.key});
@@ -187,6 +188,8 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
             enabled: !_busy,
           ),
         ),
+        const SizedBox(height: 24),
+        ScheduledBackupsPanel(session: session),
       ],
     );
   }

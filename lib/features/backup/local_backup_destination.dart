@@ -68,14 +68,16 @@ final class LocalBackupDestination {
     required this.root,
     required this.store,
     required this.files,
+    this.catalogNamespace = 'familyvault.backup.latest',
   });
   final Future<Directory> Function() root;
   final SecureStore store;
   final BackupFileDestination files;
+  final String catalogNamespace;
   Future<void> _recording = Future.value();
 
   String _catalog(VaultIdentity i) =>
-      'familyvault.backup.latest.${i.familyId}.${i.memberId}.${i.deviceId}';
+      '$catalogNamespace.${i.familyId}.${i.memberId}.${i.deviceId}';
 
   Future<LocalBackupStatus?> read(VaultIdentity identity) async {
     try {
