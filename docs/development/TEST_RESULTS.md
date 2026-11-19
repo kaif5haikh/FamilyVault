@@ -374,3 +374,15 @@ Record exact command, date, outcome and material platform/provider limits below.
   backup screens. The final incremental build took 14.1 seconds. Transcript
   `.cache/checks/m09-restore-android-20261119-b.txt`. Xcode and both platforms'
   physical Files behavior remain unverified.
+
+## M09c1 Drive transfer and independent restore on 2026-11-19
+
+- The three Drive fixture tests passed a 9 MiB interrupted upload, loss of the
+  final reply, session expiry and a rejected foreign upload URL. Retries kept
+  the allocated file ID and emitted a receipt only after the strong readback
+  check. A clean app with no source catalog also restored a downloaded archive
+  after rejecting corrupt media.
+- `bash tool/check.sh` passed 119 Flutter tests, five Deno tests, analyzer,
+  PostgreSQL, proposal checks and the advisory query for 177 resolved Pub
+  packages. The two Supabase fixture tests stayed opt-in during this run.
+  Transcript `.cache/checks/m09-drive-full-20261119-a.txt`.

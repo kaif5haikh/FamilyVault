@@ -1,6 +1,6 @@
 # Implementation status
 
-Current task: **M09 Drive and scheduling**. Local backup and clean-app restore are implemented and tested with synthetic records. Drive delivery and scheduled backups are next.
+Current task: **M09 Drive sign-in and scheduling**. Local backup and clean-app restore passed. The Drive adapter passed the local provider fixture. Mobile consent and scheduling are next.
 Baseline: b9a2705. Goal active; no financial features existed at baseline.
 
 | Area | Actual baseline | Current result |
@@ -10,8 +10,8 @@ Baseline: b9a2705. Goal active; no financial features existed at baseline.
 | Finance/wealth/debt/business | Architecture only | Local ledger + functional account/income/expense/transfer/correction/budget/reconciliation/report UI tested; v3 schema and exact calculations; asset, property, metal, rent, ownership and valuation screens tested with posted history; loans and repayment history; business revenue, operating costs, stock purchases, issues, wages and profit tested |
 | Auth/backend/sync | Secure storage adapters and proposal SQL | Approved devices can open isolated encrypted family caches and sync ordinary finance, budgets and statement checks. Two Dart clients passed a live local Supabase round trip. Offline leases and recovery that retains pending device changes passed host tests. Shared wealth, loans and business commands are pending. |
 | Documents | Design only | Local import, search, versions, in-app expiry, links, preview and export are tested. Real local Supabase tested shared versions, metadata, archive, restore, transaction links, retry of a saved conflicting version, Storage verification and historical keys. Shared asset links, scheduled reminders and physical camera validation are pending. |
-| Backup/Drive | Design only | Rekeyed snapshot, encrypted archive, local activation and preservation of restored records passed. Files adapters are implemented and the destination receipt test passed. Drive delivery, scheduling and physical Files validation remain pending. |
-| Tests | 9 Flutter host tests and design probes | 116 Flutter tests and five Deno gateway tests passed. The two opt-in Dart provider tests passed separately. Android emulator startup is blocked by a host crash. |
+| Backup/Drive | Design only | Rekeyed snapshot, encrypted archive, local activation and the Files receipt test passed. A local Drive fixture tested interrupted uploads, independent receipts, version discovery and clean restore. Native Drive consent, scheduling and physical Files validation remain pending. |
+| Tests | 9 Flutter host tests and design probes | 119 Flutter tests and five Deno gateway tests passed. The two opt-in Dart provider tests passed separately. Android emulator startup is blocked by a host crash. |
 | Release | Prior Android debug APK | Android debug build compiled the backup and restore screens and native Android destination adapter. Release APK/AAB and complete UI remain pending. iOS validation needs macOS/Xcode. |
 
 External constraints: no Supabase/Google OAuth/deployment credentials supplied;

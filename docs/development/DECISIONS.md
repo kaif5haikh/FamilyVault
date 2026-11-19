@@ -124,3 +124,6 @@ key, authenticated manifest and complete file verification before publication.
 
 ADR 0020 records verified Files receipts and restartable recovery into a local
 vault with independent device identity and preserved financial IDs.
+
+ADR 0021 records Drive file IDs allocated before upload, account-scoped
+resumable attempts, independent verified receipts and clean fixture recovery.

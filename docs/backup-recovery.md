@@ -90,11 +90,11 @@ account/device encrypted local store, outside the shared backend catalog.
 
 ## Google Drive destination
 
-Proposed adapter uses the narrow `drive.file` scope for app-created/explicitly
-selected encrypted backup files. OAuth consent and platform client configuration
-remain future work. Store tokens in OS secure storage; no credentials in archives,
-Git, PostgreSQL catalog or logs. Family membership does not confer Google-account
-access; backup account custody/discovery on a clean device must be decided and tested.
+The Dart adapter uses the file APIs covered by the narrow `drive.file` scope
+for encrypted backup files created by the app. It receives a separately supplied
+access token. OAuth consent and platform client configuration remain pending.
+Cloud archives and catalog entries omit OAuth credentials. Recovery from Drive
+requires access to the Google account that can see those backups.
 The hidden `appDataFolder` alternative has different discovery/sharing behavior
 and is not silently substituted for user-accessible backup files.
 
@@ -120,12 +120,13 @@ installs, a missing catalog and the operator's Drive credentials are required te
 cases. A Drive account/file unavailable to the recovering member remains a real
 recovery dependency; local export is an independent alternative.
 
-API facts informing this proposed design: [scopes](https://developers.google.com/workspace/drive/api/guides/api-specific-auth),
+The transport and a clean restore from a downloaded archive passed the local
+Drive API fixture. Native account consent and the hosted provider drill are
+pending. [Scopes](https://developers.google.com/workspace/drive/api/guides/api-specific-auth),
 [resumable uploads](https://developers.google.com/workspace/drive/api/guides/manage-uploads),
 [file checksums](https://developers.google.com/workspace/drive/api/reference/rest/v3/files),
 [revision handling](https://developers.google.com/workspace/drive/api/guides/manage-revisions),
 [app data folder](https://developers.google.com/workspace/drive/api/guides/appdata).
-No Google Drive integration is implemented or tested yet.
 
 ## Restore and clean-device acceptance
 
@@ -160,8 +161,8 @@ source device/catalog, corrupted/truncated copy, missing document/key envelope,
 pending already-accepted operations, stale schema/cursor, revoked membership/device,
 Drive consent revoked/quota failure and interrupted copy. Record an actual restore
 drill and recovery time before declaring production readiness. The host drill
-verified a local archive after restoring into a separate app directory. A Drive
-and physical-device recovery drill remain pending.
+verified local and fixture Drive archives after restoring into separate app
+directories. Hosted Drive and physical-device recovery drills remain pending.
 
 ## Export, retention and deletion
 

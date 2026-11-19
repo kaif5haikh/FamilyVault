@@ -359,3 +359,14 @@ separately. Continue with the business UI and executable backend policies.
   then verified the local dashboard. Real local Supabase and Storage, the full
   116-test check and the Android debug build passed.
 - Continue with Drive upload, verified independent copies and scheduling.
+
+## 2026-11-19 Drive transfer and independent recovery
+
+- Implemented Drive resumable transfer with an account-scoped attempt record
+  and a stable file ID. Completion requires metadata plus SHA-256 or full
+  ciphertext readback. Recovery can discover versions on a clean installation.
+- `bash tool/check.sh` passed all 119 host Flutter tests and the backend,
+  advisory and Deno gates. The Drive tests used synthetic archives and a
+  loopback provider. Hosted Google OAuth remains unconfigured.
+- `gh repo view` confirmed public visibility for `kaif5haikh/FamilyVault`.
+  Continue with native consent and backup screens against the verified adapter.
