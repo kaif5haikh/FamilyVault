@@ -2,6 +2,7 @@ import Flutter
 import UIKit
 import CryptoKit
 import UniformTypeIdentifiers
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -22,6 +23,8 @@ import UniformTypeIdentifiers
       guard call.method == "configured" else { reply(FlutterMethodNotImplemented); return }
       reply(Self.hasDriveConfiguration)
     }
+    let reminders = FlutterMethodChannel(name: "app.familyvault/document-reminders", binaryMessenger: engineBridge.applicationRegistrar.messenger())
+    reminders.setMethodCallHandler(DocumentReminders.handle)
   }
 
   private static var hasDriveConfiguration: Bool {
@@ -114,5 +117,58 @@ private final class BackupFiles: NSObject, UIDocumentPickerDelegate {
     }
     guard failure == nil, let result = result else { throw CocoaError(.fileReadCorruptFile) }
     return result
+  }
+}
+
+private enum DocumentReminders {
+  private static let prefix = "familyvault.document-"
+  private static let identifiers = (0..<32).map { prefix + String($0) }
+
+  static func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    let center = UNUserNotificationCenter.current()
+    switch call.method {
+    case "allowed", "request":
+      Task { @MainActor in
+        do {
+          let settings = await center.notificationSettings()
+          if call.method == "request" && settings.authorizationStatus == .notDetermined {
+            result(try await center.requestAuthorization(options: [.alert]))
+          } else {
+            let status = settings.authorizationStatus
+            result(status == .authorized || status == .provisional || status == .ephemeral)
+          }
+        } catch {
+          result(failure)
+        }
+      }
+    case "replace":
+      guard let values = call.arguments as? [NSNumber], values.count <= identifiers.count
+      else { result(failure); return }
+      Task { @MainActor in
+        do {
+          center.removePendingNotificationRequests(withIdentifiers: identifiers)
+          let now = Date().timeIntervalSince1970
+          let dates = Array(Set(values.map { $0.doubleValue / 1000 }.filter { $0 > now })).sorted()
+          if dates.isEmpty { center.removeDeliveredNotifications(withIdentifiers: identifiers) }
+          for (index, date) in dates.enumerated() {
+            let content = UNMutableNotificationContent()
+            content.title = "FamilyVault"
+            content.body = "Open your vault to review document dates."
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, date - now), repeats: false)
+            try await center.add(UNNotificationRequest(identifier: identifiers[index], content: content, trigger: trigger))
+          }
+          result(nil)
+        } catch {
+          center.removePendingNotificationRequests(withIdentifiers: identifiers)
+          result(failure)
+        }
+      }
+    default:
+      result(FlutterMethodNotImplemented)
+    }
+  }
+
+  private static var failure: FlutterError {
+    FlutterError(code: "reminder_failed", message: "Could not update document reminders.", details: nil)
   }
 }

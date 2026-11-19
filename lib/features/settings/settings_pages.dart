@@ -11,6 +11,8 @@ import '../../shared/widgets/vault_widgets.dart';
 import '../auth/cloud_device_registration.dart';
 import '../auth/cloud_cache_access.dart';
 import '../auth/cloud_providers.dart';
+import '../document_vault/expiry_reminders.dart';
+import '../document_vault/reminder_settings.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
@@ -188,6 +190,7 @@ class SettingsPage extends ConsumerWidget {
           _SyncSection(sync: sync, session: session!),
           const SizedBox(height: 24),
         ],
+        if (session != null) DocumentReminderSettings(session.identity),
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.backup_outlined),
@@ -218,7 +221,9 @@ class _SyncSection extends ConsumerWidget {
     if (session.closed) return;
     final proof = CloudDevice(session.identity, session.keys).proof;
     final controller = ref.read(vaultProvider.notifier);
+    final reminders = ref.read(documentReminderServiceProvider);
     final closed = controller.lock();
+    await reminders.clear().catchError((Object _) {});
     try {
       try {
         final user = gateway.userId;

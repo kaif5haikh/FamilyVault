@@ -500,3 +500,15 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `bash tool/check.sh` passed 123 Flutter tests, five Deno tests, analyzer,
   both SQL checks and the resolved dependency audit. Transcript
   `.cache/checks/m06-payroll-full-20261119-a.txt`.
+
+## M08b Expiry notifications on 2026-11-19
+
+- Seven targeted Flutter tests passed for expiry timing, notification
+  authorization, deduplication, switching off, vault locking and the existing
+  document flows. Transcript `.cache/checks/m10-reminders-tests-20261119-a.txt`.
+- `flutter build apk --debug --no-pub` passed in 13.9 seconds. Physical Android
+  delivery and iOS Xcode validation were outside these checks. Transcript
+  `.cache/checks/m10-reminders-android-20261119-a.txt`.
+- `bash tool/check.sh` passed 125 Flutter tests, five Deno tests, analyzer,
+  both SQL gates and the Pub advisory query. Transcript
+  `.cache/checks/m10-reminders-full-20261119-a.txt`.

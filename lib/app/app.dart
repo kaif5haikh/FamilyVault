@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/document_vault/expiry_reminders.dart';
 import 'router.dart';
 import 'theme.dart';
 import 'privacy_boundary.dart';
@@ -11,6 +12,7 @@ class FamilyVaultApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(documentReminderMonitorProvider);
     final appearance = ref.watch(appearanceProvider);
     return MaterialApp.router(
       title: 'FamilyVault',

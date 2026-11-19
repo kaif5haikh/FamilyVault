@@ -144,3 +144,6 @@ contract and deferred local replay until the referenced record is present.
 
 ADR 0026 records shared business profiles, managed accounts and business
 attribution on revenue, expenses and corrections.
+
+ADR 0027 records opt-in local expiry notifications with generic content and
+only scheduled times passed to the operating system.

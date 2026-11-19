@@ -1,6 +1,8 @@
 package app.familyvault.familyvault
 
+import android.Manifest
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,6 +15,11 @@ import java.security.MessageDigest
 class MainActivity : FlutterFragmentActivity() {
     private data class Export(val file: File, val length: Long, val reply: MethodChannel.Result)
     private var export: Export? = null
+    private var notificationPermission: MethodChannel.Result? = null
+    private val requestNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        notificationPermission?.success(granted && DocumentReminders.allowed(this))
+        notificationPermission = null
+    }
     private val chooseBackup = registerForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
         val pending = export ?: return@registerForActivityResult
         if (uri == null) {
@@ -40,6 +47,7 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        configureDocumentReminders(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app.familyvault/backup-files").setMethodCallHandler { call, reply ->
             if (call.method != "export") {
                 reply.notImplemented()
@@ -60,6 +68,35 @@ class MainActivity : FlutterFragmentActivity() {
             } catch (_: Exception) {
                 export = null
                 reply.error("picker_unavailable", "No file destination is available.", null)
+            }
+        }
+    }
+
+    private fun configureDocumentReminders(flutterEngine: FlutterEngine) {
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "app.familyvault/document-reminders").setMethodCallHandler { call, reply ->
+            try {
+                when (call.method) {
+                    "allowed" -> reply.success(DocumentReminders.allowed(this))
+                    "request" -> {
+                        if (DocumentReminders.allowed(this)) {
+                            reply.success(true)
+                        } else if (Build.VERSION.SDK_INT >= 33 && notificationPermission == null) {
+                            notificationPermission = reply
+                            requestNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            reply.success(false)
+                        }
+                    }
+                    "replace" -> {
+                        val times = checkNotNull(call.arguments as? List<*>).map { (it as Number).toLong() }
+                        DocumentReminders.replace(this, times)
+                        reply.success(null)
+                    }
+                    else -> reply.notImplemented()
+                }
+            } catch (_: Exception) {
+                if (notificationPermission === reply) notificationPermission = null
+                reply.error("reminder_failed", "Could not update document reminders.", null)
             }
         }
     }

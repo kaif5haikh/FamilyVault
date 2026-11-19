@@ -454,3 +454,13 @@ separately. Continue with the business UI and executable backend policies.
   payment, correction, return of wages on an archived worker and restoration.
   The two-device profit report included the exact paid wages and stock costs.
   The joined Storage tests also passed. Continue with expiry and release.
+
+## 2026-11-19 Document expiry notifications
+
+- Verified `45c137e` on the public SSH origin. Added opt-in local reminders
+  using only scheduled times and a generic notification. The app derives times
+  from active documents while unlocked and clears alerts at sign-out and
+  observed revocation.
+- Targeted host tests passed and Android compiled the native adapter. The
+  iOS adapter is included and needs Xcode. Continue with signed Android
+  release artifacts and the installation, migration and user guides.

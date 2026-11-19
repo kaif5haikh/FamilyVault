@@ -41,7 +41,8 @@ No production deployment, real family data, paid services or destructive history
   - [ ] M08b Document screens, native file and camera input, preview, expiry and export.
     - [x] Local document screens, Files and camera adapters, PDF and image preview, export and links.
     - [x] In-app expiry reminders.
-    - [ ] Scheduled OS reminders and physical camera validation.
+    - [x] Opt-in scheduling and generic Android and iOS notification adapters.
+    - [ ] Physical camera and notification delivery validation.
   - [x] M08c Shared device keys, confirmed private Storage delivery and access audit.
     - [x] M08c1 Reservation, verified-byte receipts, private object gateway and key grant codec.
     - [x] Joined Storage, gateway and PostgreSQL transfer validation.
