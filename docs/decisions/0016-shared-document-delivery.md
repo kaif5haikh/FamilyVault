@@ -26,14 +26,18 @@ Ordinary user and anonymous Storage access is denied for the document bucket.
 Downloads stream ciphertext through the authenticated gateway after the database
 records authorization for the addressed device. This avoids a reusable download
 link. The client also verifies length, digest and the encrypted file before
-displaying it. Unconfirmed reservations expire after one hour. Provider upload
-tokens can outlive a reservation and any resulting orphan stays private.
+displaying it. Unconfirmed reservations expire after one hour. The same
+authorized device can resume an expired reservation with the exact original
+request while its base revision remains current. Provider upload tokens can
+outlive a reservation and any resulting orphan stays private.
 
 Approval trusts the authenticated directory and the administrator's device
 fingerprint check. Protection against an active compromise that replaces the
-server directory needs a pinned administrator trust anchor. Newly enrolled
-devices need historical key backfill from an approved holder. Instant removal
-of copies already received on a device is outside the revocation mechanism.
+server directory needs a pinned administrator trust anchor. PostgreSQL lets an
+approved key holder find missing recipient grants and add them idempotently
+for active enrolled devices. A new device cannot give itself a historical
+grant. An approved holder must come online with its keys. Instant removal of
+copies already received on a device is outside the revocation mechanism.
 
 The Data API test uses real Auth sessions and a synthetic worker receipt. The
 joined local provider check additionally verifies actual Storage upload and

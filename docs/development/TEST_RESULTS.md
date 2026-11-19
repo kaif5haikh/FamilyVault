@@ -291,3 +291,8 @@ Record exact command, date, outcome and material platform/provider limits below.
   proposal probes, PostgreSQL and the audit of 177 resolved packages. The
   finance recovery test retained the draft file, queue and audit in the new
   cache. Transcript `.cache/checks/m08-queue-full-20261119-a.txt`.
+- `bash tool/check_backend.sh` passed expired reservation renewal using the
+  original byte identity, refusal to publish without an existing addressed
+  grant, and idempotent backfill with a single audit event. Transcript
+  `.cache/checks/m08-backfill-db-20261119-a.txt`. The local Storage check also
+  passed with the new migration. Transcript `.cache/checks/m08-backfill-storage-20261119-a.txt`.

@@ -13,8 +13,11 @@ DECLARE owner_session uuid:=gen_random_uuid();
 DECLARE member_session uuid:=gen_random_uuid();
 DECLARE dev_owner uuid:=gen_random_uuid();
 DECLARE dev_member uuid:=gen_random_uuid();
+DECLARE dev_later uuid:=gen_random_uuid();
+DECLARE later_session uuid:=gen_random_uuid();
 DECLARE proof_owner text:=repeat('d',64);
 DECLARE proof_member text:=repeat('e',64);
+DECLARE proof_later text:=repeat('f',64);
 DECLARE family uuid;
 DECLARE member_id uuid;
 DECLARE owner_id uuid;
@@ -28,7 +31,7 @@ DECLARE received jsonb;
 DECLARE plan jsonb;
 BEGIN
   INSERT INTO auth.users VALUES(owner_user,'document-owner@example.invalid',now()),(member_user,'document-member@example.invalid',now());
-  INSERT INTO auth.sessions(id,user_id) VALUES(owner_session,owner_user),(member_session,member_user);
+  INSERT INTO auth.sessions(id,user_id) VALUES(owner_session,owner_user),(member_session,member_user),(later_session,member_user);
   family:=fv_internal.bootstrap_family(owner_user,'Synthetic document family','Synthetic administrator');
   SET LOCAL ROLE authenticated;
   PERFORM pg_temp.document_session(owner_user,owner_session);
@@ -67,6 +70,18 @@ BEGIN
   EXCEPTION WHEN SQLSTATE 'PT409' THEN NULL;
   END;
   RESET ROLE;
+  UPDATE fv_data.document_uploads SET expires_at=statement_timestamp()-interval '1 second'
+    WHERE (family_id,id)=(family,reservation);
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    PERFORM public.fv_document_upload_plan(dev_member,proof_member,reservation);
+    RAISE EXCEPTION 'An expired reservation issued a plan';
+  EXCEPTION WHEN SQLSTATE 'PT409' THEN NULL;
+  END;
+  ASSERT public.fv_document_reserve(dev_member,proof_member,reservation,document,version_id,owner_id,0,
+    'application/pdf',100,expected_digest,repeat('A',64))=reservation;
+  ASSERT public.fv_document_upload_plan(dev_member,proof_member,reservation)->>'verified'='false';
+  RESET ROLE;
   SET LOCAL ROLE service_role;
   BEGIN
     PERFORM public.fv_document_mark_bytes(family,reservation,147,expected_digest);
@@ -95,6 +110,32 @@ BEGIN
   received:=public.fv_document_versions(dev_owner,proof_owner,document)->0;
   ASSERT received->'key_grant'->>'recipient_device_id'=dev_owner::text;
   ASSERT public.fv_document_download_plan(dev_owner,proof_owner,version_id)->>'ciphertext_digest'=expected_digest;
+  PERFORM pg_temp.document_session(member_user,later_session);
+  ASSERT public.fv_request_device(family,dev_later,proof_later,'Synthetic later device',repeat('7',64),repeat('8',64))='pending';
+  PERFORM pg_temp.document_session(owner_user,owner_session);
+  ASSERT public.fv_document_missing_grants(dev_owner,proof_owner)='[]'::jsonb;
+  PERFORM public.fv_approve_device(dev_owner,proof_owner,dev_later,encode(sha256(decode(repeat('7',64)||repeat('8',64),'hex')),'hex'));
+  received:=public.fv_document_missing_grants(dev_owner,proof_owner)->0;
+  ASSERT received->>'version_id'=version_id::text AND received->>'recipient_id'=dev_later::text;
+  ASSERT received->'key_grant'->>'recipient_device_id'=dev_owner::text;
+  PERFORM pg_temp.document_session(member_user,later_session);
+  PERFORM public.fv_bind_device(dev_later,proof_later);
+  BEGIN
+    PERFORM public.fv_document_add_grant(dev_later,proof_later,version_id,grants->0);
+    RAISE EXCEPTION 'An enrolled nonholder published a document grant';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
+  ASSERT public.fv_document_missing_grants(dev_later,proof_later)='[]'::jsonb;
+  ASSERT public.fv_document_versions(dev_later,proof_later,document)->0->'key_grant'='null'::jsonb;
+  PERFORM pg_temp.document_session(owner_user,owner_session);
+  received:=jsonb_build_object('version',1,'sender_device_id',dev_owner,'recipient_device_id',dev_later,
+    'ephemeral_public',repeat('9',64),'wrapped_key',repeat('B',96),'signature',repeat('c',128));
+  PERFORM public.fv_document_add_grant(dev_owner,proof_owner,version_id,received);
+  PERFORM public.fv_document_add_grant(dev_owner,proof_owner,version_id,received);
+  ASSERT public.fv_document_missing_grants(dev_owner,proof_owner)='[]'::jsonb;
+  PERFORM pg_temp.document_session(member_user,later_session);
+  ASSERT public.fv_document_versions(dev_later,proof_later,document)->0->'key_grant'=received;
+  PERFORM pg_temp.document_session(owner_user,owner_session);
   PERFORM public.fv_revoke_access(dev_owner,proof_owner,'device',dev_member);
   PERFORM pg_temp.document_session(member_user,member_session);
   BEGIN
@@ -104,7 +145,7 @@ BEGIN
   END;
   RESET ROLE;
   ASSERT (SELECT count(*) FROM fv_data.document_versions WHERE family_id=family)=1;
-  ASSERT (SELECT count(*) FROM fv_data.document_access_events WHERE family_id=family)=2;
+  ASSERT (SELECT count(*) FROM fv_data.document_access_events WHERE family_id=family)=3;
 END;
 $$;
 ROLLBACK;

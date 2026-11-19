@@ -41,6 +41,7 @@ No production deployment, real family data, paid services or destructive history
     - [x] Joined Storage, gateway and PostgreSQL transfer validation.
     - [ ] M08c2 Mobile queue, shared metadata and ciphertext and historical key backfill.
       - [x] Drift v5 staged uploads, offline preview and finance recovery retention.
+      - [x] Backend reservation renewal and restricted historical key grants.
       - [ ] Signed mobile transfer, receipt verification, receiving views and backfill.
 - [ ] M09 Authenticated archive/local backup/export/restore, independent Drive adapter and complete clean-environment recovery tests.
 - [ ] M10 Integrated UI/security/accessibility regression, Android emulator/device-independent integration and dependency/secret review.

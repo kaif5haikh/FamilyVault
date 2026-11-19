@@ -290,3 +290,12 @@ separately. Continue with the business UI and executable backend policies.
   that rebuilding the finance cache retains the pending document and its audit.
 - Continue with upload resumption and key backfill in PostgreSQL, the mobile
   transport and receiving device replay.
+
+## 2026-11-19 — resuming transfers and approving historical recipients
+
+- Verified `30ce847` on the public origin. Added an additive PostgreSQL migration
+  to resume an expired reservation for the same device and exact payload while
+  the document revision remains current. Added targeted key grant queries and
+  writes gated on an existing device-addressed grant.
+- Native PostgreSQL access tests and the joined local Storage test passed.
+  Client scheduling and independent receiver verification are the next unit.
