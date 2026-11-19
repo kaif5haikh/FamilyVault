@@ -5,6 +5,29 @@ Historical baseline evidence: 9 Flutter host tests,
 establish working auth, finance, sync, documents, backups or production readiness.
 Record exact command, date, outcome and material platform/provider limits below.
 
+## 2026-11-19 Moto G34 Android validation
+
+- `bash tool/check.sh` passed. Flutter analysis was clean and 130 Flutter
+  plus five Deno tests passed. The run covered populated Drift migrations,
+  SQL checks, forced RLS, document gateway checks and 184 hosted-package OSV
+  queries. The four new file-reader tests verify rereads, unknown length,
+  interruption and picker cancellation. Additional regressions check
+  persisted archive restoration and removal of an expiry date.
+- `python3 -B tool/check_supabase.py --mobile --storage` passed two
+  independent Dart clients plus Auth, Data API and Storage assertions in
+  the disposable local provider.
+- The original and both rebuilt APKs installed on Android 15. Build 3's
+  installed digest matched the rebuilt artifact. The handset preserved
+  the synthetic vault across the update and verified expiry removal,
+  archive and restore on the signed APK. The App Bundle verified with
+  the same existing certificate.
+- Original import cache reproduction, the Android retest, ledger and offline
+  assertions, artifacts and limitations are in
+  [physical Android validation](../testing/android-physical-device-validation.md).
+- Android Files exported an encrypted backup and verified its readback. A
+  fresh synthetic package on the Moto G34 rejected truncated and tampered
+  files, then restored the valid balance and three sealed document versions.
+
 ## M01 — 2026-11-13
 
 - `flutter analyze --no-pub`: no issues.

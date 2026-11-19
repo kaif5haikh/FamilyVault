@@ -65,7 +65,8 @@ No production deployment, real family data, paid services or destructive history
 
 ## External validation
 
-- [ ] Android physical installation, camera, Files, expiry delivery and airplane-mode recovery. The available emulator crashed before boot.
+- [x] Android signed installation, Files exchange, airplane-mode persistence and clean test application restore on the Moto G34 5G. [Device results](../testing/android-physical-device-validation.md).
+- [ ] Full Android camera capture with a synthetic target and scheduled expiry notification delivery.
 - [ ] iOS build, signing and native tests with macOS and Xcode.
 - [ ] Hosted Supabase setup and end-to-end validation with approved test accounts.
 - [ ] Configured Google OAuth consent, real Drive transfer and a physical clean-device recovery drill.

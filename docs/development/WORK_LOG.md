@@ -479,3 +479,68 @@ separately. Continue with the business UI and executable backend policies.
   the indexed content, native dependency report and redacted Git history scan.
   Recorded the installation and migration steps and the pending hardware and
   hosted-service checks.
+
+## 2026-11-19 Physical Moto G34 validation
+
+- At `de634ac`, inspected the USB-authorized Moto G34 and preserved the
+  signed original APK and AAB. Manifest, certificate and redacted 40-commit
+  history checks passed. `adb install --streaming --user 0` succeeded, and
+  `am start -W` reported a 1,063 ms cold launch to welcome. Android device
+  verification opened a synthetic local vault.
+- Evidence and the task-owned temporary path manifest are recorded under
+  `.local/qa/moto-g34-20261119/`. The current checklist is in
+  [physical Android validation](../testing/android-physical-device-validation.md).
+- The signed app posted income, expense and transfer entries. App balances
+  matched the integer paise calculation, and the double tap produced one
+  income entry. It accepted an expense and a rename with airplane mode on
+  and displayed both after an authenticated restart and reconnection.
+- `python3 -B tool/check_supabase.py --mobile --storage` passed with two
+  independent Dart clients. The full baseline check passed 125 Flutter tests
+  and five Deno tests, plus security, SQL and dependency checks.
+- Both isolated PostgreSQL scripts had been leaving their disposable test
+  clusters on disk. The cleanup now stops the new cluster before removing
+  its exact `mktemp` path. Injected `initdb` failures retained exit code 42
+  and left the pre-existing directory inventory unchanged.
+- Pushed and verified `28a0f34` for PostgreSQL cleanup. On the Moto G34,
+  an isolated baseline app retained a byte-identical plaintext PDF after
+  import. Replaced the Android document and backup pickers' read path with
+  a transient content URI reader. Four new tests exercise header reads,
+  EOF, missing size, cancellation and read failure.
+- The full suite passed 129 Flutter tests and five Deno tests. The signed
+  `0.1.0+2` APK and AAB verified under the original development certificate.
+  `adb install --streaming -r --user 0` updated the package in place.
+- Pushed and verified `921b911`. On the signed release, reopened the
+  pre-update vault, imported the generated PDF through Android Files,
+  checked metadata and expiry, opened the preview and verified the
+  exported PDF matched its input byte for byte. The installed APK hash
+  matched the rebuilt APK.
+- The next Android verification prompt remained open during JPEG selection.
+  Continued with an isolated FamilyVault package on the same handset for
+  details that require repeated unlocks and private-cache inspection.
+- The isolated handset build imported PNG and JPEG with zero new picker
+  cache copies and native image previews. The Archive then Restore flow
+  revealed that the stored archive timestamp was retained. Two targeted
+  assertions reproduced the omitted SQLite null field and expiry behavior.
+  Both passed after writing the full companion explicitly.
+- The Android Files backup destination wrote and read back 608,531 bytes.
+  The byte check found no synthetic plaintext markers or recovery key.
+  A fresh package rejected incomplete and tampered backups and restored
+  the exact ₹42.17 balance and three sealed versions from the valid copy.
+  Checked the restored package for a picker cache and verified the repair
+  returned an archived document to the active list.
+- The handset confirmed no default network during an expense and cold
+  restart. Reconnecting kept one matching ledger entry. The isolated run
+  opened and scrolled a 301-entry list, selected both themes, rotated and
+  restored portrait, handed off to Motorola Camera and cancelled, and
+  confirmed the Android notification permission grant.
+- The full run passed 130 Flutter tests and five Deno tests. The second
+  signed rebuild, `0.1.0+3`, verified under the original certificate.
+  `adb install --streaming -r --user 0` succeeded and the installed digest
+  matched the APK. The signed app reopened its original synthetic vault,
+  cleared an expiry date, and archived and restored the PDF with its
+  version intact. Verified fix `8c39822` on the public origin.
+- Reviewed task-owned data and removed the three QA packages, temporary
+  recovery key, scratch tree, and validation Gradle process. Verified cleanup
+  with the project path manifest, package and radio checks, and the isolated
+  PostgreSQL and Podman inventory. The release stays installed and locked.
+  The original binaries and final validation evidence are retained.

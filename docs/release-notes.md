@@ -23,9 +23,12 @@ local Supabase fixture drives independent Dart clients through Auth, Data API
 and private Storage. The Drive fixture tests retry, independent file checks and
 clean recovery with a separate key. [Test results](development/TEST_RESULTS.md).
 
-Live Supabase and Google Drive use require the operator's authorized service and
-OAuth configuration. Android camera, Files, notification delivery and device
-installation need physical testing. The available Android emulator crashed
-before boot. iOS build and runtime validation require macOS with Xcode.
+Android build 3 fixes plaintext picker copies and preserves document history
+when restoring an archived document or clearing an expiry date. On the Moto
+G34 5G, the test run exercised signed installation, exact local finance,
+Android Files and clean encrypted restore. The device report lists remaining
+camera, notification and hosted-service checks. Live Supabase and Google
+Drive require approved service and OAuth configuration. iOS build and runtime
+validation require macOS with Xcode. [Physical Android validation](testing/android-physical-device-validation.md).
 
 [Installation](installation.md). [User guide](user-guide.md). [Migration guide](migration-guide.md). [Recovery](backup-recovery.md).
