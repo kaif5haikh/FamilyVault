@@ -219,4 +219,31 @@ extension _LedgerModuleReplay on LedgerReplay {
     }
     return prior == null ? null : databaseRecord(prior);
   }
+
+  Future<SyncJson?> _worker(SyncChange change) async {
+    final envelope = change.envelope;
+    final worker = readDatabaseRecord(envelope.record, Worker.fromJson);
+    final prior = await (db.select(
+      db.workers,
+    )..where((t) => t.id.equals(worker.id))).getSingleOrNull();
+    _moduleRevision(
+      envelope,
+      worker.id,
+      worker.familyId,
+      worker.revision,
+      prior?.revision,
+    );
+    await db.into(db.workers).insertOnConflictUpdate(worker.toCompanion(false));
+    await _moduleJournals(change);
+    for (final row in _rows(envelope.bundle, 'salary_payments')) {
+      final payment = readDatabaseRecord(row, SalaryPayment.fromJson);
+      if (payment.familyId != familyId ||
+          payment.workerId != worker.id ||
+          payment.businessId != worker.businessId) {
+        throw syncIntegrityFailure;
+      }
+      await db.into(db.salaryPayments).insert(payment);
+    }
+    return prior == null ? null : databaseRecord(prior);
+  }
 }

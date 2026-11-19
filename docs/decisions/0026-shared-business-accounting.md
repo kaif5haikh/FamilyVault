@@ -1,7 +1,7 @@
 # ADR 0026 Shared business accounting
 
-**Status** Shared profiles, cash journals and inventory were tested with two
-enrolled devices on 2026-11-19. Salaries follow.
+**Status** Shared profiles, cash journals, inventory and wages were tested
+with two enrolled devices on 2026-11-19.
 
 Keep each business in the family ledger with three managed accounts for stock
 value, stock cost and wages. A business profile creates or renames its related
@@ -25,3 +25,10 @@ the remaining cost when the last units leave. Movement corrections reverse
 the latest active event and may append a replacement. Both devices derive
 the same position from the accepted events. Active SKUs use ASCII case
 comparison in both stores, matching SQLite's existing rule.
+
+Worker profiles keep their original business and creator. Each salary stores
+the paid date, covered month, exact amount, device and actor. The accepted
+journal debits the managed wages account and credits active cash or bank.
+Corrected payments keep the original journal and new reversal. An archived
+worker may have an old payment reversed. Restore the worker before adding
+another payment. The monthly profit report derives wages from posted history.

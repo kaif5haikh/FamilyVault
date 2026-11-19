@@ -444,3 +444,13 @@ separately. Continue with the business UI and executable backend policies.
 - Local Supabase rejected a fabricated issue cost and accepted the valid
   movement, retained correction and archival history. Both caches reached
   the same zero position and business stock cost. Continue with wages.
+
+## 2026-11-19 Shared worker payments
+
+- Verified `6bc34f7` on the public SSH origin. Added typed worker and salary
+  rows, family and business scope, exact journals and archived-worker
+  reversal checks. The receiving cache retains all posted payment rows.
+- Local Supabase rejected a mismatched salary amount. It accepted the valid
+  payment, correction, return of wages on an archived worker and restoration.
+  The two-device profit report included the exact paid wages and stock costs.
+  The joined Storage tests also passed. Continue with expiry and release.

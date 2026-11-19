@@ -663,6 +663,7 @@ Future<void> _sharedBusiness(_Client first, _Client second, String cash) async {
   expect(profit.operatingExpenses, BigInt.from(2502));
   expect(profit.net, BigInt.from(97499));
   await _sharedInventory(first, second, shop, cash);
+  await _sharedPayroll(first, second, shop, cash);
 }
 
 Future<void> _sharedInventory(
@@ -810,4 +811,132 @@ Future<void> _sharedInventory(
     through: '2026-07-31',
   );
   expect(profit.costOfGoods, BigInt.from(206));
+}
+
+Future<void> _sharedPayroll(
+  _Client first,
+  _Client second,
+  String shop,
+  String cash,
+) async {
+  final local = BusinessRepository(first.vault.ledger);
+  final remote = BusinessRepository(second.vault.ledger);
+  final worker = await local.saveWorker(
+    businessId: shop,
+    name: 'Synthetic worker',
+    notes: '',
+    expectedMonthlyMinor: 2000,
+  );
+  await first.sync.run();
+  await second.sync.run();
+  final original = await remote.worker(worker);
+  expect(original.createdBy, first.vault.identity.memberId);
+  expect(original.monthlySalaryMinor, 2000);
+  await remote.saveWorker(
+    id: worker,
+    revision: original.revision,
+    businessId: shop,
+    name: original.name,
+    notes: 'Synthetic changed salary agreement',
+  );
+  await second.sync.run();
+  final edited = await remote.worker(worker);
+  SalaryDraft salary(int amount) => SalaryDraft(
+    amountMinor: amount,
+    period: '2026-07',
+    paidOn: '2026-07-12',
+    cashAccountId: cash,
+  );
+  await remote.paySalary(worker, edited.revision, salary(751));
+  final attempted =
+      await (second.vault.db.select(second.vault.db.pendingMutations)..where(
+            (t) =>
+                t.entityId.equals(worker) &
+                t.baseRevision.equals(edited.revision),
+          ))
+          .getSingle();
+  final envelope = SyncEnvelope.verify(
+    attempted.payloadJson,
+    attempted.payloadDigest,
+  );
+  final payment = syncObject(
+    (envelope.bundle['salary_payments']! as List<Object?>).single,
+  );
+  final invalid = canonicalJson({
+    ...envelope.fields,
+    'bundle': {
+      ...envelope.bundle,
+      'salary_payments': [
+        {...payment, 'amount_minor': 752},
+      ],
+    },
+  });
+  await expectLater(
+    second.sync.transport.push(
+      SyncEnvelope.verify(invalid, payloadDigest(invalid)),
+    ),
+    throwsA(
+      isA<AppFailure>().having(
+        (error) => error.code,
+        'code',
+        FailureCode.validation,
+      ),
+    ),
+  );
+  await second.sync.run();
+  await first.sync.run();
+  final firstPayment = (await local.snapshot()).salaries.single;
+  expect((await local.worker(worker)).monthlySalaryMinor, isNull);
+  expect(firstPayment.createdBy, second.vault.identity.memberId);
+  await local.correctSalary(
+    worker,
+    (await local.worker(worker)).revision,
+    firstPayment.id,
+    'Synthetic wage correction',
+    replacement: salary(1102),
+  );
+  await first.sync.run();
+  await second.sync.run();
+  final replacement = (await remote.snapshot()).salaries.singleWhere(
+    (row) => row.amountMinor == 1102,
+  );
+  await remote.archiveWorker(
+    worker,
+    (await remote.worker(worker)).revision,
+    restore: false,
+  );
+  await remote.correctSalary(
+    worker,
+    (await remote.worker(worker, active: false)).revision,
+    replacement.id,
+    'Synthetic returned wage',
+  );
+  await second.sync.run();
+  await first.sync.run();
+  expect((await local.worker(worker, active: false)).deletedAtUs, isNotNull);
+  await local.archiveWorker(
+    worker,
+    (await local.worker(worker, active: false)).revision,
+    restore: true,
+  );
+  await local.paySalary(
+    worker,
+    (await local.worker(worker)).revision,
+    salary(1250),
+  );
+  await first.sync.run();
+  await second.sync.run();
+  final restored = await remote.worker(worker);
+  expect(restored.deletedAtUs, isNull);
+  expect((await remote.snapshot()).salaries, hasLength(3));
+  final profit = BusinessProfit.forPeriod(
+    await remote.business(shop),
+    await second.vault.ledger.snapshot(),
+    from: '2026-07-01',
+    through: '2026-07-31',
+  );
+  expect(profit.revenue, BigInt.from(100001));
+  expect(profit.salaries, BigInt.from(1250));
+  expect(profit.costOfGoods, BigInt.from(206));
+  expect(profit.net, BigInt.from(96043));
 }

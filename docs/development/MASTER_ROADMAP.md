@@ -16,19 +16,19 @@ No production deployment, real family data, paid services or destructive history
   - [x] M05b Atomic module writer and wealth/property/metals services/screens.
   - [x] M05c Contracts, actual repayments, interest estimates and native workflows.
   - [x] M05d Business revenue/expenses, stock, workers/salaries and profit reporting.
-- [ ] M06 Executable PostgreSQL/Supabase migrations, membership/enrollment/session/RLS/RPC and security integration tests.
+- [x] M06 Executable PostgreSQL/Supabase migrations, membership/enrollment/session/RLS/RPC and local security integration tests.
   - [x] M06a Membership, enrollment, TOTP and revocation migration verified with PostgreSQL, Auth and PostgREST.
   - [x] M06b Mobile family sign-in, device approval and administrator controls.
-  - [ ] M06c Typed finance mutations, shared ledger validation and ordered receipts.
+  - [x] M06c Typed finance mutations, shared ledger validation and ordered receipts.
     - [x] M06c1 Ordinary accounts and balanced journal commands with atomic receipts.
     - [x] M06c2 Budgets and reconciliation bundles.
-    - [ ] M06c3 Typed wealth, loan and business commands.
+    - [x] M06c3 Typed wealth, loan and business commands.
       - [x] M06c3a Scoped journal rules, shared holdings, ownership, valuation, rent and disposal.
       - [x] M06c3b Shared loans, principal changes, repayments and archive.
-      - [ ] M06c3c Shared businesses, revenue and expenses, inventory and wages.
+      - [x] M06c3c Shared businesses, revenue and expenses, inventory and wages.
         - [x] Shared profiles, cash journals, corrections and exact profit.
         - [x] Shared stock positions, purchases and issuing costs.
-        - [ ] Shared worker profiles, salaries and corrections.
+        - [x] Shared worker profiles, salaries and corrections.
   - [x] M06d Scoped encrypted cloud cache and live device session lifecycle.
     - [x] M06d1 Verified directory and chart import into isolated encrypted caches.
     - [x] M06d2 Connected app lifecycle, bounded offline unlock and revocation.
@@ -42,14 +42,14 @@ No production deployment, real family data, paid services or destructive history
     - [x] Local document screens, Files and camera adapters, PDF and image preview, export and links.
     - [x] In-app expiry reminders.
     - [ ] Scheduled OS reminders and physical camera validation.
-  - [ ] M08c Shared device keys, confirmed private Storage delivery and access audit.
+  - [x] M08c Shared device keys, confirmed private Storage delivery and access audit.
     - [x] M08c1 Reservation, verified-byte receipts, private object gateway and key grant codec.
     - [x] Joined Storage, gateway and PostgreSQL transfer validation.
     - [x] M08c2 Mobile queue, encrypted metadata with shared versions, ciphertext and historical key backfill.
       - [x] Drift v5 staged uploads, offline preview and finance recovery retention.
       - [x] Backend reservation renewal and restricted historical key grants.
       - [x] Signed mobile transfer, receipt verification, receiving views and backfill.
-    - [ ] M08c3 Shared metadata edits, archive and record links with conflict recovery.
+    - [x] M08c3 Shared metadata edits, archive and record links with conflict recovery.
       - [x] Durable metadata edits, archive and restore with independent revision and file history.
       - [x] Shared transaction links and user-directed retry of a preserved draft.
       - [x] Shared asset links, tombstones and recovery after the referenced record synchronizes.

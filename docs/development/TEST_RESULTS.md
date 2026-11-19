@@ -487,3 +487,16 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `bash tool/check.sh` passed 123 Flutter tests, five Deno tests, analyzer
   and database and dependency checks. Transcript
   `.cache/checks/m06-inventory-full-20261119-a.txt`.
+
+## M06c3c Shared worker payments on 2026-11-19
+
+- `bash tool/check_backend.sh` applied the private worker and payment migration.
+  Transcript `.cache/checks/m06-payroll-sql-20261119-a.txt`.
+- `python3 -B tool/check_supabase.py --mobile --storage` passed worker
+  enrollment, payment validation, wage corrections, archival, reversal and
+  restoration. The cache retained all prior payments and reported exact
+  business profit alongside the joined document flows. Transcript
+  `.cache/checks/m06-payroll-provider-20261119-a.txt`.
+- `bash tool/check.sh` passed 123 Flutter tests, five Deno tests, analyzer,
+  both SQL checks and the resolved dependency audit. Transcript
+  `.cache/checks/m06-payroll-full-20261119-a.txt`.
