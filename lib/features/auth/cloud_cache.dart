@@ -380,6 +380,7 @@ final class CloudWorkspaceCache {
       final edits = await (previous.select(
         previous.pendingMutations,
       )..where((t) => t.entityType.equals('document_change'))).get();
+      final links = await previous.select(previous.vaultDocumentLinks).get();
       final uploads = await previous
           .select(previous.vaultDocumentUploads)
           .get();
@@ -390,6 +391,7 @@ final class CloudWorkspaceCache {
                   'document_transfer',
                   'document_receipt',
                   'document_change',
+                  'document_resolution',
                   'document_access',
                   'document_link',
                 ]),
@@ -398,6 +400,7 @@ final class CloudWorkspaceCache {
       await session.db.batch((batch) {
         batch.insertAll(session.db.vaultDocuments, documents);
         batch.insertAll(session.db.vaultDocumentVersions, versions);
+        batch.insertAll(session.db.vaultDocumentLinks, links);
         batch.insertAll(session.db.vaultDocumentUploads, uploads);
         batch.insertAll(session.db.pendingMutations, edits);
         batch.insertAll(session.db.localAuditEvents, audit);

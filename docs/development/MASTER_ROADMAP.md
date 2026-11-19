@@ -45,7 +45,8 @@ No production deployment, real family data, paid services or destructive history
       - [x] Signed mobile transfer, receipt verification, receiving views and backfill.
     - [ ] M08c3 Shared metadata edits, archive and record links with conflict recovery.
       - [x] Durable metadata edits, archive and restore with independent revision and file history.
-      - [ ] Shared record links and user-directed retry of a preserved draft.
+      - [x] Shared transaction links and user-directed retry of a preserved draft.
+      - [ ] Shared asset links after the typed wealth backend is available.
 - [ ] M09 Authenticated archive/local backup/export/restore, independent Drive adapter and complete clean-environment recovery tests.
 - [ ] M10 Integrated UI/security/accessibility regression, Android emulator/device-independent integration and dependency/secret review.
 - [ ] M11 Release APK/AAB/signing setup, iOS configuration, installation/user/migration/recovery guides and release notes.

@@ -1,23 +1,30 @@
 part of 'document_repository.dart';
 
+enum _DocumentReplay { ready, awaitingKeys, awaitingTransactions }
+
 Future<void> _replayDocuments(
   _SharedDocumentSync sync,
   DocumentRoster roster,
 ) async {
   final rows = await sync._call(sync.transport.list);
   AppFailure? failure;
-  var waiting = false;
+  final waiting = <_DocumentReplay>{};
   for (final row in rows) {
     try {
-      final available = await _replayDocument(sync, row, roster);
-      waiting |= !available;
+      waiting.add(await _replayDocument(sync, row, roster));
     } on AppFailure catch (error) {
       if (error.code != FailureCode.integrity) rethrow;
       failure = error;
     }
   }
   if (failure != null) throw failure;
-  if (waiting) {
+  if (waiting.contains(_DocumentReplay.awaitingTransactions)) {
+    throw const AppFailure(
+      FailureCode.network,
+      'Waiting for linked family transactions to sync.',
+    );
+  }
+  if (waiting.contains(_DocumentReplay.awaitingKeys)) {
     throw const AppFailure(
       FailureCode.configuration,
       'Waiting for another approved device to share older document keys.',
@@ -25,7 +32,7 @@ Future<void> _replayDocuments(
   }
 }
 
-Future<bool> _replayDocument(
+Future<_DocumentReplay> _replayDocument(
   _SharedDocumentSync sync,
   DocumentWire row,
   DocumentRoster roster,
@@ -36,8 +43,8 @@ Future<bool> _replayDocument(
       await (db.select(db.vaultDocuments)
             ..where((t) => t.familyId.equals(sync._family) & t.id.equals(id)))
           .getSingleOrNull();
-  if (revision <= (existing?.revision ?? 0)) return true;
-  if (row['key_grant'] == null) return false;
+  if (revision <= (existing?.revision ?? 0)) return _DocumentReplay.ready;
+  if (row['key_grant'] == null) return _DocumentReplay.awaitingKeys;
   final latestNumber = _docInt(row, 'latest_version');
   if (latestNumber > revision) throw _invalidSharedDocument;
   final latest = _docId(row, 'latest_version_id'),
@@ -45,7 +52,7 @@ Future<bool> _replayDocument(
   final history = [...await sync._call(() => sync.transport.versions(id))]
     ..sort((a, b) => _docInt(a, 'version').compareTo(_docInt(b, 'version')));
   // A new version could have finalized between the list and history calls.
-  if (history.length > latestNumber) return true;
+  if (history.length > latestNumber) return _DocumentReplay.ready;
   if (history.length != latestNumber || history.last['id'] != latest) {
     throw _invalidSharedDocument;
   }
@@ -72,7 +79,9 @@ Future<bool> _replayDocument(
     }
   }
   final incoming = history.skip(local.length);
-  if (incoming.any((entry) => entry['key_grant'] == null)) return false;
+  if (incoming.any((entry) => entry['key_grant'] == null)) {
+    return _DocumentReplay.awaitingKeys;
+  }
 
   final versions = <VaultDocumentVersion>[];
   DocumentDetails? metadata;
@@ -160,14 +169,29 @@ Future<bool> _replayDocument(
   if (document.createdBy != history.first['created_by'] ||
       document.createdAtUs != _docTime(history.first, 'finalized_at') ||
       document.updatedAtUs < _docTime(history.last, 'finalized_at') ||
-      (archived != null && archived != document.updatedAtUs) ||
+      (archived != null && archived > document.updatedAtUs) ||
       (existing != null &&
           (document.createdBy != existing.createdBy ||
               document.createdAtUs != existing.createdAtUs))) {
     throw _invalidSharedDocument;
   }
-  await db.transaction(() async {
+  final links = _readJournalLinks(document, row['links'] ?? const []);
+  return db.transaction(() async {
     await repository._authorize();
+    final journalIds = {for (final link in links) link.journalId!};
+    if (journalIds.isNotEmpty) {
+      final journals =
+          await (db.selectOnly(db.ledgerJournals)
+                ..addColumns([db.ledgerJournals.id])
+                ..where(
+                  db.ledgerJournals.familyId.equals(sync._family) &
+                      db.ledgerJournals.id.isIn(journalIds),
+                ))
+              .get();
+      if (journals.length != journalIds.length) {
+        return _DocumentReplay.awaitingTransactions;
+      }
+    }
     if (existing == null) {
       await db.into(db.vaultDocuments).insert(document);
     } else {
@@ -176,9 +200,10 @@ Future<bool> _replayDocument(
     for (final version in versions) {
       await db.into(db.vaultDocumentVersions).insert(version);
     }
+    await _applyJournalLinks(db, document, links);
     sync._check();
+    return _DocumentReplay.ready;
   });
-  return true;
 }
 
 Future<DocumentDetails> _openMetadata(

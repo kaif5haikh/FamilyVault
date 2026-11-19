@@ -28,5 +28,8 @@ holder can give a newly approved device the keys to older versions.
 
 The migration, upload queue, receiver and backfill passed development tests
 with real local Supabase services. A version conflict preserves the draft for
-preview and export. ADR 0018 covers shared edits to metadata and archive state.
-Shared record links, deployment and physical device checks remain pending.
+preview and export. The member can choose to submit that file against the
+current revision. The app re-encrypts it as a new version and records its
+relationship to the original draft while keeping the original file and audit.
+ADR 0018 covers shared edits, archive and transaction links. Shared asset
+links, deployment and physical device checks remain pending.

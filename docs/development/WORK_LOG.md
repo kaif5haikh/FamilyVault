@@ -321,3 +321,17 @@ separately. Continue with the business UI and executable backend policies.
   interruption. Its process was gone on resume. The rerun passed 109 Flutter
   tests, five Deno tests and both database gates.
 - Continue with shared record links and preserve access to competing drafts.
+
+## 2026-11-19 — transaction links and version conflict recovery
+
+- Verified `ce2a4d9` on the public SSH origin. Added same-family PostgreSQL
+  transaction links, retained removal history, and client replay and link status.
+  Added a deliberate retry command that keeps the original draft intact.
+- Native SQL and the joined Dart provider check passed. The fixture created a
+  transaction and queued its document link, replicated the link and its removal,
+  attached it again and published a version from the preserved draft. Ledger
+  balances and both original file versions were retained.
+- Verified in a synthetic SQLite3MC experiment that the Online Backup API can
+  copy a pinned read snapshot from a live WAL source to a rekeyed destination.
+  Continue with the encrypted archive and clean-device restore. Shared asset
+  links remain dependent on the typed shared wealth backend.

@@ -135,6 +135,12 @@ BEGIN
   received:=public.fv_document_list(dev_owner,proof_owner)->0;
   ASSERT received->>'archived_at' IS NULL AND received->>'metadata_box'=repeat('C',64);
   ASSERT received->>'owner_id'=member_id::text AND received->>'updated_by'=owner_id::text;
+  BEGIN
+    PERFORM public.fv_document_journal_link(dev_owner,proof_owner,gen_random_uuid(),document,version_id,4,'link',gen_random_uuid(),gen_random_uuid());
+    RAISE EXCEPTION 'An unavailable transaction acquired a document link';
+  EXCEPTION WHEN SQLSTATE 'PT424' THEN NULL;
+  END;
+  ASSERT public.fv_document_list(dev_owner,proof_owner)->0->'links'='[]'::jsonb;
   received:=public.fv_document_versions(dev_owner,proof_owner,document)->0;
   ASSERT received->'key_grant'->>'recipient_device_id'=dev_owner::text;
   ASSERT public.fv_document_download_plan(dev_owner,proof_owner,version_id)->>'ciphertext_digest'=expected_digest;

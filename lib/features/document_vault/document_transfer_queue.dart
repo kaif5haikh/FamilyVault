@@ -6,6 +6,7 @@ extension DocumentTransferQueue on DocumentRepository {
     await _authorize();
     final uploads = _db.vaultDocumentUploads;
     final versions = _db.vaultDocumentVersions;
+    final audit = _db.localAuditEvents;
     final query =
         _db.select(uploads).join([
             leftOuterJoin(
@@ -13,10 +14,18 @@ extension DocumentTransferQueue on DocumentRepository {
               versions.id.equalsExp(uploads.id),
               useColumns: false,
             ),
+            leftOuterJoin(
+              audit,
+              audit.familyId.equalsExp(uploads.familyId) &
+                  audit.operationId.equalsExp(uploads.operationId) &
+                  audit.entityType.equals('document_resolution'),
+              useColumns: false,
+            ),
           ])
           ..where(
             uploads.familyId.equals(_familyId) &
                 uploads.deviceId.equals(_deviceId) &
+                audit.id.isNull() &
                 (uploads.state.equals('acknowledged').not() |
                     versions.id.isNull()),
           )
@@ -27,13 +36,63 @@ extension DocumentTransferQueue on DocumentRepository {
     }
   }
 
+  Future<VaultDocumentUpload?> _findUpload(String documentId, String id) =>
+      (_db.select(_db.vaultDocumentUploads)..where(
+            (t) =>
+                t.familyId.equals(_familyId) &
+                t.documentId.equals(documentId) &
+                t.id.equals(id) &
+                t.deviceId.equals(_deviceId),
+          ))
+          .getSingleOrNull();
+
+  Future<bool> _retried(VaultDocumentUpload job) async =>
+      (await (_db.select(_db.localAuditEvents)..where(
+            (t) =>
+                t.familyId.equals(_familyId) &
+                t.operationId.equals(job.operationId) &
+                t.entityType.equals('document_resolution'),
+          ))
+          .getSingleOrNull()) !=
+      null;
+
+  Future<VaultDocumentVersion> retryDraft(
+    String documentId,
+    String versionId,
+    int expectedRevision,
+  ) => storageBoundary(() async {
+    await _authorize();
+    final draft = await _findUpload(documentId, versionId);
+    if (draft == null || draft.state != 'conflicted' || await _retried(draft)) {
+      throw DocumentRepository._missing;
+    }
+    final bytes = await read(documentId, versionId, DocumentAccess.preview);
+    try {
+      return await _addVersion(
+        documentId,
+        DocumentInput(
+          length: () async => bytes.length,
+          openRead: () => Stream.value(bytes),
+        ),
+        expectedRevision: expectedRevision,
+        retry: draft,
+      );
+    } finally {
+      bytes.fillRange(0, bytes.length, 0);
+    }
+  });
+
   Future<void> _stage(
     VaultDocumentVersion version,
     int baseRevision,
     DocumentDetails details,
-    SecretKeyData key,
-  ) async {
+    SecretKeyData key, {
+    VaultDocumentUpload? retry,
+  }) async {
     await _checkOperationSlot(version.documentId);
+    if (retry != null && await _retried(retry)) {
+      throw DocumentRepository._changed;
+    }
     final title = _title(details);
     final metadata = await _sealMetadata(version, details, key);
     final operation = DocumentRepository._uuid.v4();
@@ -66,6 +125,15 @@ extension DocumentTransferQueue on DocumentRepository {
       action: 'queue',
       after: {'version_id': version.id},
     );
+    if (retry != null) {
+      await _writer.audit(
+        operationId: retry.operationId,
+        entityType: 'document_resolution',
+        entityId: retry.documentId,
+        action: 'retry',
+        after: {'version_id': retry.id, 'replacement_version_id': version.id},
+      );
+    }
   }
 
   Future<String> _sealMetadata(

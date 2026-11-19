@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:familyvault/core/database/app_database.dart';
 import 'package:familyvault/core/errors/app_failure.dart';
+import 'package:familyvault/core/finance/money.dart';
 import 'package:familyvault/core/security/vault_identity.dart';
 import 'package:familyvault/core/security/vault_lifecycle.dart';
 import 'package:familyvault/features/auth/cloud_access_gateway.dart';
@@ -12,6 +13,7 @@ import 'package:familyvault/features/auth/cloud_cache.dart';
 import 'package:familyvault/features/auth/cloud_connection.dart';
 import 'package:familyvault/features/auth/cloud_device_registration.dart';
 import 'package:familyvault/features/document_vault/document_repository.dart';
+import 'package:familyvault/features/finance/data/ledger_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -274,6 +276,87 @@ void main() {
       expect(
         await receiver.documents.versions(staged.documentId),
         hasLength(2),
+      );
+      final cash = await receiver.ledger.createAccount(
+        name: 'Synthetic attachment account',
+        kind: AccountKind.asset,
+        subtype: 'cash',
+        openingBalance: Money.fromMinor(4123),
+      );
+      final journal = (await receiver.ledger.snapshot()).postings
+          .firstWhere((p) => p.accountId == cash.id)
+          .journalId;
+      final link = await receiver.documents.link(
+        staged.documentId,
+        journalId: journal,
+      );
+      expect(await receiver.documents.links(staged.documentId), isEmpty);
+      await receiver.sync!.check();
+      expect(receiver.sync!.status.documentFailure?.code, isNull);
+      expect(
+        (await receiver.documents.links(staged.documentId)).single.id,
+        link,
+      );
+      await later.sync!.check();
+      expect(
+        (await later.documents.watchLinked(journalId: journal).first).single.id,
+        staged.documentId,
+      );
+      expect(
+        (await later.documents.links(staged.documentId)).single.createdBy,
+        receiver.identity.memberId,
+      );
+
+      await later.documents.unlink(link);
+      await later.sync!.check();
+      expect(
+        await later.documents.watchLinked(journalId: journal).first,
+        isEmpty,
+      );
+      final relinked = await later.documents.link(
+        staged.documentId,
+        journalId: journal,
+      );
+      expect(relinked, isNot(link));
+      await later.sync!.check();
+      await receiver.sync!.check();
+      expect(receiver.sync!.status.documentFailure?.code, isNull);
+      expect(
+        (await receiver.documents.links(staged.documentId)).single.id,
+        relinked,
+      );
+      final history = await receiver.db
+          .select(receiver.db.vaultDocumentLinks)
+          .get();
+      expect(history.singleWhere((row) => row.id == link).revision, 2);
+      expect(
+        (await receiver.ledger.snapshot()).balances()[cash.id],
+        BigInt.from(4123),
+      );
+      final replacement = await receiver.documents.retryDraft(
+        staged.documentId,
+        competing.id,
+        8,
+      );
+      expect(
+        (await receiver.documents.watchUploads().first).single.id,
+        replacement.id,
+      );
+      await receiver.sync!.check();
+      await later.sync!.check();
+      expect(later.sync!.status.documentFailure?.code, isNull);
+      expect(
+        (await later.documents.versions(staged.documentId)).map((v) => v.id),
+        [replacement.id, accepted.id, staged.id],
+      );
+      expect(await receiver.documents.watchUploads().first, isEmpty);
+      expect(
+        await receiver.documents.read(
+          staged.documentId,
+          competing.id,
+          DocumentAccess.preview,
+        ),
+        bytes,
       );
     },
     skip: fixturePath == null

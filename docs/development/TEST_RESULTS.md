@@ -325,3 +325,17 @@ Record exact command, date, outcome and material platform/provider limits below.
   `.cache/checks/m08-change-provider-20261119-a.txt`.
 - The prior connected document Android debug build passed in 23.9 seconds.
   Transcript `.cache/checks/m08-shared-doc-android-20261119-a.txt`.
+
+## M08c3b — 2026-11-19 transaction links and draft retry
+
+- `bash tool/check_backend.sh` passed same-family link constraints and refused
+  an unavailable journal reference. Transcript `.cache/checks/m08-link-sql-20261119-b.txt`.
+- `python3 -B tool/check_supabase.py --mobile --storage` passed. The Flutter
+  fixture queued both the new transaction and its document link, received the
+  link on a second device, retained the tombstone through removal and reattachment,
+  and submitted a preserved conflicting file as a new version. The original
+  draft remained readable and the opening balance stayed at 4,123 paise.
+  Transcript `.cache/checks/m08-link-provider-20261119-b.txt`.
+- `bash tool/check.sh` passed 109 Flutter tests, five Deno tests, analyzer,
+  package audit and both SQL gates. The two provider checks ran separately.
+  Transcript `.cache/checks/m08-link-full-20261119-a.txt`.

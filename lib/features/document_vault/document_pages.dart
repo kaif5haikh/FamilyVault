@@ -212,6 +212,9 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                           _ => switch (edit.action) {
                             'archive' => 'Waiting to confirm the archive.',
                             'restore' => 'Waiting to confirm the restore.',
+                            'link' =>
+                              'Waiting to confirm the transaction link.',
+                            'unlink' => 'Waiting to confirm removal of the transaction link.',
                             _ => 'Waiting to confirm the edited details.',
                           },
                         }),

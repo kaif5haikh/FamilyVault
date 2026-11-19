@@ -21,6 +21,7 @@ part 'document_transfer_queue.dart';
 part 'shared_document_sync.dart';
 part 'shared_document_replay.dart';
 part 'shared_document_changes.dart';
+part 'shared_document_links.dart';
 
 enum DocumentFormat {
   pdf('application/pdf', 'pdf'),
@@ -132,15 +133,9 @@ final class DocumentRepository {
     await _sharing?.run(roster);
   }
 
-  Future<void> _authorize({bool writing = false}) async {
+  Future<void> _authorize() async {
     _checkOpen();
     _sharing?.requireSession();
-    if (writing && session.identity.isCloud) {
-      throw const AppFailure(
-        FailureCode.configuration,
-        'Record links are available in the local vault.',
-      );
-    }
     await _writer.authorize();
     _checkOpen();
   }
@@ -267,6 +262,7 @@ final class DocumentRepository {
     DocumentInput source, {
     DocumentDetails? details,
     int? expectedRevision,
+    VaultDocumentUpload? retry,
   }) => storageBoundary(() async {
     await _authorize();
     if (details != null) _title(details);
@@ -329,7 +325,13 @@ final class DocumentRepository {
               expiryOn: current.expiryOn,
             );
         if (session.identity.isCloud) {
-          await _stage(version, current?.revision ?? 0, metadata, contentKey);
+          await _stage(
+            version,
+            current?.revision ?? 0,
+            metadata,
+            contentKey,
+            retry: retry,
+          );
         } else {
           await _publishLocal(version, current, metadata);
         }
@@ -386,42 +388,46 @@ final class DocumentRepository {
     );
   }
 
-  Future<({VaultDocumentVersion version, String title, bool confirmed})>
-  describeVersion(String documentId, String versionId) => storageBoundary(
-    () async {
-      await _authorize();
-      final version =
-          await (_db.select(_db.vaultDocumentVersions)..where(
-                (t) =>
-                    t.familyId.equals(_familyId) &
-                    t.documentId.equals(documentId) &
-                    t.id.equals(versionId),
-              ))
-              .getSingleOrNull();
-      if (version != null) {
-        return (
-          version: version,
-          title: (await _load(documentId)).title,
-          confirmed: true,
-        );
-      }
-      if (session.identity.isCloud) {
-        final job =
-            await (_db.select(_db.vaultDocumentUploads)..where(
+  Future<
+    ({
+      VaultDocumentVersion version,
+      String title,
+      bool confirmed,
+      bool canRetry,
+    })
+  >
+  describeVersion(String documentId, String versionId) =>
+      storageBoundary(() async {
+        await _authorize();
+        final version =
+            await (_db.select(_db.vaultDocumentVersions)..where(
                   (t) =>
                       t.familyId.equals(_familyId) &
                       t.documentId.equals(documentId) &
-                      t.id.equals(versionId) &
-                      t.deviceId.equals(_deviceId),
+                      t.id.equals(versionId),
                 ))
                 .getSingleOrNull();
-        if (job != null) {
-          return (version: job.fileVersion, title: job.title, confirmed: false);
+        if (version != null) {
+          return (
+            version: version,
+            title: (await _load(documentId)).title,
+            confirmed: true,
+            canRetry: false,
+          );
         }
-      }
-      throw _missing;
-    },
-  );
+        if (session.identity.isCloud) {
+          final job = await _findUpload(documentId, versionId);
+          if (job != null) {
+            return (
+              version: job.fileVersion,
+              title: job.title,
+              confirmed: false,
+              canRetry: job.state == 'conflicted' && !await _retried(job),
+            );
+          }
+        }
+        throw _missing;
+      });
 
   Future<Uint8List> read(
     String documentId,
@@ -550,7 +556,7 @@ final class DocumentRepository {
     String? assetId,
   }) => storageBoundary(
     () => _db.transaction(() async {
-      await _authorize(writing: true);
+      await _authorize();
       final document = await _load(documentId);
       if ((journalId == null) == (assetId == null) ||
           document.deletedAtUs != null) {
@@ -569,6 +575,22 @@ final class DocumentRepository {
               .getSingleOrNull();
       if (existing != null) return existing.id;
       final id = _uuid.v4(), now = _writer.now;
+      if (session.identity.isCloud) {
+        if (journalId == null) throw _sharedAssetLink;
+        final journal =
+            await (_db.select(_db.ledgerJournals)..where(
+                  (t) =>
+                      t.familyId.equals(_familyId) &
+                      t.id.equals(journalId) &
+                      t.status.equals('posted') &
+                      t.deletedAtUs.isNull() &
+                      t.kind.equals('reversal').not(),
+                ))
+                .getSingleOrNull();
+        if (journal == null) throw _missing;
+        await _stageChange(document, 'link', linkId: id, journalId: journalId);
+        return id;
+      }
       await _db
           .into(_db.vaultDocumentLinks)
           .insert(
@@ -601,13 +623,24 @@ final class DocumentRepository {
 
   Future<void> unlink(String id) => storageBoundary(
     () => _db.transaction(() async {
-      await _authorize(writing: true);
+      await _authorize();
       final old =
           await (_db.select(_db.vaultDocumentLinks)
                 ..where((t) => t.familyId.equals(_familyId) & t.id.equals(id)))
               .getSingleOrNull();
       if (old == null) throw _missing;
       if (old.deletedAtUs != null) return;
+      if (session.identity.isCloud) {
+        final journalId = old.journalId;
+        if (journalId == null) throw _sharedAssetLink;
+        await _stageChange(
+          await _load(old.documentId),
+          'unlink',
+          linkId: id,
+          journalId: journalId,
+        );
+        return;
+      }
       final now = _writer.now;
       await (_db.update(
         _db.vaultDocumentLinks,
@@ -649,7 +682,11 @@ final class DocumentRepository {
             updatedAtUs: _writer.now,
           );
       if (session.identity.isCloud) {
-        await _stageChange(old, updated, action);
+        await _stageChange(
+          old,
+          action,
+          metadata: action == 'metadata' ? updated : null,
+        );
         return;
       }
       await (_db.update(
@@ -657,6 +694,11 @@ final class DocumentRepository {
       )..where((t) => t.id.equals(id))).write(updated);
       await _audit(id, action);
     }),
+  );
+
+  static const _sharedAssetLink = AppFailure(
+    FailureCode.configuration,
+    'Asset links are available in the local vault. You can link a shared transaction here.',
   );
 
   List<int> _context(String doc, String version, String mimeType, int length) =>

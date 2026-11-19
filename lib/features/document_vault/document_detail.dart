@@ -79,9 +79,13 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
     final db = repository.session.db;
     final family = repository.session.identity.familyId;
     final snapshot = await repository.session.ledger.snapshot();
-    final assets = await (db.select(
-      db.wealthAssets,
-    )..where((t) => t.familyId.equals(family) & t.deletedAtUs.isNull())).get();
+    final shared = repository.session.identity.isCloud;
+    final assets = shared
+        ? <WealthAsset>[]
+        : await (db.select(db.wealthAssets)..where(
+                (t) => t.familyId.equals(family) & t.deletedAtUs.isNull(),
+              ))
+              .get();
     if (!mounted || repository.session.closed) return;
     final choices = <({String label, String? journal, String? asset})>[
       for (final asset in assets)
@@ -102,9 +106,13 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
             title: const Text('Link to a record'),
             children: [
               if (choices.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(24),
-                  child: Text('Add an asset or transaction first.'),
+                  child: Text(
+                    shared
+                        ? 'Add a transaction first.'
+                        : 'Add an asset or transaction first.',
+                  ),
                 ),
               for (final choice in choices)
                 SimpleDialogOption(
@@ -181,17 +189,16 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                           icon: const Icon(Icons.add),
                           label: const Text('Add version'),
                         ),
-                        if (!repository.session.identity.isCloud)
-                          OutlinedButton.icon(
-                            onPressed: _busy
-                                ? null
-                                : () => _change(
-                                    repository,
-                                    () => _link(repository, doc.id),
-                                  ),
-                            icon: const Icon(Icons.link),
-                            label: const Text('Link record'),
-                          ),
+                        OutlinedButton.icon(
+                          onPressed: _busy
+                              ? null
+                              : () => _change(
+                                  repository,
+                                  () => _link(repository, doc.id),
+                                ),
+                          icon: const Icon(Icons.link),
+                          label: const Text('Link record'),
+                        ),
                       ],
                       TextButton.icon(
                         onPressed: _busy
@@ -288,6 +295,7 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
   Uint8List? _data;
   ImageProvider<Object>? _image;
   bool _saving = false;
+  bool _canRetry = false;
 
   Future<void> _load(DocumentRepository repository) async {
     final info = await repository.describeVersion(
@@ -306,6 +314,7 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
     }
     _version = version;
     _title = info.title;
+    _canRetry = info.canRetry;
     _data = bytes;
     if (version.mimeType != 'application/pdf') {
       _image = ResizeImage(
@@ -314,6 +323,53 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
         height: 4096,
         policy: ResizeImagePolicy.fit,
       );
+    }
+  }
+
+  Future<void> _retry(DocumentRepository repository) async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      final document = await repository.document(widget.documentId);
+      if (!mounted || repository.session.closed) return;
+      if (document.deletedAtUs != null) {
+        throw const AppFailure(
+          FailureCode.conflict,
+          'Restore the family document before adding another version.',
+        );
+      }
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Share this saved file?'),
+          content: Text('This will add a new version to ${document.title}.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Add version'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+      await repository.retryDraft(
+        document.id,
+        widget.versionId,
+        document.revision,
+      );
+      if (mounted) context.go('/documents');
+      unawaited(repository.session.sync?.check());
+    } on AppFailure catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -373,6 +429,12 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
         appBar: AppBar(
           title: Text(_title),
           actions: [
+            if (_canRetry)
+              IconButton(
+                onPressed: _saving ? null : () => _retry(repository),
+                tooltip: 'Add saved file as a new version',
+                icon: const Icon(Icons.cloud_upload_outlined),
+              ),
             IconButton(
               onPressed: _data == null || _saving
                   ? null

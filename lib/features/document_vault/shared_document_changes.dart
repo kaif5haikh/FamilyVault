@@ -69,14 +69,16 @@ extension SharedDocumentEdits on DocumentRepository {
 
   Future<void> _stageChange(
     VaultDocument old,
-    VaultDocument updated,
-    String action,
-  ) async {
+    String action, {
+    VaultDocument? metadata,
+    String? linkId,
+    String? journalId,
+  }) async {
     await _checkOperationSlot(old.id);
     final version =
         await _latestVersion(old.id) ?? (throw DocumentRepository._missing);
     String? box;
-    if (action == 'metadata') {
+    if (metadata != null) {
       final key = await _unwrap(
         version.wrappedKey,
         _context(old.id, version.id, version.mimeType, version.plaintextBytes),
@@ -85,10 +87,10 @@ extension SharedDocumentEdits on DocumentRepository {
         box = await _sealMetadata(
           version,
           DocumentDetails(
-            title: updated.title,
-            category: DocumentCategory.values.byName(updated.category),
-            ownerId: updated.ownerId,
-            expiryOn: updated.expiryOn,
+            title: metadata.title,
+            category: DocumentCategory.values.byName(metadata.category),
+            ownerId: metadata.ownerId,
+            expiryOn: metadata.expiryOn,
           ),
           key,
         );
@@ -108,8 +110,10 @@ extension SharedDocumentEdits on DocumentRepository {
         'family_id': _familyId,
         'version_id': version.id,
         'action': action,
-        'owner_id': box == null ? null : updated.ownerId,
+        'owner_id': metadata?.ownerId,
         'metadata_box': box,
+        'link_id': linkId,
+        'journal_id': journalId,
       },
     );
   }
@@ -127,7 +131,8 @@ DocumentChangeRequest _changeRequest(PendingMutation job) {
   }
   final record = envelope.record;
   final action = _docText(record, 'action');
-  if (!['metadata', 'archive', 'restore'].contains(action)) {
+  final linking = action == 'link' || action == 'unlink';
+  if (!linking && !['metadata', 'archive', 'restore'].contains(action)) {
     throw _invalidSharedDocument;
   }
   return DocumentChangeRequest(
@@ -138,6 +143,8 @@ DocumentChangeRequest _changeRequest(PendingMutation job) {
     action: action,
     ownerId: action == 'metadata' ? _docId(record, 'owner_id') : null,
     metadataBox: action == 'metadata' ? _docText(record, 'metadata_box') : null,
+    linkId: linking ? _docId(record, 'link_id') : null,
+    journalId: linking ? _docId(record, 'journal_id') : null,
   );
 }
 
@@ -167,6 +174,8 @@ extension on _SharedDocumentSync {
             receipt['document_id'] != job.entityId ||
             receipt['version_id'] != request.versionId ||
             receipt['action'] != request.action ||
+            receipt['link_id'] != request.linkId ||
+            receipt['journal_id'] != request.journalId ||
             receipt['revision'] != job.baseRevision + 1) {
           throw _invalidSharedDocument;
         }

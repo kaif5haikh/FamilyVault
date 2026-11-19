@@ -24,3 +24,10 @@ the existing document projection.
 Executable PostgreSQL checks and a three-device Dart round trip verified these
 behaviors with local services. A configured hosted deployment and physical
 device tests remain pending.
+
+Shared transaction links use the same revision and receipt checks. The backend
+requires a posted family transaction when creating a link, and keeps removed
+links as immutable history. A receiving client waits for referenced ledger
+records before applying the updated projection. A later link can attach the
+same transaction while the earlier removal stays in history. The live local
+provider test verified creation, removal and reattachment across devices.

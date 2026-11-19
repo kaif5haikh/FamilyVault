@@ -277,6 +277,12 @@ final class SupabaseAccessGateway implements CloudAccessGateway {
           'Shared records changed. Review the latest family records.',
         );
       }
+      if (code == 'PT424') {
+        throw const AppFailure(
+          FailureCode.network,
+          'Waiting for the related family transaction to sync.',
+        );
+      }
       if (code.startsWith('22') || code.startsWith('23')) {
         throw const AppFailure(
           FailureCode.validation,
