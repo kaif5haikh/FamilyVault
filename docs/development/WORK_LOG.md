@@ -406,3 +406,13 @@ separately. Continue with the business UI and executable backend policies.
   provider, which also rejected an invalid value, a direct rent reversal and
   a stale concurrent edit.
 - Continue with shared asset links, loan repayments and business accounting.
+
+## 2026-11-19 Shared loan accounting
+
+- Verified `1e78b49` on the public SSH origin. Added typed loan terms and
+  immutable repayment records under the same private ledger receipt boundary.
+  The server computes outstanding principal before admitting each payment.
+- `python3 -B tool/check_supabase.py --mobile` passed funded bank loan and
+  opening receivable cases, overpayment rejection, corrected principal and
+  repayments, soft archive and restoration with two independent devices.
+- Continue with asset document links and shared business accounting.

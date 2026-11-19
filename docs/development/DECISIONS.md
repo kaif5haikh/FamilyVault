@@ -135,3 +135,6 @@ and receipts, and optional delivery to the explicitly selected Drive account.
 
 ADR 0023 records typed holdings, managed ledger accounts, validation of
 scoped journal effects and review of conflicting accepted revisions.
+
+ADR 0024 records shared loan terms, constrained principal and interest
+postings, and retained corrections and repayments.

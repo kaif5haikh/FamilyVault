@@ -435,3 +435,16 @@ Record exact command, date, outcome and material platform/provider limits below.
   PostgreSQL and proposal checks and the dependency advisory query. The
   provider tests ran separately. Transcript
   `.cache/checks/m06-asset-full-20261119-a.txt`.
+
+## M06c3b Shared loan accounting on 2026-11-19
+
+- `bash tool/check_backend.sh` applied the loan migration and passed the
+  existing authorization tests. Transcript `.cache/checks/m06-loan-sql-20261119-a.txt`.
+- `python3 -B tool/check_supabase.py --mobile` passed exact loan terms, denial
+  of an excessive principal repayment, clearing old terms, both directions of
+  principal, repayment corrections, principal replacement, archival and
+  restoration with history retained. Transcript
+  `.cache/checks/m06-loan-provider-20261119-a.txt`.
+- `bash tool/check.sh` passed analyzer, 123 Flutter tests, five Deno tests,
+  both SQL gates and 183 resolved package queries. Transcript
+  `.cache/checks/m06-loan-full-20261119-a.txt`.

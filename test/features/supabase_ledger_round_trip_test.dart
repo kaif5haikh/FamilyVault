@@ -15,10 +15,14 @@ import 'package:familyvault/features/auth/cloud_access_gateway.dart';
 import 'package:familyvault/features/auth/cloud_cache.dart';
 import 'package:familyvault/features/finance/data/ledger_replay.dart';
 import 'package:familyvault/features/finance/data/ledger_repository.dart';
+import 'package:familyvault/features/liabilities/data/debt_repository.dart';
+import 'package:familyvault/features/liabilities/domain/loan_calculator.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../support/vault_fixture.dart';
+
+typedef _Client = ({VaultFixture vault, SyncCoordinator sync});
 
 void main() {
   final fixturePath = Platform.environment['FAMILYVAULT_TEST_SUPABASE_FIXTURE'];
@@ -38,7 +42,7 @@ void main() {
         () => driftRuntimeOptions.dontWarnAboutMultipleDatabases =
             originalWarning,
       );
-      final clients = <({VaultFixture vault, SyncCoordinator sync})>[];
+      final clients = <_Client>[];
       for (final user in cloudRows(fixture['users'])) {
         final client = SupabaseClient(
           url.toString(),
@@ -359,6 +363,7 @@ void main() {
         BigInt.from(72001),
       );
       expect((await remote.snapshot()).latest(gold)!.familyValueMinor, 401);
+      await _sharedLoans(first, second, account.id);
       final beforeRace = restored.revision;
       await local.edit(
         holding,
@@ -396,5 +401,194 @@ void main() {
     skip: fixturePath == null
         ? 'Start the isolated provider check with --mobile'
         : false,
+  );
+}
+
+Future<void> _sharedLoans(_Client first, _Client second, String cash) async {
+  final local = DebtRepository(first.vault.ledger);
+  final remote = DebtRepository(second.vault.ledger);
+  final loan = await local.create(
+    DebtDraft(
+      name: 'Synthetic bank loan',
+      direction: DebtDirection.bankLoan,
+      counterparty: 'Synthetic bank',
+      principalMinor: 50001,
+      startedOn: '2026-02-01',
+      cashAccountId: cash,
+      terms: const DebtTerms(
+        method: InterestMethod.reducingMonthly,
+        annualRateBps: 1200,
+        termMonths: 12,
+        emiMinor: 4400,
+        firstDueOn: '2026-03-01',
+      ),
+    ),
+  );
+  await first.sync.run();
+  await second.sync.run();
+  final original = await remote.contract(loan);
+  expect(original.createdBy, first.vault.identity.memberId);
+  expect(original.principalMinor, 50001);
+  await remote.edit(
+    loan,
+    original.revision,
+    name: 'Synthetic revised loan',
+    counterparty: 'Synthetic bank',
+    terms: const DebtTerms(),
+    notes: 'Synthetic terms change',
+  );
+  await second.sync.run();
+  final revised = await remote.contract(loan);
+  await remote.repay(
+    loan,
+    revised.revision,
+    RepaymentDraft(
+      principalMinor: 12001,
+      interestMinor: 750,
+      accountId: cash,
+      paidOn: '2026-04-01',
+    ),
+  );
+  final attempted =
+      await (second.vault.db.select(second.vault.db.pendingMutations)..where(
+            (t) =>
+                t.entityId.equals(loan) &
+                t.baseRevision.equals(revised.revision),
+          ))
+          .getSingle();
+  final envelope = SyncEnvelope.verify(
+    attempted.payloadJson,
+    attempted.payloadDigest,
+  );
+  final payment = syncObject(
+    (envelope.bundle['repayments']! as List<Object?>).single,
+  );
+  final invalid = canonicalJson({
+    ...envelope.fields,
+    'bundle': {
+      ...envelope.bundle,
+      'repayments': [
+        {...payment, 'principal_minor': 60001},
+      ],
+    },
+  });
+  await expectLater(
+    second.sync.transport.push(
+      SyncEnvelope.verify(invalid, payloadDigest(invalid)),
+    ),
+    throwsA(
+      isA<AppFailure>().having(
+        (error) => error.code,
+        'code',
+        FailureCode.validation,
+      ),
+    ),
+  );
+  final firstPayment = (await remote.snapshot()).repayments.single;
+  await remote.correctRepayment(
+    loan,
+    (await remote.contract(loan)).revision,
+    firstPayment.id,
+    'Synthetic payment correction',
+    RepaymentDraft(
+      principalMinor: 15001,
+      interestMinor: 701,
+      accountId: cash,
+      paidOn: '2026-04-01',
+    ),
+  );
+  await second.sync.run();
+  await first.sync.run();
+  final corrected = await local.contract(loan);
+  expect(corrected.updatedBy, second.vault.identity.memberId);
+  expect(corrected.annualRateBps, isNull);
+  expect(corrected.firstDueOn, isNull);
+  expect(
+    await first.vault.ledger.accountBalance(corrected.accountId),
+    BigInt.from(-35000),
+  );
+  expect(
+    (await first.vault.ledger.detail(firstPayment.journalId))
+        .journal
+        .deletedAtUs,
+    isNotNull,
+  );
+
+  await local.correctPrincipal(
+    loan,
+    corrected.revision,
+    principalMinor: 55001,
+    startedOn: '2026-01-15',
+    cashAccountId: cash,
+    reason: 'Synthetic principal correction',
+  );
+  await first.sync.run();
+  await second.sync.run();
+  final opening = await remote.contract(loan);
+  expect(
+    await second.vault.ledger.accountBalance(opening.accountId),
+    BigInt.from(-40000),
+  );
+  await remote.repay(
+    loan,
+    opening.revision,
+    RepaymentDraft(
+      principalMinor: 40000,
+      interestMinor: 100,
+      accountId: cash,
+      paidOn: '2026-05-01',
+    ),
+  );
+  await remote.archive(
+    loan,
+    (await remote.contract(loan)).revision,
+    restore: false,
+  );
+  await second.sync.run();
+  await first.sync.run();
+  expect((await local.contract(loan)).deletedAtUs, isNotNull);
+  await remote.archive(
+    loan,
+    (await remote.contract(loan)).revision,
+    restore: true,
+  );
+  await second.sync.run();
+  await first.sync.run();
+  final settled = await local.contract(loan);
+  expect(settled.deletedAtUs, isNull);
+  expect(
+    await first.vault.ledger.accountBalance(settled.accountId),
+    BigInt.zero,
+  );
+  expect(
+    (await local.snapshot()).repayments.where((row) => row.contractId == loan),
+    hasLength(3),
+  );
+
+  final lent = await local.create(
+    const DebtDraft(
+      name: 'Synthetic lent balance',
+      direction: DebtDirection.lent,
+      counterparty: 'Synthetic borrower',
+      principalMinor: 901,
+      startedOn: '2026-01-02',
+    ),
+  );
+  await local.repay(
+    lent,
+    (await local.contract(lent)).revision,
+    RepaymentDraft(
+      principalMinor: 301,
+      interestMinor: 5,
+      accountId: cash,
+      paidOn: '2026-05-02',
+    ),
+  );
+  await first.sync.run();
+  await second.sync.run();
+  final receivable = await remote.contract(lent);
+  expect(
+    await second.vault.ledger.accountBalance(receivable.accountId),
+    BigInt.from(600),
   );
 }

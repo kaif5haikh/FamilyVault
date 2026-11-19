@@ -123,4 +123,33 @@ extension _LedgerModuleReplay on LedgerReplay {
     }
     return prior == null ? null : databaseRecord(prior);
   }
+
+  Future<SyncJson?> _debt(SyncChange change) async {
+    final envelope = change.envelope;
+    final raw = envelope.record;
+    final loan = readDatabaseRecord(raw, DebtContract.fromJson);
+    final prior = await (db.select(
+      db.debtContracts,
+    )..where((t) => t.id.equals(loan.id))).getSingleOrNull();
+    if (loan.familyId != familyId ||
+        loan.revision != envelope.baseRevision + 1) {
+      throw syncIntegrityFailure;
+    }
+    if ((prior?.revision ?? 0) != envelope.baseRevision) {
+      throw SyncReplayConflict(loan.id, raw);
+    }
+    await _moduleAccounts(change);
+    await db
+        .into(db.debtContracts)
+        .insertOnConflictUpdate(loan.toCompanion(false));
+    await _moduleJournals(change);
+    for (final row in _rows(envelope.bundle, 'repayments')) {
+      final payment = readDatabaseRecord(row, DebtRepayment.fromJson);
+      if (payment.familyId != familyId || payment.contractId != loan.id) {
+        throw syncIntegrityFailure;
+      }
+      await db.into(db.debtRepayments).insert(payment);
+    }
+    return prior == null ? null : databaseRecord(prior);
+  }
 }
