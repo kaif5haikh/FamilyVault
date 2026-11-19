@@ -18,6 +18,16 @@ final class VaultKeys {
         Uint8List.fromList(List.generate(32, (_) => random.nextInt(256)));
     return VaultKeys._(bytes(), bytes(), bytes(), bytes());
   }
+  factory VaultKeys.fromRecovery({
+    required List<int> database,
+    required List<int> documents,
+  }) {
+    if (database.length != 32 || documents.length != 32) throw _invalid;
+    final keys = VaultKeys.generate();
+    keys.database.setAll(0, database);
+    keys.documents.setAll(0, documents);
+    return keys;
+  }
   factory VaultKeys.fromJson(Map<String, Object?> value) {
     Uint8List decode(String name) {
       final encoded = value[name];

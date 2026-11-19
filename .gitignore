@@ -57,6 +57,9 @@ scans/
 exports/
 backups/
 recovery/
+*.fvbackup
+*.fvbackup.partial
+*.fvdoc
 *.pdf
 *.jpg
 *.jpeg

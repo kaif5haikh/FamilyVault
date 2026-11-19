@@ -22,6 +22,7 @@ part 'shared_document_sync.dart';
 part 'shared_document_replay.dart';
 part 'shared_document_changes.dart';
 part 'shared_document_links.dart';
+part 'document_backup.dart';
 
 enum DocumentFormat {
   pdf('application/pdf', 'pdf'),

@@ -10,6 +10,7 @@ import 'package:sqlite3/sqlite3.dart';
 
 import 'package:familyvault/core/database/app_database.dart';
 import 'package:familyvault/core/database/encrypted_connection.dart';
+import 'package:familyvault/core/errors/app_failure.dart';
 
 const _family = '00000000-0000-4000-8000-000000000001';
 const _operation = '00000000-0000-4000-8000-000000000002';
@@ -118,6 +119,84 @@ void main() {
       );
     },
   );
+
+  test(
+    'snapshot a live WAL vault into a database using a different key',
+    () async {
+      await db.customStatement('PRAGMA journal_mode = WAL');
+      await db.into(db.pendingMutations).insert(_mutation());
+      final snapshot = File('${scratch.path}/snapshot.sqlite3');
+      final snapshotKey = _newKey();
+      await snapshotEncryptedDatabase(
+        source: db.file,
+        sourceKey: key,
+        destination: snapshot,
+        destinationKey: snapshotKey,
+      );
+      final saved = AppDatabase.encrypted(file: snapshot, key: snapshotKey);
+      try {
+        expect(
+          (await saved.select(saved.pendingMutations).getSingle()).operationId,
+          _operation,
+        );
+        expect(
+          await saved.customSelect('PRAGMA foreign_key_check').get(),
+          isEmpty,
+        );
+      } finally {
+        await saved.close();
+      }
+      expect(
+        (await db.select(db.pendingMutations).getSingle()).operationId,
+        _operation,
+      );
+      final wrong = AppDatabase.encrypted(file: snapshot, key: key);
+      try {
+        await expectLater(
+          wrong.select(wrong.pendingMutations).get(),
+          throwsA(
+            isA<DriftRemoteException>().having(
+              _originalCause,
+              'ciphered snapshot',
+              isA<VaultOpenFailure>(),
+            ),
+          ),
+        );
+      } finally {
+        await wrong.close();
+      }
+      final header = await snapshot.openRead(0, 16).first;
+      expect(String.fromCharCodes(header), isNot('SQLite format 3\u0000'));
+    },
+  );
+
+  test('snapshot failure preserves an existing destination and cleans its own partial', () async {
+    await db.into(db.pendingMutations).insert(_mutation());
+    final existing = File('${scratch.path}/prior-copy.sqlite3');
+    await existing.writeAsString('Synthetic existing file');
+    await expectLater(
+      snapshotEncryptedDatabase(
+        source: db.file,
+        sourceKey: key,
+        destination: existing,
+        destinationKey: _newKey(),
+      ),
+      throwsA(isA<AppFailure>()),
+    );
+    expect(await existing.readAsString(), 'Synthetic existing file');
+    final partial = File('${scratch.path}/partial.sqlite3');
+    await expectLater(
+      snapshotEncryptedDatabase(
+        source: db.file,
+        sourceKey: _newKey(),
+        destination: partial,
+        destinationKey: _newKey(),
+      ),
+      throwsA(isA<AppFailure>()),
+    );
+    expect(await partial.exists(), isFalse);
+    expect((await db.select(db.pendingMutations).getSingle()).state, 'pending');
+  });
 
   test(
     'duplicate operations and unconfirmed acknowledgements are rejected',

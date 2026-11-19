@@ -116,3 +116,8 @@ family history and the additive Drift v5 migration.
 
 ADR 0018 records shared metadata and archive receipts, additive Drift v6,
 independent file version numbering and preservation across finance recovery.
+
+## 2026-11-19 Encrypted backup snapshots
+
+ADR 0019 records the rekeyed SQLite snapshot, independently wrapped archive
+key, authenticated manifest and complete file verification before publication.

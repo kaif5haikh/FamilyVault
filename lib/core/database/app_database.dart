@@ -129,12 +129,14 @@ class SyncConflicts extends Table {
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase._(super.executor);
+  AppDatabase._(this.file, super.executor);
 
   factory AppDatabase.encrypted({
     required File file,
     required VaultDatabaseKey key,
-  }) => AppDatabase._(openEncryptedConnection(file: file, key: key));
+  }) => AppDatabase._(file, openEncryptedConnection(file: file, key: key));
+
+  final File file;
 
   @override
   int get schemaVersion => 6;

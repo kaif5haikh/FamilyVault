@@ -339,3 +339,21 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `bash tool/check.sh` passed 109 Flutter tests, five Deno tests, analyzer,
   package audit and both SQL gates. The two provider checks ran separately.
   Transcript `.cache/checks/m08-link-full-20261119-a.txt`.
+
+## M09a — 2026-11-19 encrypted archive
+
+- A SQLite3MC experiment used a pinned WAL read while the source committed
+  another record. The separate encrypted copy had the original view, passed
+  SQLite checks and refused the source key. Transcript
+  `.cache/checks/sqlite-encrypted-backup-20261119-a.txt`.
+- The 14 snapshot and migration tests passed. The new snapshot tests protected
+  an existing destination and removed a partial copy after failure. Transcript
+  `.cache/checks/m09-snapshot-tests-20261119-b.txt`.
+- The targeted archive and encrypted document suite passed 15 tests. The
+  recovery key alone reopened the archive in a clean directory after source
+  lock and decrypted an older version. A wrong key, short archive, changed
+  ciphertext and missing source document all failed. Transcript
+  `.cache/checks/m09-archive-tests-20261119-a.txt`.
+- `bash tool/check.sh` passed 113 Flutter tests, five Deno tests, analyzer,
+  both SQL gates and the advisory review. Two provider tests were opt-in.
+  Transcript `.cache/checks/m09-archive-full-20261119-a.txt`.

@@ -1,10 +1,17 @@
-# Backup and recovery — both destinations required, implementation proposed
+# Backup and recovery
 
 The owner requires encrypted local backups **and** Google Drive backups. These
 are independent destinations using one authenticated archive format. Supabase is
 the live synchronization authority; Drive is never a live financial database.
 No Drive account, OAuth client/token, cloud project or paid service is configured
-by this documentation update. See [ADR 0003](decisions/0003-confirmed-product-architecture.md).
+by this development work. See [ADR 0003](decisions/0003-confirmed-product-architecture.md).
+
+The versioned archive engine and local verification are implemented. They
+snapshot encrypted SQLite, seal document files and the manifest, and verify the
+archive with a separately held key. A clean-directory test reopened the exact
+paise balance and decrypted an older document version after the source vault
+closed. App restore, independent destination delivery and scheduling remain
+pending. [ADR 0019](decisions/0019-encrypted-backup-envelope.md)
 
 ## Snapshot and archive
 

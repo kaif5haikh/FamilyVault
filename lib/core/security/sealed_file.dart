@@ -70,6 +70,7 @@ final class SealedFile {
     required int clearLength,
     required SecretKey key,
     required List<int> context,
+    List<int> prefix = const [],
   }) async {
     if (clearLength < 1) throw invalid;
     final header = Uint8List.fromList([
@@ -82,6 +83,7 @@ final class SealedFile {
       final output = await destination.open(mode: FileMode.writeOnly);
       final buffer = Uint8List(chunkSize);
       try {
+        if (prefix.isNotEmpty) await output.writeFrom(prefix);
         await output.writeFrom(header);
         var length = 0, filled = 0, index = 0;
         Future<void> writeBlock() async {
@@ -131,15 +133,18 @@ final class SealedFile {
     required SecretKey key,
     required List<int> context,
     required Future<void> Function(Uint8List bytes) write,
+    int prefixLength = 0,
   }) async {
     if (clearLength < 1 ||
+        prefixLength < 0 ||
         !await source.exists() ||
-        await source.length() != byteLength(clearLength) ||
+        await source.length() != prefixLength + byteLength(clearLength) ||
         await digest(source) != expectedDigest) {
       throw invalid;
     }
     final input = await source.open();
     try {
+      if (prefixLength != 0) await input.setPosition(prefixLength);
       final header = await input.read(_headerLength);
       if (header.length != _headerLength ||
           Mac(header.sublist(0, 8)) != Mac(_magic)) {
@@ -167,6 +172,27 @@ final class SealedFile {
       if (await input.readByte() != -1) throw invalid;
     } on SecretBoxAuthenticationError {
       throw invalid;
+    } finally {
+      await input.close();
+    }
+  }
+
+  /// Returns the untrusted clear length after checking it against actual size.
+  /// The caller must still authenticate the sealed file before using any data.
+  static Future<int> inspectLength(File source, {int prefixLength = 0}) async {
+    if (prefixLength < 0) throw invalid;
+    final input = await source.open();
+    try {
+      await input.setPosition(prefixLength);
+      final header = await input.read(_headerLength);
+      if (header.length != _headerLength ||
+          Mac(header.sublist(0, 8)) != Mac(_magic)) {
+        throw invalid;
+      }
+      final clear = ByteData.sublistView(header).getUint64(24);
+      final size = await input.length() - prefixLength;
+      if (clear < 1 || clear > size || byteLength(clear) != size) throw invalid;
+      return clear;
     } finally {
       await input.close();
     }

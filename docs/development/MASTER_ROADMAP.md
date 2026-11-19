@@ -48,6 +48,9 @@ No production deployment, real family data, paid services or destructive history
       - [x] Shared transaction links and user-directed retry of a preserved draft.
       - [ ] Shared asset links after the typed wealth backend is available.
 - [ ] M09 Authenticated archive/local backup/export/restore, independent Drive adapter and complete clean-environment recovery tests.
+  - [x] M09a Consistent rekeyed snapshot, authenticated envelope and verified local artifact.
+  - [ ] M09b Clean-install activation, recovery UI and verified Files destination.
+  - [ ] M09c Drive copy/versioning/restore and permitted scheduling.
 - [ ] M10 Integrated UI/security/accessibility regression, Android emulator/device-independent integration and dependency/secret review.
 - [ ] M11 Release APK/AAB/signing setup, iOS configuration, installation/user/migration/recovery guides and release notes.
 

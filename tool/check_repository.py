@@ -14,13 +14,14 @@ def git(*args: str) -> bytes:
 files = [p.decode() for p in git("ls-files", "-z").split(b"\0") if p]
 problems: list[str] = []
 private_dirs = {"private", "documents", "uploads", "scans", "exports", "backups", "recovery", "secrets", ".secrets", ".ssh", ".aws"}
-private_extensions = {".pdf", ".csv", ".xlsx", ".xls", ".db", ".sqlite", ".sqlite3", ".pem", ".key", ".jks", ".keystore", ".p12", ".pfx", ".enc", ".age", ".dump", ".mobileprovision", ".provisionprofile", ".apk", ".aab", ".ipa"}
+private_extensions = {".pdf", ".csv", ".xlsx", ".xls", ".db", ".sqlite", ".sqlite3", ".pem", ".key", ".jks", ".keystore", ".p12", ".pfx", ".enc", ".age", ".dump", ".mobileprovision", ".provisionprofile", ".apk", ".aab", ".ipa", ".fvbackup", ".fvdoc"}
 secret_patterns = [
     re.compile(rb"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     re.compile(rb"\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})\b"),
     re.compile(rb"\bsb_secret_[A-Za-z0-9_-]{15,}\b"),
     re.compile(rb"\bAKIA[0-9A-Z]{16}\b"),
     re.compile(rb"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"),
+    re.compile(rb"\bFV1\.[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])"),
 ]
 for file in files:
     path = PurePosixPath(file)
@@ -32,6 +33,7 @@ for file in files:
     if (
         private_dirs.intersection(path.parts)
         or path.suffix.lower() in private_extensions
+        or path.name.lower().endswith(".fvbackup.partial")
         or any(part in {".tools", ".cache", ".dart_tool", "build"} for part in path.parts)
         or (path.name.startswith(".env") and path.name != ".env.example")
         or path.name in {"google-services.json", "GoogleService-Info.plist", "key.properties"}
@@ -48,7 +50,7 @@ for file in files:
 ignore_probes = [
     ".env", ".env.production", "config/local/development.json", "credentials.json",
     "supabase/.temp/access-token", "private/identity.pdf", "documents/scan.jpg",
-    "exports/finance.csv", "backups/vault.enc", "vault.sqlite3", "vault.sqlite3-wal",
+    "exports/finance.csv", "backups/vault.enc", "vault.sqlite3", "vault.sqlite3-wal", "vault.fvbackup", "vault.fvbackup.partial", "attachment.fvdoc",
     "android/key.properties", "android/app/release.jks", ".tools/flutter/bin/flutter",
     ".cache/checks/build.log", "build/app.apk",
 ]

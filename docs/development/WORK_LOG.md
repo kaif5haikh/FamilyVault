@@ -335,3 +335,15 @@ separately. Continue with the business UI and executable backend policies.
   copy a pinned read snapshot from a live WAL source to a rekeyed destination.
   Continue with the encrypted archive and clean-device restore. Shared asset
   links remain dependent on the typed shared wealth backend.
+
+## 2026-11-19 — verified encrypted backup archive
+
+- Verified `9768407` on the public SSH origin. Added the independently rekeyed
+  SQLite snapshot, chunked archive, recovery key and complete verification before
+  the verified local artifact reaches its final filename. Added ignore and indexed
+  policy checks for backup and document ciphertext formats and recovery keys.
+- The initial snapshot test found an obsolete SQLite API type. Changed it to the
+  pinned native Database interface. The rekeyed WAL, migration and existing-file
+  protection tests passed. The archive tests reopened data in a clean directory
+  and rejected missing documents, wrong keys, altered data and truncation.
+- Continue with clean installation of a verified archive and local delivery.
