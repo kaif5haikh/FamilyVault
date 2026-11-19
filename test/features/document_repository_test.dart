@@ -150,9 +150,33 @@ void main() {
       expect(await vault.watch().first, isEmpty);
       expect((await vault.watch(archived: true).first).single.revision, 3);
       await vault.archive(first.documentId, 3, restore: true);
+      final restored = (await vault.watch().first).single;
+      expect(restored.id, first.documentId);
+      expect(restored.revision, 4);
+      expect(restored.deletedAtUs, isNull);
+      expect(await vault.watch(archived: true).first, isEmpty);
       expect((await vault.versions(first.documentId)).length, 2);
     },
   );
+
+  test('removing the expiry date clears the saved metadata', () async {
+    final version = await vault.add(details: sample(), source: source);
+    final original = await vault.document(version.documentId);
+    expect(original.expiryOn, isNotNull);
+    await vault.update(
+      original.id,
+      original.revision,
+      DocumentDetails(
+        title: original.title,
+        category: DocumentCategory.property,
+        ownerId: original.ownerId,
+      ),
+    );
+    final updated = await vault.document(original.id);
+    expect(updated.expiryOn, isNull);
+    expect(updated.revision, original.revision + 1);
+    expect((await vault.versions(updated.id)).single.id, version.id);
+  });
 
   test('bad input and damaged container files cannot produce a document access receipt', () async {
     final invalid = File(

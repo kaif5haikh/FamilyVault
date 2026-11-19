@@ -711,7 +711,7 @@ final class DocumentRepository {
       }
       await (_db.update(
         _db.vaultDocuments,
-      )..where((t) => t.id.equals(id))).write(updated);
+      )..where((t) => t.id.equals(id))).write(updated.toCompanion(false));
       await _audit(id, action);
     }),
   );
