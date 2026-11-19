@@ -386,3 +386,21 @@ Record exact command, date, outcome and material platform/provider limits below.
   PostgreSQL, proposal checks and the advisory query for 177 resolved Pub
   packages. The two Supabase fixture tests stayed opt-in during this run.
   Transcript `.cache/checks/m09-drive-full-20261119-a.txt`.
+
+## M09c2 Native Drive configuration on 2026-11-19
+
+- Six targeted Flutter tests passed. The widget test opened Drive history
+  after simulated consent, selected an encrypted version, verified the supplied
+  key and restored the original records in a clean app. The protocol tests
+  included rejection of an expired token, wrong-key rejection before staging
+  and rejection of corrupt downloaded content. Transcript
+  `.cache/checks/m09-drive-native-tests-20261119-b.txt`.
+- `bash tool/check.sh` passed 121 Flutter tests, five Deno tests, analyzer and
+  both SQL gates. OSV reported no matches for the 183 resolved Pub packages.
+  A separate Maven query returned no matches for the four direct Android Google
+  plugin components. Transcripts `.cache/checks/m09-drive-native-full-20261119-a.txt`
+  and `.cache/checks/m09-drive-native-osv-20261119-a.json`.
+- `flutter build apk --debug --no-pub` passed in 65.0 seconds. The iOS property
+  list parsed with the expected local settings references. Xcode and real
+  Google consent are pending. Transcript
+  `.cache/checks/m09-drive-native-android-20261119-a.txt`.

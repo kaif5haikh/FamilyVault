@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:familyvault/app/app.dart';
+import 'package:familyvault/app/vault_providers.dart';
 import 'package:familyvault/core/errors/app_failure.dart';
 import 'package:familyvault/core/security/sealed_file.dart';
 import 'package:familyvault/core/security/vault_identity.dart';
@@ -10,11 +12,35 @@ import 'package:familyvault/core/security/vault_lifecycle.dart';
 import 'package:familyvault/features/backup/backup_archive.dart';
 import 'package:familyvault/features/backup/drive_backup_api.dart';
 import 'package:familyvault/features/backup/drive_backup_destination.dart';
+import 'package:familyvault/features/backup/drive_sign_in.dart';
 import 'package:familyvault/features/backup/vault_backup.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_ui/material_ui.dart' show FilledButton, TextButton;
 import 'package:uuid/uuid.dart';
 
 import '../support/security_fakes.dart';
+import '../support/widget_io.dart';
+
+final class _DriveConsentFixture implements DriveSignIn {
+  _DriveConsentFixture(this.connection);
+  final DriveBackupConnection connection;
+  int connects = 0;
+
+  @override
+  Future<bool> configured() async => true;
+
+  @override
+  Future<DriveBackupConnection> connect() async {
+    connects++;
+    return connection;
+  }
+
+  @override
+  Future<void> disconnect() async {}
+}
+
+final class _LoopbackHttpOverrides extends HttpOverrides {}
 
 final class _Upload {
   _Upload(this.id, this.properties, this.size);
@@ -76,7 +102,7 @@ final class _DriveFixture {
         } else if (params['alt'] == 'media') {
           mediaReads++;
           final data = Uint8List.fromList(file.bytes.toBytes());
-          if (corruptMedia) data[0] ^= 1;
+          if (corruptMedia) data[data.length - 1] ^= 1;
           response.contentLength = data.length;
           response.add(data);
         } else {
@@ -171,6 +197,13 @@ void main() {
   late MemorySecureStore store;
   late VaultIdentity identity;
 
+  void driveTest(String name, Future<void> Function() work) {
+    test(
+      name,
+      () => HttpOverrides.runWithHttpOverrides(work, _LoopbackHttpOverrides()),
+    );
+  }
+
   DriveBackupDestination destination({MemorySecureStore? catalog}) =>
       DriveBackupDestination(
         api: GoogleDriveBackupApi.test(
@@ -207,7 +240,7 @@ void main() {
     return BackupArtifact(id, file, await SealedFile.digest(file), size);
   }
 
-  test('resumes an interrupted upload and a lost completion response under the same file ID', () async {
+  driveTest('resumes an interrupted upload and a lost completion response under the same file ID', () async {
     final artifact = await blob(9 * 1024 * 1024);
     drive.interrupt = drive.loseFinish = true;
     await expectLater(
@@ -236,7 +269,33 @@ void main() {
     expect((await destination().history()).files.single.id, saved.file.id);
   });
 
-  test(
+  driveTest(
+    'clears a rejected token and requests fresh access on the next action',
+    () async {
+      var expired = true;
+      final api = GoogleDriveBackupApi.test(
+        () async => expired ? 'expired-fixture' : 'synthetic-drive',
+        drive.root,
+        clearRejectedToken: (token) async {
+          expect(token, 'expired-fixture');
+          expired = false;
+        },
+      );
+      await expectLater(
+        api.list(),
+        throwsA(
+          isA<AppFailure>().having(
+            (error) => error.code,
+            'code',
+            FailureCode.unauthorized,
+          ),
+        ),
+      );
+      expect((await api.list()).files, isEmpty);
+    },
+  );
+
+  driveTest(
     'expired sessions reuse the allocated ID and reject another upload host',
     () async {
       final artifact = await blob(9 * 1024 * 1024);
@@ -265,7 +324,7 @@ void main() {
     },
   );
 
-  test('opens an independent downloaded archive in a clean vault and detects corrupt cloud bytes', () async {
+  driveTest('opens an independent downloaded archive in a clean vault and detects corrupt cloud bytes', () async {
     final source = VaultLifecycle(
       store: MemorySecureStore(),
       gate: FakeDeviceGate(),
@@ -294,8 +353,15 @@ void main() {
     await artifact.file.delete();
     final clean = Directory('${root.path}/clean');
     final recovery = destination(catalog: MemorySecureStore());
+    final wrongKey = BackupRecoveryKey.generate();
+    addTearDown(wrongKey.destroy);
+    await expectLater(
+      recovery.fetch(receipt.file, clean, wrongKey),
+      throwsA(isA<AppFailure>()),
+    );
+    expect(await clean.exists(), isFalse);
     drive.corruptMedia = true;
-    final corrupted = await recovery.fetch(receipt.file, clean);
+    final corrupted = await recovery.fetch(receipt.file, clean, key);
     await expectLater(
       engine.verify(corrupted, key),
       throwsA(isA<AppFailure>()),
@@ -304,6 +370,7 @@ void main() {
     final downloaded = await recovery.fetch(
       (await recovery.history()).files.single,
       clean,
+      key,
     );
     final verified = await engine.verify(downloaded, key);
     addTearDown(verified.close);
@@ -321,4 +388,115 @@ void main() {
       verified.contents.manifest.identity.familyId,
     );
   });
+
+  testWidgets(
+    'clean app selects a Drive version and verifies its key before activation',
+    (tester) async {
+      Future<T?> disk<T>(Future<T> Function() work) => tester.runAsync(
+        () =>
+            HttpOverrides.runWithHttpOverrides(work, _LoopbackHttpOverrides()),
+      );
+      final gate = FakeDeviceGate();
+      final target = VaultLifecycle(
+        store: MemorySecureStore(),
+        gate: gate,
+        root: () async => Directory('${root.path}/widget-target'),
+      );
+      final flow = destination(catalog: MemorySecureStore());
+      final consent = _DriveConsentFixture(
+        DriveBackupConnection('drive-fixture@example.invalid', flow),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          vaultLifecycleProvider.overrideWithValue(target),
+          driveSignInProvider.overrideWithValue(consent),
+        ],
+      );
+      addTearDown(() async {
+        container.dispose();
+        await target.dispose();
+      });
+      final seeded = (await disk(() async {
+        final source = VaultLifecycle(
+          store: MemorySecureStore(),
+          gate: FakeDeviceGate(),
+          root: () async => Directory('${root.path}/widget-source'),
+        );
+        final key = BackupRecoveryKey.generate();
+        try {
+          await source.initialize();
+          await source.createOffline(
+            familyName: 'Synthetic Drive family',
+            ownerName: 'Synthetic owner',
+          );
+          final session = source.status.session!;
+          final artifact = await VaultBackup(Directory('${root.path}/verify'))
+              .capture(
+                session: session,
+                destination: Directory('${root.path}/out'),
+                recovery: key,
+              );
+          await destination().upload(session.identity, artifact);
+          await artifact.file.delete();
+          await target.initialize();
+          return (code: key.code, family: session.identity.familyId);
+        } finally {
+          key.destroy();
+          await source.dispose();
+        }
+      }))!;
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const FamilyVaultApp(),
+        ),
+      );
+      await ready(tester, find.text('Family access'));
+      await tapVisible(tester, find.text('Family access'));
+      await ready(tester, find.text('Restore an encrypted backup'));
+      await tapVisible(tester, find.text('Restore an encrypted backup'));
+      expect(consent.connects, 0);
+      await tapVisible(tester, find.text('Connect Google Drive'));
+      await ready(tester, find.text('drive-fixture@example.invalid'));
+      expect(consent.connects, 1);
+
+      Future<void> press(void Function()? onPressed) async {
+        await disk(onPressed! as Future<void> Function());
+        await tester.pump();
+      }
+
+      await disk(() async {
+        tester
+            .widget<TextButton>(
+              find.widgetWithText(TextButton, 'Show backup history'),
+            )
+            .onPressed!();
+      });
+      await ready(tester, find.textContaining(' bytes'));
+      await tapVisible(tester, find.textContaining(' bytes'));
+      await tester.enterText(field('Recovery key'), seeded.code);
+      expect(drive.mediaReads, 1);
+      await press(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Verify backup'),
+            )
+            .onPressed,
+      );
+      expect(drive.mediaReads, 2);
+      await ready(tester, find.text('Restore vault'));
+      expect(target.status.phase, VaultPhase.setup);
+      expect(gate.calls, 0);
+      await press(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Restore vault'),
+            )
+            .onPressed,
+      );
+      await ready(tester, find.text('On this device'));
+      expect(target.status.session!.identity.familyId, seeded.family);
+      expect(gate.calls, 1);
+    },
+  );
 }

@@ -17,10 +17,11 @@ FamilyVault is a Flutter app I am building to help a family keep track of money 
 - Edit shared document details, archive files and bring them back with their old versions.
 - Link a shared document to a family transaction. If two people add a new version at the same time, you can keep your saved copy and share it as the next version.
 - Create an encrypted backup and save a copy in Files. On a fresh install, use the backup file and your separate recovery key. I tested this with sample records on my computer.
+- Save encrypted backups to Google Drive and choose an older copy to restore. This needs Google Drive setup for your build. I tested the upload and restore with a local test server.
 
 ## What I am still building
 
-I am working on shared sync for assets, loans and business records, Google Drive backups and scheduled backups.
+I am working on shared sync for assets, loans and business records, and scheduled backups.
 
 ## Run it
 

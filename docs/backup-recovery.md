@@ -11,8 +11,9 @@ snapshot encrypted SQLite, seal document files and the manifest, and verify the
 archive with a separately held key. A clean-directory test reopened the exact
 paise balance and decrypted an older document version after the source vault
 closed. The restore flow installs a separate local vault with a fresh device
-identity. The app has a verified local copy workflow. Drive and scheduling
-remain in development. [ADR 0019](decisions/0019-encrypted-backup-envelope.md) · [ADR 0020](decisions/0020-local-backup-restore.md)
+identity. The app has independent Files and Drive copy workflows. The Drive
+workflow requires platform OAuth setup. Scheduled capture remains in development.
+[ADR 0019](decisions/0019-encrypted-backup-envelope.md) · [ADR 0020](decisions/0020-local-backup-restore.md)
 
 ## Create or restore a local copy
 
@@ -90,13 +91,22 @@ account/device encrypted local store, outside the shared backend catalog.
 
 ## Google Drive destination
 
-The Dart adapter uses the file APIs covered by the narrow `drive.file` scope
-for encrypted backup files created by the app. It receives a separately supplied
-access token. OAuth consent and platform client configuration remain pending.
-Cloud archives and catalog entries omit OAuth credentials. Recovery from Drive
-requires access to the Google account that can see those backups.
-The hidden `appDataFolder` alternative has different discovery/sharing behavior
-and is not silently substituted for user-accessible backup files.
+The native Google SDK requests the narrow `drive.file` permission for encrypted
+backup files created by the app. It supplies access tokens to the Dart adapter
+in memory. Cloud archives and catalog entries omit OAuth credentials. Recovery
+from Drive requires access to the Google account that can see those backups.
+
+In **Encrypted backups**, create a backup and choose **Connect Google Drive**.
+After accepting consent, verify the Google account shown and choose
+**Save backup to Drive**. The page shows an independent verified date when Drive
+confirms the complete copy. Use **Show backup history** to see previous versions.
+
+On a fresh installation, open **Restore an encrypted backup**, connect the same
+Google account and open the backup history. Select a version and enter its
+separate recovery key. The app authenticates the envelope prefix before writing
+the downloaded bytes, verifies the whole archive, then offers local activation.
+Disconnecting the account clears the app's active connection and leaves existing
+backup files in Drive. Manage or revoke the app grant through the Google account.
 
 Use resumable binary uploads and opaque names/app metadata. Each snapshot version
 is a **new file**, not an overwrite or reliance on provider revision retention.
@@ -120,13 +130,44 @@ installs, a missing catalog and the operator's Drive credentials are required te
 cases. A Drive account/file unavailable to the recovering member remains a real
 recovery dependency; local export is an independent alternative.
 
-The transport and a clean restore from a downloaded archive passed the local
-Drive API fixture. Native account consent and the hosted provider drill are
-pending. [Scopes](https://developers.google.com/workspace/drive/api/guides/api-specific-auth),
+The transport and a clean restore from the app screen passed the local Drive API
+fixture with simulated consent. Live account consent and the hosted recovery
+drill require a configured build and an approved test account.
+[Scopes](https://developers.google.com/workspace/drive/api/guides/api-specific-auth),
 [resumable uploads](https://developers.google.com/workspace/drive/api/guides/manage-uploads),
 [file checksums](https://developers.google.com/workspace/drive/api/reference/rest/v3/files),
 [revision handling](https://developers.google.com/workspace/drive/api/guides/manage-revisions),
 [app data folder](https://developers.google.com/workspace/drive/api/guides/appdata).
+
+### Configure a development build
+
+1. Enable the Drive API in an approved Google project. Configure the consent
+   screen for the app and its test accounts. Add the
+   `https://www.googleapis.com/auth/drive.file` permission. Use the same project
+   for client registrations on Android and iOS so the same Google account can
+   discover its backup versions. [Google consent setup](https://developers.google.com/workspace/guides/configure-oauth-consent).
+2. On Android, register an Android OAuth client for `app.familyvault.familyvault`
+   and the SHA-1 of the signing certificate of the build. Register a web OAuth
+   client in the same project. Set `GOOGLE_SERVER_CLIENT_ID` to that web client
+   ID in a local Flutter defines JSON file under ignored `config/local/`.
+   Pass the file to Flutter with `--dart-define-from-file`. The app needs the
+   client ID only. [Flutter Android configuration](https://pub.dev/packages/google_sign_in_android).
+3. On macOS, register an iOS OAuth client for the iOS bundle ID
+   `app.familyvault.familyvault` and use a signed build. Put its client ID and
+   reversed client ID in ignored `ios/Flutter/Drive.local.xcconfig` using the
+   following build settings. Xcode inserts the values into the built property
+   list. [Google iOS configuration](https://developers.google.com/identity/sign-in/ios/start-integrating).
+
+   ```xcconfig
+   FAMILYVAULT_GOOGLE_IOS_CLIENT_ID = YOUR_IOS_CLIENT_ID
+   FAMILYVAULT_GOOGLE_IOS_URL_SCHEME = YOUR_REVERSED_IOS_CLIENT_ID
+   ```
+
+Without these settings, the app can still create, export and restore local files.
+Try a synthetic backup, verify the independent copy in the source app and restore
+it on a separate installation with the same Drive account and recovery key.
+Keep the source vault intact during the drill. Before regular use, exercise
+revoked consent, no network, a wrong recovery key and an interrupted upload.
 
 ## Restore and clean-device acceptance
 

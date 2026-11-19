@@ -36,7 +36,7 @@ for file in files:
         or path.name.lower().endswith(".fvbackup.partial")
         or any(part in {".tools", ".cache", ".dart_tool", "build"} for part in path.parts)
         or (path.name.startswith(".env") and path.name != ".env.example")
-        or path.name in {"google-services.json", "GoogleService-Info.plist", "key.properties"}
+        or path.name in {"google-services.json", "GoogleService-Info.plist", "Drive.local.xcconfig", "key.properties"}
         or tuple(path.parts[:2]) == ("config", "local")
         or (path.suffix.lower() in {".png", ".jpg", ".jpeg", ".heic"} and not approved_image)
     ):
@@ -51,7 +51,7 @@ ignore_probes = [
     ".env", ".env.production", "config/local/development.json", "credentials.json",
     "supabase/.temp/access-token", "private/identity.pdf", "documents/scan.jpg",
     "exports/finance.csv", "backups/vault.enc", "vault.sqlite3", "vault.sqlite3-wal", "vault.fvbackup", "vault.fvbackup.partial", "attachment.fvdoc",
-    "android/key.properties", "android/app/release.jks", ".tools/flutter/bin/flutter",
+    "android/key.properties", "android/app/release.jks", "ios/Flutter/Drive.local.xcconfig", ".tools/flutter/bin/flutter",
     ".cache/checks/build.log", "build/app.apk",
 ]
 for probe in ignore_probes:

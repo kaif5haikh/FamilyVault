@@ -3,13 +3,14 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
-import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../../core/errors/app_failure.dart';
 import '../../core/security/sealed_file.dart';
 import '../../core/security/secure_store.dart';
 import '../../core/security/vault_identity.dart';
+import 'backup_archive.dart';
+import 'backup_file_io.dart';
 import 'drive_backup_api.dart';
 import 'vault_backup.dart';
 
@@ -178,7 +179,11 @@ final class DriveBackupDestination {
     String? page,
   }) => api.list(page: page);
 
-  Future<File> fetch(DriveBackupFile file, Directory staging) async {
+  Future<File> fetch(
+    DriveBackupFile file,
+    Directory staging,
+    BackupRecoveryKey recovery,
+  ) async {
     final current = await api.metadata(file.id);
     if (current == null ||
         current.snapshotId != file.snapshotId ||
@@ -186,14 +191,23 @@ final class DriveBackupDestination {
         file.digest != null && file.digest != current.digest) {
       throw driveInvalid;
     }
-    final folder = await (await staging.create(recursive: true))
-        .createTemp('drive-');
-    final target = File(p.join(folder.path, '${file.snapshotId}.fvbackup'));
+    File? target;
     try {
-      await api.download(current, target);
-      return target;
+      return await api.readContent(current, (bytes) async {
+        final staged = await stageSelectedBackup(
+          (length: () async => current.bytes, openRead: () => bytes),
+          staging,
+          recovery,
+        );
+        target = staged;
+        if (current.digest != null &&
+            await SealedFile.digest(staged) != current.digest) {
+          throw driveInvalid;
+        }
+        return staged;
+      });
     } catch (_) {
-      await folder.delete(recursive: true);
+      await target?.parent.delete(recursive: true);
       rethrow;
     }
   }

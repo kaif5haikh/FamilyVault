@@ -17,6 +17,20 @@ import UniformTypeIdentifiers
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     let channel = FlutterMethodChannel(name: "app.familyvault/backup-files", binaryMessenger: engineBridge.applicationRegistrar.messenger())
     channel.setMethodCallHandler(backupFiles.handle)
+    let drive = FlutterMethodChannel(name: "app.familyvault/drive", binaryMessenger: engineBridge.applicationRegistrar.messenger())
+    drive.setMethodCallHandler { call, reply in
+      guard call.method == "configured" else { reply(FlutterMethodNotImplemented); return }
+      reply(Self.hasDriveConfiguration)
+    }
+  }
+
+  private static var hasDriveConfiguration: Bool {
+    guard let client = Bundle.main.object(forInfoDictionaryKey: "GIDClientID") as? String,
+      client.range(of: "^[0-9]+-[A-Za-z0-9_-]+\\.apps\\.googleusercontent\\.com$", options: .regularExpression) != nil,
+      let types = Bundle.main.object(forInfoDictionaryKey: "CFBundleURLTypes") as? [[String: Any]]
+    else { return false }
+    let reversed = client.split(separator: ".").reversed().joined(separator: ".")
+    return types.contains { ($0["CFBundleURLSchemes"] as? [String])?.contains(reversed) == true }
   }
 }
 

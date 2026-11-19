@@ -1,1 +1,5 @@
 #include "Generated.xcconfig"
+
+FAMILYVAULT_GOOGLE_IOS_CLIENT_ID =
+FAMILYVAULT_GOOGLE_IOS_URL_SCHEME = familyvault-drive-disabled
+#include? "Drive.local.xcconfig"

@@ -12,6 +12,8 @@ import '../../shared/widgets/vault_widgets.dart';
 import '../foundation/foundation_pages.dart' show VaultPage;
 import 'backup_archive.dart';
 import 'backup_file_io.dart';
+import 'drive_backup_api.dart';
+import 'drive_backups_panel.dart';
 import 'vault_backup.dart';
 
 class RestoreBackupPage extends ConsumerStatefulWidget {
@@ -24,6 +26,7 @@ class RestoreBackupPage extends ConsumerStatefulWidget {
 class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
   final _key = TextEditingController();
   BackupInput? _selected;
+  DriveBackupSelection? _drive;
   VerifiedVaultBackup? _verified;
   Object? _error;
   bool _working = false, _installing = false;
@@ -40,6 +43,8 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
       await _verified?.close();
       _verified = null;
       _selected = file;
+      _drive = null;
+      _key.clear();
     } catch (error) {
       if (mounted) _error = error;
     } finally {
@@ -48,8 +53,8 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
   }
 
   Future<void> _verify() async {
-    final selected = _selected;
-    if (_working || selected == null) return;
+    final selected = _selected, drive = _drive;
+    if (_working || selected == null && drive == null) return;
     final lifecycle = ref.read(vaultLifecycleProvider);
     setState(() {
       _working = true;
@@ -63,8 +68,15 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
       final root = Directory(
         p.join((await lifecycle.root()).path, 'backup-staging'),
       );
-      copy = await stageSelectedBackup(selected, root, key);
+      copy = drive == null
+          ? await stageSelectedBackup(selected!, root, key)
+          : await drive.connection.destination.fetch(drive.file, root, key);
       final verified = await VaultBackup(root).verify(copy, key);
+      if (drive != null &&
+          verified.contents.manifest.id != drive.file.snapshotId) {
+        await verified.close();
+        throw driveInvalid;
+      }
       if (!mounted) {
         await verified.close();
         return;
@@ -77,6 +89,15 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
       await copy?.parent.delete(recursive: true);
       if (mounted) setState(() => _working = false);
     }
+  }
+
+  void _selectDrive(DriveBackupSelection selection) {
+    setState(() {
+      _selected = null;
+      _drive = selection;
+      _key.clear();
+      _error = null;
+    });
   }
 
   Future<void> _restore() async {
@@ -130,8 +151,14 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
                     : 'Choose a different backup',
               ),
             ),
-            if (_selected != null) ...[
+            const SizedBox(height: 16),
+            DriveBackupsPanel(enabled: !_working, onSelect: _selectDrive),
+            if (_selected != null || _drive != null) ...[
               const SizedBox(height: 16),
+              if (_drive != null)
+                Text(
+                  'Selected Drive backup from ${MaterialLocalizations.of(context).formatMediumDate(_drive!.file.created.toLocal())}',
+                ),
               TextField(
                 controller: _key,
                 enabled: !_working,

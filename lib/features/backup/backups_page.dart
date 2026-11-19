@@ -7,6 +7,7 @@ import '../../core/security/vault_lifecycle.dart';
 import '../../shared/widgets/vault_widgets.dart';
 import '../foundation/foundation_pages.dart' show VaultPage;
 import 'backup_archive.dart';
+import 'drive_backups_panel.dart';
 import 'local_backup_destination.dart';
 
 class BackupsPage extends ConsumerStatefulWidget {
@@ -177,6 +178,15 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) FailureNotice(_error!),
+        const SizedBox(height: 24),
+        FutureBuilder<LocalBackupStatus?>(
+          future: _last,
+          builder: (_, snapshot) => DriveBackupsPanel(
+            identity: session.identity,
+            backup: snapshot.data?.artifact,
+            enabled: !_busy,
+          ),
+        ),
       ],
     );
   }

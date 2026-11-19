@@ -18,7 +18,7 @@ const driveInvalid = AppFailure(
 );
 const driveAccessRequired = AppFailure(
   FailureCode.unauthorized,
-  'Connect your Google account to use Drive backups.',
+  'Reconnect your Google account if Drive access has expired.',
 );
 
 final class DriveBackupFile {
@@ -86,9 +86,13 @@ String _driveId(Object? value) {
 /// Drive's file-scoped API, with redirects disabled so OAuth cannot reach a
 /// different host. Credentials come from the separately authorized account.
 final class GoogleDriveBackupApi {
-  GoogleDriveBackupApi(this._accessToken)
+  GoogleDriveBackupApi(this._accessToken, {this.clearRejectedToken})
     : _origin = Uri.https('www.googleapis.com');
-  GoogleDriveBackupApi.test(this._accessToken, this._origin) {
+  GoogleDriveBackupApi.test(
+    this._accessToken,
+    this._origin, {
+    this.clearRejectedToken,
+  }) {
     if (_origin.scheme != 'http' ||
         _origin.host != '127.0.0.1' ||
         !_origin.hasPort) {
@@ -96,6 +100,7 @@ final class GoogleDriveBackupApi {
     }
   }
   final Future<String?> Function() _accessToken;
+  final Future<void> Function(String token)? clearRejectedToken;
   final Uri _origin;
   static const _fields =
       'id,trashed,size,createdTime,sha256Checksum,appProperties';
@@ -148,6 +153,10 @@ final class GoogleDriveBackupApi {
       if (bytes != null) request.contentLength = bytes;
       if (body != null) await request.addStream(body).timeout(_timeout);
       final response = await request.close().timeout(_timeout);
+      if (response.statusCode == 401) {
+        await clearRejectedToken?.call(token).timeout(_timeout);
+        throw driveAccessRequired;
+      }
       return await read(response);
     } on AppFailure {
       rethrow;
@@ -164,7 +173,6 @@ final class GoogleDriveBackupApi {
 
   Never _failed(HttpClientResponse response) {
     final status = response.statusCode;
-    if (status == 401) throw driveAccessRequired;
     if (status == 403) {
       throw const AppFailure(
         FailureCode.configuration,
@@ -337,36 +345,12 @@ final class GoogleDriveBackupApi {
     body: body,
   );
 
-  Future<String> checksum(DriveBackupFile file) => _content(
+  Future<String> checksum(DriveBackupFile file) => readContent(
     file,
     (bytes) async => (await hash.sha256.bind(bytes).first).toString(),
   );
 
-  Future<String> download(DriveBackupFile file, File target) async {
-    await target.create(exclusive: true);
-    try {
-      return await _content(file, (bytes) async {
-        final output = await target.open(mode: FileMode.writeOnly);
-        try {
-          await for (final block in bytes) {
-            await output.writeFrom(block);
-          }
-          await output.flush();
-        } finally {
-          await output.close();
-        }
-        final digest = (await hash.sha256.bind(target.openRead()).first)
-            .toString();
-        if (file.digest != null && digest != file.digest) throw driveInvalid;
-        return digest;
-      });
-    } catch (_) {
-      await target.delete();
-      rethrow;
-    }
-  }
-
-  Future<T> _content<T>(
+  Future<T> readContent<T>(
     DriveBackupFile file,
     Future<T> Function(Stream<List<int>>) handle,
   ) => _request('GET', _uri('$_files/${_driveId(file.id)}', {'alt': 'media'}), (

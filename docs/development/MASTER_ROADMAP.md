@@ -53,7 +53,8 @@ No production deployment, real family data, paid services or destructive history
     - [ ] Native Files validation on supported devices.
   - [ ] M09c Drive copy/versioning/restore and permitted scheduling.
     - [x] M09c1 Resumable Drive transport, independent receipt and clean recovery in a local provider fixture.
-    - [ ] M09c2 Native Google consent, backup history, export and restore screens.
+    - [x] M09c2 Native Google consent configuration, backup history, export and restore screens with a local fixture.
+    - [ ] Hosted Google consent and physical clean-device recovery drill.
     - [ ] M09c3 Scheduled capture during authorized device sessions.
 - [ ] M10 Integrated UI/security/accessibility regression, Android emulator/device-independent integration and dependency/secret review.
 - [ ] M11 Release APK/AAB/signing setup, iOS configuration, installation/user/migration/recovery guides and release notes.

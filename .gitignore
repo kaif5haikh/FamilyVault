@@ -12,6 +12,7 @@
 key.properties
 google-services.json
 GoogleService-Info.plist
+ios/Flutter/Drive.local.xcconfig
 credentials*
 *credentials.json
 *service-account*.json

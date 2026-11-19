@@ -370,3 +370,15 @@ separately. Continue with the business UI and executable backend policies.
   loopback provider. Hosted Google OAuth remains unconfigured.
 - `gh repo view` confirmed public visibility for `kaif5haikh/FamilyVault`.
   Continue with native consent and backup screens against the verified adapter.
+
+## 2026-11-19 Google Drive consent and recovery screens
+
+- Verified `53f0405` on the public SSH origin. Reviewed the Flutter Google plugin,
+  adopted the locked packages, and connected the verified Drive transport to
+  encrypted backup and restore screens. Configured an ignored iOS settings file
+  for the matched client ID and callback scheme.
+- The first fixture run used Flutter's default blocked widget-test HTTP client
+  and found a callback type mismatch. Scoped loopback clients and the correct
+  widget clock allowed the six targeted cases to pass. The full 121-test check,
+  dependency review and Android debug build passed.
+- Continue with scheduled local capture and separately authorized Drive delivery.
