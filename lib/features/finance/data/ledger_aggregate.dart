@@ -19,7 +19,8 @@ extension LedgerAggregates on LedgerRepository {
     String action = 'update',
   }) => storageBoundary(
     () => db.transaction(() async {
-      if (identity.isCloud && !const {'asset', 'debt'}.contains(entityType)) {
+      if (identity.isCloud &&
+          !const {'asset', 'debt', 'business'}.contains(entityType)) {
         throw const AppFailure(
           FailureCode.configuration,
           'Use your local vault to edit this section while family sync is in development.',

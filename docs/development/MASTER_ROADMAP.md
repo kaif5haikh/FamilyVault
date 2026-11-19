@@ -26,6 +26,9 @@ No production deployment, real family data, paid services or destructive history
       - [x] M06c3a Scoped journal rules, shared holdings, ownership, valuation, rent and disposal.
       - [x] M06c3b Shared loans, principal changes, repayments and archive.
       - [ ] M06c3c Shared businesses, revenue and expenses, inventory and wages.
+        - [x] Shared profiles, cash journals, corrections and exact profit.
+        - [ ] Shared stock positions, purchases and issuing costs.
+        - [ ] Shared worker profiles, salaries and corrections.
   - [x] M06d Scoped encrypted cloud cache and live device session lifecycle.
     - [x] M06d1 Verified directory and chart import into isolated encrypted caches.
     - [x] M06d2 Connected app lifecycle, bounded offline unlock and revocation.

@@ -1,6 +1,23 @@
 part of 'ledger_replay.dart';
 
 extension _LedgerModuleReplay on LedgerReplay {
+  void _moduleRevision(
+    SyncEnvelope envelope,
+    String id,
+    String rowFamily,
+    int revision,
+    int? previous,
+  ) {
+    if (id != envelope.entityId ||
+        rowFamily != familyId ||
+        revision != envelope.baseRevision + 1) {
+      throw syncIntegrityFailure;
+    }
+    if ((previous ?? 0) != envelope.baseRevision) {
+      throw SyncReplayConflict(id, envelope.record);
+    }
+  }
+
   Iterable<SyncJson> _rows(SyncJson bundle, String field) sync* {
     if (!bundle.containsKey(field)) return;
     final value = bundle[field];
@@ -60,13 +77,13 @@ extension _LedgerModuleReplay on LedgerReplay {
     final prior = await (db.select(
       db.wealthAssets,
     )..where((t) => t.id.equals(asset.id))).getSingleOrNull();
-    if (asset.familyId != familyId ||
-        asset.revision != envelope.baseRevision + 1) {
-      throw syncIntegrityFailure;
-    }
-    if ((prior?.revision ?? 0) != envelope.baseRevision) {
-      throw SyncReplayConflict(asset.id, raw);
-    }
+    _moduleRevision(
+      envelope,
+      asset.id,
+      asset.familyId,
+      asset.revision,
+      prior?.revision,
+    );
     await _moduleAccounts(change);
     await db
         .into(db.wealthAssets)
@@ -131,13 +148,13 @@ extension _LedgerModuleReplay on LedgerReplay {
     final prior = await (db.select(
       db.debtContracts,
     )..where((t) => t.id.equals(loan.id))).getSingleOrNull();
-    if (loan.familyId != familyId ||
-        loan.revision != envelope.baseRevision + 1) {
-      throw syncIntegrityFailure;
-    }
-    if ((prior?.revision ?? 0) != envelope.baseRevision) {
-      throw SyncReplayConflict(loan.id, raw);
-    }
+    _moduleRevision(
+      envelope,
+      loan.id,
+      loan.familyId,
+      loan.revision,
+      prior?.revision,
+    );
     await _moduleAccounts(change);
     await db
         .into(db.debtContracts)
@@ -150,6 +167,29 @@ extension _LedgerModuleReplay on LedgerReplay {
       }
       await db.into(db.debtRepayments).insert(payment);
     }
+    return prior == null ? null : databaseRecord(prior);
+  }
+
+  Future<SyncJson?> _business(SyncChange change) async {
+    final envelope = change.envelope;
+    final business = readDatabaseRecord(
+      envelope.record,
+      BusinessesData.fromJson,
+    );
+    final prior = await (db.select(
+      db.businesses,
+    )..where((t) => t.id.equals(business.id))).getSingleOrNull();
+    _moduleRevision(
+      envelope,
+      business.id,
+      business.familyId,
+      business.revision,
+      prior?.revision,
+    );
+    await _moduleAccounts(change);
+    await db
+        .into(db.businesses)
+        .insertOnConflictUpdate(business.toCompanion(false));
     return prior == null ? null : databaseRecord(prior);
   }
 }

@@ -462,3 +462,15 @@ Record exact command, date, outcome and material platform/provider limits below.
 - `bash tool/check.sh` passed 123 Flutter tests, five Deno tests, analyzer,
   both SQL gates and the package audit. Transcript
   `.cache/checks/m08-asset-links-full-20261119-a.txt`.
+
+## M06c3c Business profiles and cash journals on 2026-11-19
+
+- `bash tool/check_backend.sh` applied the business and journal scope migration.
+  Transcript `.cache/checks/m06-business-sql-20261119-a.txt`.
+- `python3 -B tool/check_supabase.py --mobile` passed a queued business, revenue,
+  expenses, member attribution, three managed accounts and a corrected expense.
+  Both devices calculated exact profit from the native ledger. Transcript
+  `.cache/checks/m06-business-provider-20261119-a.txt`.
+- `bash tool/check.sh` passed 123 Flutter tests, five Deno tests, analyzer,
+  both SQL checks and the audit of 183 Pub packages. Transcript
+  `.cache/checks/m06-business-full-20261119-a.txt`.

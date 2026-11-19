@@ -141,3 +141,6 @@ postings, and retained corrections and repayments.
 
 ADR 0025 records family-scoped asset links, the existing transaction
 contract and deferred local replay until the referenced record is present.
+
+ADR 0026 records shared business profiles, managed accounts and business
+attribution on revenue, expenses and corrections.

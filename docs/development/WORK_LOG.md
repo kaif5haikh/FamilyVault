@@ -425,3 +425,13 @@ separately. Continue with the business UI and executable backend policies.
 - The local provider tests queued a synthetic asset and link together,
   replayed both on another device and checked reattachment, tombstone
   retention and clean backup recovery. Continue with shared business records.
+
+## 2026-11-19 Shared business profiles and cash journals
+
+- Verified `06a7318` on the public SSH origin. Added family-scoped business
+  profiles, managed account renames and private validation for business cash
+  entries and corrections.
+- Local PostgreSQL and the two-device Data API fixture passed. A business
+  profile and two cash entries queued together, then a second member
+  corrected the expense. The first device reported the exact resulting profit.
+  Continue with weighted inventory costs and wages.

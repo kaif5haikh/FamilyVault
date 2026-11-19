@@ -13,6 +13,7 @@ import 'package:familyvault/core/sync/sync_protocol.dart';
 import 'package:familyvault/features/assets/data/asset_repository.dart';
 import 'package:familyvault/features/auth/cloud_access_gateway.dart';
 import 'package:familyvault/features/auth/cloud_cache.dart';
+import 'package:familyvault/features/business/data/business_repository.dart';
 import 'package:familyvault/features/finance/data/ledger_replay.dart';
 import 'package:familyvault/features/finance/data/ledger_repository.dart';
 import 'package:familyvault/features/liabilities/data/debt_repository.dart';
@@ -364,6 +365,7 @@ void main() {
       );
       expect((await remote.snapshot()).latest(gold)!.familyValueMinor, 401);
       await _sharedLoans(first, second, account.id);
+      await _sharedBusiness(first, second, account.id);
       final beforeRace = restored.revision;
       await local.edit(
         holding,
@@ -591,4 +593,73 @@ Future<void> _sharedLoans(_Client first, _Client second, String cash) async {
     await second.vault.ledger.accountBalance(receivable.accountId),
     BigInt.from(600),
   );
+}
+
+Future<void> _sharedBusiness(_Client first, _Client second, String cash) async {
+  final local = BusinessRepository(first.vault.ledger);
+  final remote = BusinessRepository(second.vault.ledger);
+  final shop = await local.create(
+    name: 'Synthetic tyre shop',
+    notes: 'Synthetic business profile',
+  );
+  final revenue = await local.cashEntry(
+    shop,
+    revenue: true,
+    amount: Money.fromMinor(100001),
+    accountId: cash,
+    date: '2026-07-10',
+    description: 'Synthetic cash revenue',
+  );
+  final expense = await local.cashEntry(
+    shop,
+    revenue: false,
+    amount: Money.fromMinor(1001),
+    accountId: cash,
+    date: '2026-07-10',
+    description: 'Synthetic operating expense',
+  );
+  await first.sync.run();
+  await second.sync.run();
+  final shared = await remote.business(shop);
+  expect(shared.createdBy, first.vault.identity.memberId);
+  expect((await second.vault.ledger.detail(revenue)).journal.businessId, shop);
+  await remote.edit(
+    shop,
+    shared.revision,
+    name: 'Synthetic renamed shop',
+    notes: '',
+  );
+  final corrected = await second.vault.ledger.correct(
+    expense,
+    kind: EntryKind.expense,
+    accountId: cash,
+    counterAccountId: second.vault.ledger.chartId('business_expense'),
+    amount: Money.fromMinor(2502),
+    occurredOn: '2026-07-10',
+    description: 'Synthetic corrected expense',
+    reason: 'Synthetic cash correction',
+  );
+  await second.sync.run();
+  await first.sync.run();
+  final updated = await local.business(shop);
+  expect(updated.name, 'Synthetic renamed shop');
+  expect(updated.updatedBy, second.vault.identity.memberId);
+  expect(
+    (await first.vault.ledger.account(updated.inventoryAccountId)).name,
+    'Synthetic renamed shop · Inventory',
+  );
+  expect(
+    (await first.vault.ledger.detail(expense)).journal.deletedAtUs,
+    isNotNull,
+  );
+  expect((await first.vault.ledger.detail(corrected)).journal.businessId, shop);
+  final profit = BusinessProfit.forPeriod(
+    updated,
+    await first.vault.ledger.snapshot(),
+    from: '2026-07-01',
+    through: '2026-07-31',
+  );
+  expect(profit.revenue, BigInt.from(100001));
+  expect(profit.operatingExpenses, BigInt.from(2502));
+  expect(profit.net, BigInt.from(97499));
 }
