@@ -224,13 +224,36 @@ export function createGateway(
           const stored = await request(`/storage/v1/object/${path}`, {
             headers: service,
           });
-          if (!stored.ok) {
+          const length = stored.headers.get("content-length");
+          if (
+            !stored.ok || !stored.body ||
+            (length !== null && Number(length) !== plan.ciphertext_bytes)
+          ) {
+            await stored.body?.cancel();
             throw new GatewayError(502, "stored_bytes_unavailable");
           }
-          return new Response(stored.body, {
+          let remaining = plan.ciphertext_bytes;
+          const body = stored.body.pipeThrough(
+            new TransformStream<Uint8Array>({
+              transform(chunk, controller) {
+                remaining -= chunk.byteLength;
+                if (remaining < 0) {
+                  throw new Error("Invalid stored object size");
+                }
+                controller.enqueue(chunk);
+              },
+              flush() {
+                if (remaining !== 0) {
+                  throw new Error("Invalid stored object size");
+                }
+              },
+            }),
+          );
+          return new Response(body, {
             headers: {
               ...responseHeaders,
               "content-type": "application/octet-stream",
+              "content-length": String(plan.ciphertext_bytes),
             },
           });
         }

@@ -19,6 +19,15 @@ The context binds the family, document, version and owner. The queued title used
 for local display stays within the encrypted SQLite file. The shared service
 receives the opaque box and the owner ID for provenance.
 
-The additive migration and draft persistence are implemented and tested.
-The mobile publisher and receiver will verify real server receipts before
-making version promises in the interface.
+The sender retries the same operation when it loses the receipt and compares
+the returned reservation, version number, version ID and digest before
+acknowledging it. The receiver checks key signatures and decrypts metadata
+before installing any new version. It stores ciphertext on first authenticated
+access and checks byte length, digest and file authentication. An approved
+holder can give a newly approved device the keys to older versions.
+
+The migration, upload queue, receiver and backfill passed development tests
+with real local Supabase services. A version conflict preserves the draft for
+preview and export. Shared metadata changes, archive and record links require
+their own synchronization commands. Deployment and physical device checks
+remain pending.

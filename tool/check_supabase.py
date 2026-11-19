@@ -59,6 +59,17 @@ def role_token(signing_key: str, role: str) -> str:
     return f'{head}.{body}.{base64url(signature)}'
 
 
+def public_key(seed: bytes, algorithm: str) -> str:
+    # Raw Ed25519/X25519 seeds in PKCS#8 for this disposable-device fixture.
+    private_der = bytes.fromhex('302e020100300506032b65' + algorithm + '04220420') + seed
+    result = subprocess.run(['openssl', 'pkey', '-inform', 'DER', '-pubout', '-outform', 'DER'],
+                            input=private_der, capture_output=True, timeout=5)
+    prefix = bytes.fromhex('302a300506032b65' + algorithm + '032100')
+    if result.returncode or len(result.stdout) != len(prefix) + 32 or not result.stdout.startswith(prefix):
+        raise RuntimeError('Could not create a synthetic device public key')
+    return result.stdout[len(prefix):].hex()
+
+
 def request(url: str, body: dict | None = None, *, token: str | None = None, status: int | tuple[int, ...] = 200):
     headers = {'Content-Type': 'application/json'}
     if token:
@@ -205,7 +216,7 @@ def local_gateway(scratch: Path, rest_url: str, storage_url: str, anon: str, wor
                     'Content-Type': 'application/json', 'x-fv-device': device['p_device'], 'x-fv-proof': device['p_proof']},
                     data=json.dumps({'action': action, 'id': target}).encode()), status)
 
-            yield gateway
+            yield gateway, f'http://127.0.0.1:{port}'
         finally:
             child.terminate()
             child.wait(timeout=10)
@@ -259,12 +270,24 @@ def check_document_access(rpc, family: str, owner: dict, owner_token: str, membe
         print('Real Storage and Deno gateway passed signed upload, readback receipt and authorized private download.')
 
 
-def check_mobile(scratch: Path, auth_url: str, rest_url: str, family: str, users: list[dict]):
-    """Expose the two isolated services under the normal Supabase client paths."""
+def check_mobile(scratch: Path, auth_url: str, rest_url: str, family: str, users: list[dict], *,
+                 object_url: str | None = None, function_url: str | None = None, late_device=None, approve_late=None):
+    """Expose isolated services under the normal Supabase client paths."""
+    lose_finalize_reply = function_url is not None
+    routes = [('/auth/v1/', auth_url), ('/rest/v1/', rest_url)]
+    if object_url is not None:
+        routes += [('/storage/v1/', object_url), ('/functions/v1/', function_url)]
+
     class FixtureProxy(BaseHTTPRequestHandler):
         def forward(self):
+            nonlocal lose_finalize_reply
+            if self.path == '/__fixture/approve_late' and self.command == 'POST' and approve_late is not None:
+                approve_late()
+                self.send_response(204)
+                self.end_headers()
+                return
             target = None
-            for prefix, upstream in (('/auth/v1/', auth_url), ('/rest/v1/', rest_url)):
+            for prefix, upstream in routes:
                 if self.path.startswith(prefix):
                     target = upstream + '/' + self.path[len(prefix):]
                     break
@@ -272,11 +295,12 @@ def check_mobile(scratch: Path, auth_url: str, rest_url: str, family: str, users
                 self.send_error(404)
                 return
             length = int(self.headers.get('Content-Length', '0'))
-            if length > 2 * 1024 * 1024:
+            if length > 26 * 1024 * 1024:
                 self.send_error(413)
                 return
             body = self.rfile.read(length) if length else None
-            headers = {key: self.headers[key] for key in ('Authorization', 'Content-Type', 'Accept', 'Prefer')
+            headers = {key: self.headers[key] for key in ('Authorization', 'Content-Type', 'Accept', 'Prefer',
+                                                         'x-fv-device', 'x-fv-proof', 'x-upsert')
                        if key in self.headers}
             try:
                 response = urlopen(Request(target, data=body, headers=headers, method=self.command), timeout=10)
@@ -287,26 +311,35 @@ def check_mobile(scratch: Path, auth_url: str, rest_url: str, family: str, users
                 return
             with response:
                 raw = response.read()
+                if self.path == '/rest/v1/rpc/fv_document_finalize' and response.code == 200 and lose_finalize_reply:
+                    lose_finalize_reply = False
+                    self.send_error(502)
+                    return
                 self.send_response(response.code)
                 self.send_header('Content-Type', response.headers.get('Content-Type', 'application/json'))
                 self.send_header('Content-Length', str(len(raw)))
                 self.end_headers()
                 self.wfile.write(raw)
 
-        do_POST = do_GET = forward
+        do_POST = do_GET = do_PUT = forward
 
         def log_message(self, *_):
             pass
 
     with ThreadingHTTPServer(('127.0.0.1', 0), FixtureProxy) as proxy:
         config = scratch / 'mobile-fixture.json'
-        config.write_text(json.dumps({'url': f'http://127.0.0.1:{proxy.server_port}', 'family': family, 'users': users}))
-        config.chmod(0o600)
+        config.touch(mode=0o600, exist_ok=False)
+        config.write_text(json.dumps({'url': f'http://127.0.0.1:{proxy.server_port}', 'family': family,
+                                      'users': users, 'late_device': late_device}))
         thread = Thread(target=proxy.serve_forever, daemon=True)
         thread.start()
         try:
-            subprocess.run(['flutter', 'test', '--no-pub', 'test/features/supabase_ledger_round_trip_test.dart'],
-                           env={**os.environ, 'FAMILYVAULT_TEST_SUPABASE_FIXTURE': str(config)},
+            outputs = {'FAMILYVAULT_TEST_SUPABASE_FIXTURE': str(config)}
+            tests = ['test/features/supabase_ledger_round_trip_test.dart']
+            if object_url is not None:
+                outputs['FAMILYVAULT_TEST_DOCUMENT_FIXTURE'] = str(config)
+                tests.append('test/features/supabase_document_round_trip_test.dart')
+            subprocess.run(['flutter', 'test', '--no-pub', *tests], env={**os.environ, **outputs},
                            cwd=ROOT, timeout=180, check=True)
         finally:
             proxy.shutdown()
@@ -405,12 +438,18 @@ def run(scratch: Path, *, mobile: bool, objects: bool):
         def request_device(session: str):
             device, proof = str(uuid4()), secrets.token_hex(32)
             signing, exchange = secrets.token_hex(32), secrets.token_hex(32)
+            keys = None
+            if mobile and objects:
+                seeds = {name: secrets.token_bytes(32) for name in ('database', 'documents', 'signing', 'exchange')}
+                proof = hmac.digest(seeds['signing'], f'FamilyVault device proof v1:{device}'.encode(), 'sha256').hex()
+                signing, exchange = public_key(seeds['signing'], '70'), public_key(seeds['exchange'], '6e')
+                keys = {name: base64.b64encode(seed).decode() for name, seed in seeds.items()}
             result = rpc('request_device', {'p_family': family, 'p_device': device, 'p_proof': proof,
                 'p_name': 'Synthetic phone', 'p_signing_public': signing, 'p_exchange_public': exchange}, session)
             assert result == 'pending'
-            return {'p_device': device, 'p_proof': proof}, hashlib.sha256(bytes.fromhex(signing + exchange)).hexdigest()
+            return {'p_device': device, 'p_proof': proof}, hashlib.sha256(bytes.fromhex(signing + exchange)).hexdigest(), keys
 
-        owner_fields, owner_fingerprint = request_device(owner_session)
+        owner_fields, owner_fingerprint, owner_keys = request_device(owner_session)
         psql(f"SELECT fv_internal.approve_first_device('{owner_fields['p_device']}', '{owner_fingerprint}');")
         rpc('bind_device', owner_fields, owner_session, status=204)
         assert rpc('workspace', owner_fields, owner_session)['role'] == 'administrator'
@@ -424,7 +463,7 @@ def run(scratch: Path, *, mobile: bool, objects: bool):
             'p_relationship': 'member'}, owner_session)
         rpc('accept_invite', {'p_invite': invite}, outsider_session, status=403)
         assert rpc('accept_invite', {'p_invite': invite}, member_session) == family
-        member_fields, member_fingerprint = request_device(member_session)
+        member_fields, member_fingerprint, member_keys = request_device(member_session)
         rpc('bind_device', member_fields, member_session, status=403)
         rpc('approve_device', {**owner_fields, 'p_candidate': member_fields['p_device'], 'p_fingerprint': member_fingerprint}, owner_session, status=204)
         rpc('bind_device', member_fields, member_session, status=204)
@@ -433,17 +472,31 @@ def run(scratch: Path, *, mobile: bool, objects: bool):
         rpc('workspace', {**member_fields, 'p_proof': secrets.token_hex(32)}, member_session, status=403)
         check_ledger(rpc, family, owner_fields, owner_session, member_fields, member_session)
         rpc('document_list', owner_fields, outsider_session, status=403)
+        users = [
+            {'email': 'owner@example.invalid', 'password': owner_password, 'keys': owner_keys, **owner_fields,
+             'member_id': rpc('workspace', owner_fields, owner_session)['member_id']},
+            {'email': 'member@example.invalid', 'password': member_password, 'keys': member_keys, **member_fields,
+             'member_id': rpc('workspace', member_fields, member_session)['member_id']},
+        ]
         if storage_url is None:
             check_document_access(rpc, family, owner_fields, owner_session, member_fields, member_session, worker)
+            if mobile:
+                check_mobile(scratch, auth_url, rest_url, family, users)
         else:
-            with local_gateway(scratch, rest_url, storage_url, anon, worker) as gateway:
-                check_document_access(rpc, family, owner_fields, owner_session, member_fields, member_session, worker,
-                                      gateway=gateway, storage_url=storage_url)
-        if mobile:
-            check_mobile(scratch, auth_url, rest_url, family, [
-                {'email': 'owner@example.invalid', 'password': owner_password, **owner_fields},
-                {'email': 'member@example.invalid', 'password': member_password, **member_fields},
-            ])
+            with local_gateway(scratch, rest_url, storage_url, anon, worker) as (gateway, function_url):
+                if mobile:
+                    late_fields, fingerprint, late_keys = request_device(member_session)
+                    late = {**users[1], **late_fields, 'keys': late_keys}
+
+                    def approve_late():
+                        rpc('approve_device', {**owner_fields, 'p_candidate': late_fields['p_device'],
+                            'p_fingerprint': fingerprint}, owner_session, status=204)
+
+                    check_mobile(scratch, auth_url, rest_url, family, users, object_url=storage_url,
+                                 function_url=function_url, late_device=late, approve_late=approve_late)
+                else:
+                    check_document_access(rpc, family, owner_fields, owner_session, member_fields, member_session, worker,
+                                          gateway=gateway, storage_url=storage_url)
         request(auth_url + '/logout?scope=local', {}, token=member_session, status=204)
         rpc('workspace', member_fields, member_session, status=403)
         rpc('sync_pull', {**member_fields, 'p_after': 0}, member_session, status=403)

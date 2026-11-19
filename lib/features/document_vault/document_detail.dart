@@ -150,19 +150,22 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                   Text(expiry),
                 if (_error != null) FailureNotice(_error!),
                 const SizedBox(height: 12),
-                if (!repository.session.identity.isCloud)
+                if (!repository.session.identity.isCloud ||
+                    repository.sharingAvailable && !archived)
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
                       if (!archived) ...[
-                        OutlinedButton.icon(
-                          onPressed: _busy
-                              ? null
-                              : () => context.push('/document/${doc.id}/edit'),
-                          icon: const Icon(Icons.edit_outlined),
-                          label: const Text('Edit details'),
-                        ),
+                        if (!repository.session.identity.isCloud)
+                          OutlinedButton.icon(
+                            onPressed: _busy
+                                ? null
+                                : () =>
+                                      context.push('/document/${doc.id}/edit'),
+                            icon: const Icon(Icons.edit_outlined),
+                            label: const Text('Edit details'),
+                          ),
                         OutlinedButton.icon(
                           onPressed: _busy
                               ? null
@@ -175,37 +178,39 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                           icon: const Icon(Icons.add),
                           label: const Text('Add version'),
                         ),
-                        OutlinedButton.icon(
+                        if (!repository.session.identity.isCloud)
+                          OutlinedButton.icon(
+                            onPressed: _busy
+                                ? null
+                                : () => _change(
+                                    repository,
+                                    () => _link(repository, doc.id),
+                                  ),
+                            icon: const Icon(Icons.link),
+                            label: const Text('Link record'),
+                          ),
+                      ],
+                      if (!repository.session.identity.isCloud)
+                        TextButton.icon(
                           onPressed: _busy
                               ? null
                               : () => _change(
                                   repository,
-                                  () => _link(repository, doc.id),
+                                  () => repository.archive(
+                                    doc.id,
+                                    doc.revision,
+                                    restore: archived,
+                                  ),
                                 ),
-                          icon: const Icon(Icons.link),
-                          label: const Text('Link record'),
+                          icon: Icon(
+                            archived
+                                ? Icons.unarchive_outlined
+                                : Icons.archive_outlined,
+                          ),
+                          label: Text(
+                            archived ? 'Restore document' : 'Archive document',
+                          ),
                         ),
-                      ],
-                      TextButton.icon(
-                        onPressed: _busy
-                            ? null
-                            : () => _change(
-                                repository,
-                                () => repository.archive(
-                                  doc.id,
-                                  doc.revision,
-                                  restore: archived,
-                                ),
-                              ),
-                        icon: Icon(
-                          archived
-                              ? Icons.unarchive_outlined
-                              : Icons.archive_outlined,
-                        ),
-                        label: Text(
-                          archived ? 'Restore document' : 'Archive document',
-                        ),
-                      ),
                     ],
                   ),
                 const SizedBox(height: 18),
@@ -283,19 +288,13 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
   bool _saving = false;
 
   Future<void> _load(DocumentRepository repository) async {
-    final detail = await repository.document(widget.documentId);
-    final versions = await repository.versions(widget.documentId);
-    final version = versions
-        .where((row) => row.id == widget.versionId)
-        .firstOrNull;
-    if (version == null) {
-      throw const AppFailure(
-        FailureCode.validation,
-        'This version is unavailable.',
-      );
-    }
+    final info = await repository.describeVersion(
+      widget.documentId,
+      widget.versionId,
+    );
+    final version = info.version;
     final bytes = await repository.read(
-      detail.id,
+      widget.documentId,
       version.id,
       DocumentAccess.preview,
     );
@@ -304,7 +303,7 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
       return;
     }
     _version = version;
-    _title = detail.title;
+    _title = info.title;
     _data = bytes;
     if (version.mimeType != 'application/pdf') {
       _image = ResizeImage(

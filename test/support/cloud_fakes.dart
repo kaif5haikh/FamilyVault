@@ -1,5 +1,6 @@
 import 'package:familyvault/core/errors/app_failure.dart';
 import 'package:familyvault/features/auth/cloud_access_gateway.dart';
+import 'package:familyvault/features/document_vault/document_transport.dart';
 
 class EnrollmentGateway implements CloudAccessGateway {
   EnrollmentGateway({required this.userId, required this.memberId});
@@ -7,6 +8,8 @@ class EnrollmentGateway implements CloudAccessGateway {
   String? userId;
   @override
   Stream<String?> get identityChanges => const Stream.empty();
+  @override
+  DocumentTransport? documentTransport(DeviceProof device) => null;
   final String memberId;
   String state = 'pending';
   String? family, responseFamily;

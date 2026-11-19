@@ -114,7 +114,7 @@ final documentRepositoryProvider = Provider.autoDispose<DocumentRepository?>((
   ref,
 ) {
   final session = ref.watch(vaultProvider).session;
-  return session == null || session.closed ? null : DocumentRepository(session);
+  return session == null || session.closed ? null : session.documents;
 });
 
 final class PendingDocumentImport {

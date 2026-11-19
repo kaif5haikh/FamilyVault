@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/errors/app_failure.dart';
+import '../../core/sync/live_sync.dart';
 import '../../shared/widgets/vault_widgets.dart';
 import '../finance/data/ledger_repository.dart';
 import '../foundation/foundation_pages.dart' show VaultPage;
@@ -102,12 +103,10 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
     final repository = ref.watch(documentRepositoryProvider);
     final selection = ref.watch(documentIntakeProvider);
     if (repository == null) return const SizedBox.shrink();
-    if (repository.session.identity.isCloud) {
+    if (repository.session.identity.isCloud && !repository.sharingAvailable) {
       return const VaultContent(
         children: [
-          Text(
-            'Shared document storage is in development. You can add documents in your local vault.',
-          ),
+          Text('Shared document storage is unavailable for this account.'),
         ],
       );
     }
@@ -128,6 +127,68 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
             ),
           ],
         ),
+        if (repository.sharingAvailable) ...[
+          if (repository.session.sync case final sync?)
+            StreamBuilder<SyncFeedback>(
+              stream: sync.changes,
+              initialData: sync.status,
+              builder: (context, snapshot) {
+                final feedback = snapshot.data;
+                final failure =
+                    feedback?.documentFailure ??
+                    (feedback?.failure?.code == FailureCode.network
+                        ? feedback?.failure
+                        : null);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextButton.icon(
+                      onPressed: feedback?.checking == true ? null : sync.check,
+                      icon: const Icon(Icons.sync),
+                      label: const Text('Check for shared documents'),
+                    ),
+                    if (failure != null) FailureNotice(failure),
+                  ],
+                );
+              },
+            ),
+          StreamBuilder<List<VaultDocumentUpload>>(
+            stream: repository.watchUploads(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) return FailureNotice(snapshot.error!);
+              final uploads = snapshot.data;
+              if (uploads == null || uploads.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionHeading('Files saved on this device'),
+                  for (final job in uploads)
+                    Card.outlined(
+                      child: ListTile(
+                        leading: const Icon(Icons.cloud_upload_outlined),
+                        title: Text(job.title),
+                        subtitle: Text(switch (job.state) {
+                          'acknowledged' =>
+                            'Shared. Waiting for the family list to refresh.',
+                          'conflicted' =>
+                            'The family document changed. Your copy is here.',
+                          'rejected' =>
+                            'Could not share this version. Your copy is here.',
+                          _ => 'Waiting for the family service to confirm this file.',
+                        }),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => context.push(
+                          '/document/${job.documentId}/version/${job.id}',
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
         if (selection?.belongsTo(repository.session.identity) == true)
           ListTile(
             leading: const Icon(Icons.description_outlined),
@@ -351,6 +412,7 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
       }
       if (mounted) context.go('/documents');
       if (selected != null) await intake.clear();
+      unawaited(repository.session.sync?.check());
     } catch (error) {
       if (mounted) setState(() => _error = error);
     } finally {

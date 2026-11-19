@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
+import '../../features/document_vault/document_repository.dart';
 import '../../features/finance/data/ledger_repository.dart';
 import '../database/app_database.dart';
 import '../database/encrypted_connection.dart';
@@ -42,6 +43,7 @@ final class VaultSession {
   final VaultKeys keys;
   final Directory directory;
   final LedgerRepository ledger;
+  late final documents = DocumentRepository(this);
   LiveSync? _sync;
   LiveSync? get sync => _sync;
   bool closed = false;

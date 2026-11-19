@@ -65,6 +65,14 @@ The test drives the actual handler with synthetic Auth and Storage replies. The
 local Data API check separately verifies the RPC boundary with genuine Auth
 sessions and a worker receipt fixture. [Deno release](https://github.com/denoland/deno/releases/tag/v2.9.8)
 
+Pull the pinned Supabase Storage image listed in `tool/check_supabase.py` to
+exercise actual signed upload, verification and download with
+`python3 -B tool/check_supabase.py --storage`. Add `--mobile` to run the Dart
+client through those local endpoints. The combined check uses OpenSSL to
+generate test device public keys. It exercises a lost finalization reply, a
+competing version and backfill to a newly approved third device. All object
+bytes and accounts are disposable fixtures.
+
 The gateway is designed for an isolated Supabase development project with
 Storage enabled. Apply the app migrations, then apply
 `supabase/storage/document_bucket.sql` after Storage creates its schema. The

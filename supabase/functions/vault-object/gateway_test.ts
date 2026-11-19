@@ -150,3 +150,11 @@ Deno.test("approved download streams ciphertext without reusable public access",
     "exact ciphertext returned",
   );
 });
+
+Deno.test("download streaming enforces the approved ciphertext size", async () => {
+  for (const stored of [bytes.slice(1), new Uint8Array(bytes.length + 1)]) {
+    const reply = await fixture({ stored }).send("download");
+    const corrupt = await reply.arrayBuffer().then(() => false, () => true);
+    require(corrupt, "inconsistent stored bytes stopped the response stream");
+  }
+});

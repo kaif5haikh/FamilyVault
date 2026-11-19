@@ -1,8 +1,9 @@
 # ADR 0016 Shared document delivery
 
-The PostgreSQL receipt protocol, private bucket policy, Deno gateway and
-recipient key codec are implemented and tested in development. Flutter's
-foreground upload queue and shared document views are in progress.
+The PostgreSQL receipt protocol, private bucket policy, Deno gateway,
+recipient key codec and Flutter transfer queue are implemented and tested in
+development. Shared views use confirmed versions and show pending files from
+the current device.
 
 Documents belong to the family. The owner ID provides context while the enrolled
 member and device determine access. The server keeps a document revision, its

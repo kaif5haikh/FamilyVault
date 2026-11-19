@@ -299,3 +299,14 @@ separately. Continue with the business UI and executable backend policies.
   writes gated on an existing device-addressed grant.
 - Native PostgreSQL access tests and the joined local Storage test passed.
   Client scheduling and independent receiver verification are the next unit.
+
+## 2026-11-19 — shared Flutter document versions
+
+- Verified `83c618f` on the public origin. Connected the staged upload queue
+  to Supabase and the gateway. Added a separate document sync status and
+  authenticated receive path with metadata decryption and on-demand caching.
+- The first joined Dart run found a duplicate test matcher import. Fixed it.
+  The rerun and the five-gateway-test full check passed. The joined test uses
+  three synthetic device profiles to verify a lost reply, a competing version,
+  late key delivery and actual ciphertext download.
+- Continue with shared changes to document details, archive and record links.

@@ -6,10 +6,16 @@ import '../errors/app_failure.dart';
 import 'sync_coordinator.dart';
 
 final class SyncFeedback {
-  const SyncFeedback({this.checking = false, this.pending, this.failure});
+  const SyncFeedback({
+    this.checking = false,
+    this.pending,
+    this.failure,
+    this.documentFailure,
+  });
   final bool checking;
   final int? pending;
   final AppFailure? failure;
+  final AppFailure? documentFailure;
 }
 
 /// Foreground polling recovers from missed notifications and connectivity loss.
@@ -19,10 +25,12 @@ final class LiveSync {
     required this.worker,
     required this.revocations,
     required this.onRevoked,
+    this.checkDocuments,
   });
   final SyncCoordinator worker;
   final Stream<void> revocations;
   final Future<void> Function(AppFailure) onRevoked;
+  final Future<void> Function()? checkDocuments;
   final _events = StreamController<SyncFeedback>.broadcast();
   SyncFeedback _status = const SyncFeedback();
   SyncFeedback get status => _status;
@@ -53,19 +61,35 @@ final class LiveSync {
   Future<void> check() async {
     if (_closed || _checking) return;
     _checking = true;
-    _publish(SyncFeedback(checking: true, pending: _status.pending));
-    AppFailure? failure;
+    _publish(
+      SyncFeedback(
+        checking: true,
+        pending: _status.pending,
+        documentFailure: _status.documentFailure,
+      ),
+    );
+    AppFailure? failure, documentFailure;
     try {
-      await worker.run();
-    } on AppFailure catch (error) {
-      failure = error;
-    }
-    if (_closed) return;
-    if (failure?.code == FailureCode.unauthorized) {
-      await onRevoked(failure!);
-      return;
-    }
-    try {
+      try {
+        await worker.run();
+      } on AppFailure catch (error) {
+        failure = error;
+      }
+      if (_closed) return;
+      if (failure?.code == FailureCode.unauthorized) {
+        await onRevoked(failure!);
+        return;
+      }
+      try {
+        await checkDocuments?.call();
+      } on AppFailure catch (error) {
+        documentFailure = error;
+      }
+      if (_closed) return;
+      if (documentFailure?.code == FailureCode.unauthorized) {
+        await onRevoked(documentFailure!);
+        return;
+      }
       final db = worker.db;
       final row = await db
           .customSelect(
@@ -74,7 +98,13 @@ final class LiveSync {
             readsFrom: {db.pendingMutations},
           )
           .getSingle();
-      _publish(SyncFeedback(failure: failure, pending: row.read<int>('total')));
+      _publish(
+        SyncFeedback(
+          failure: failure,
+          pending: row.read<int>('total'),
+          documentFailure: documentFailure,
+        ),
+      );
     } catch (_) {
       _publish(
         const SyncFeedback(

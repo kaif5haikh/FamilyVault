@@ -1,12 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/errors/app_failure.dart';
+import '../../core/database/app_database.dart';
 import '../../core/sync/sync_protocol.dart';
+import '../document_vault/document_key_grant.dart';
+import '../document_vault/document_transport.dart';
+
+part 'supabase_document_transport.dart';
 
 typedef CloudJson = Map<String, Object?>;
 
@@ -36,6 +42,7 @@ abstract interface class CloudAccessGateway {
   Future<CloudJson> workspace(DeviceProof device);
   Future<List<CloudJson>> chart(DeviceProof device);
   SyncTransport syncTransport(DeviceProof device);
+  DocumentTransport? documentTransport(DeviceProof device);
   Future<CloudJson> administratorView(DeviceProof device);
   Future<void> invite(
     DeviceProof device,
@@ -136,6 +143,10 @@ final class SupabaseAccessGateway implements CloudAccessGateway {
   @override
   SyncTransport syncTransport(DeviceProof device) =>
       _SupabaseSync(this, device);
+
+  @override
+  DocumentTransport documentTransport(DeviceProof device) =>
+      _SupabaseDocuments(this, device);
 
   @override
   Future<CloudJson> administratorView(DeviceProof device) =>
@@ -243,9 +254,12 @@ final class SupabaseAccessGateway implements CloudAccessGateway {
     'The family service is unavailable. Check your connection and try again.',
   );
 
-  Future<T> _request<T>(Future<T> Function() action) async {
+  Future<T> _request<T>(
+    Future<T> Function() action, {
+    Duration timeout = const Duration(seconds: 20),
+  }) async {
     try {
-      return await action().timeout(const Duration(seconds: 20));
+      return await action().timeout(timeout);
     } on AppFailure {
       rethrow;
     } on AuthRetryableFetchException {

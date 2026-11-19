@@ -296,3 +296,16 @@ Record exact command, date, outcome and material platform/provider limits below.
   grant, and idempotent backfill with a single audit event. Transcript
   `.cache/checks/m08-backfill-db-20261119-a.txt`. The local Storage check also
   passed with the new migration. Transcript `.cache/checks/m08-backfill-storage-20261119-a.txt`.
+
+## M08c2b — 2026-11-19 connected document delivery
+
+- `python3 -B tool/check_supabase.py --mobile --storage` passed the Dart ledger
+  and encrypted document round trips with real local Auth, PostgREST, Storage
+  and the Deno gateway. Three separately keyed app sessions tested delayed
+  acknowledgement after a lost finalization response, encrypted download,
+  cross-member owner and creator attribution, two competing uploads and keys
+  for a newly enrolled device. Transcript `.cache/checks/m08-mobile-doc-provider-20261119-c.txt`.
+- `bash tool/check.sh` passed 108 Flutter tests, five Deno tests, analyzer,
+  PostgreSQL, proposal checks and the package advisory query. Two provider
+  tests were opt-in. The Deno test rejects a truncated or longer object stream
+  using the authorized length. Transcript `.cache/checks/m08-mobile-doc-full-20261119-a.txt`.

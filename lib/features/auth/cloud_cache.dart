@@ -383,6 +383,7 @@ final class CloudWorkspaceCache {
                 (t) => t.entityType.isIn([
                   'document',
                   'document_transfer',
+                  'document_receipt',
                   'document_access',
                   'document_link',
                 ]),

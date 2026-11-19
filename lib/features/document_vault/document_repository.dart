@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:drift/drift.dart';
@@ -12,8 +13,12 @@ import '../../core/errors/app_failure.dart';
 import '../../core/security/sealed_file.dart';
 import '../../core/security/vault_lifecycle.dart';
 import '../finance/data/ledger_repository.dart';
+import 'document_key_grant.dart';
+import 'document_transport.dart';
 
 part 'document_transfer_queue.dart';
+part 'shared_document_sync.dart';
+part 'shared_document_replay.dart';
 
 enum DocumentFormat {
   pdf('application/pdf', 'pdf'),
@@ -86,6 +91,8 @@ enum DocumentAccess { preview, download }
 final class DocumentRepository {
   DocumentRepository(this.session);
   final VaultSession session;
+  _SharedDocumentSync? _sharing;
+  bool get sharingAvailable => _sharing != null;
   AppDatabase get _db => session.db;
   MutationWriter get _writer => session.ledger.mutations;
   String get _familyId => session.identity.familyId;
@@ -109,8 +116,23 @@ final class DocumentRepository {
     if (session.closed || session.keys.destroyed) throw _locked;
   }
 
+  void attachSharing(
+    DocumentTransport transport,
+    void Function() requireSession,
+  ) {
+    if (session.closed || !session.identity.isCloud || _sharing != null) {
+      throw StateError('Document sharing is unavailable.');
+    }
+    _sharing = _SharedDocumentSync(this, transport, requireSession);
+  }
+
+  Future<void> synchronize(DocumentRoster roster) async {
+    await _sharing?.run(roster);
+  }
+
   Future<void> _authorize({bool writing = false}) async {
     _checkOpen();
+    _sharing?.requireSession();
     if (writing && session.identity.isCloud) {
       throw const AppFailure(
         FailureCode.configuration,
@@ -118,6 +140,7 @@ final class DocumentRepository {
       );
     }
     await _writer.authorize();
+    _checkOpen();
   }
 
   Directory get _files =>
@@ -357,43 +380,55 @@ final class DocumentRepository {
     );
   }
 
-  Future<({VaultDocumentVersion version, String title})> describeVersion(
-    String documentId,
-    String versionId,
-  ) => storageBoundary(() async {
-    await _authorize();
-    final version =
-        await (_db.select(_db.vaultDocumentVersions)..where(
-              (t) =>
-                  t.familyId.equals(_familyId) &
-                  t.documentId.equals(documentId) &
-                  t.id.equals(versionId),
-            ))
-            .getSingleOrNull();
-    if (version != null) {
-      return (version: version, title: (await _load(documentId)).title);
-    }
-    if (session.identity.isCloud) {
-      final job =
-          await (_db.select(_db.vaultDocumentUploads)..where(
+  Future<({VaultDocumentVersion version, String title, bool confirmed})>
+  describeVersion(String documentId, String versionId) => storageBoundary(
+    () async {
+      await _authorize();
+      final version =
+          await (_db.select(_db.vaultDocumentVersions)..where(
                 (t) =>
                     t.familyId.equals(_familyId) &
                     t.documentId.equals(documentId) &
-                    t.id.equals(versionId) &
-                    t.deviceId.equals(_deviceId),
+                    t.id.equals(versionId),
               ))
               .getSingleOrNull();
-      if (job != null) return (version: job.fileVersion, title: job.title);
-    }
-    throw _missing;
-  });
+      if (version != null) {
+        return (
+          version: version,
+          title: (await _load(documentId)).title,
+          confirmed: true,
+        );
+      }
+      if (session.identity.isCloud) {
+        final job =
+            await (_db.select(_db.vaultDocumentUploads)..where(
+                  (t) =>
+                      t.familyId.equals(_familyId) &
+                      t.documentId.equals(documentId) &
+                      t.id.equals(versionId) &
+                      t.deviceId.equals(_deviceId),
+                ))
+                .getSingleOrNull();
+        if (job != null) {
+          return (version: job.fileVersion, title: job.title, confirmed: false);
+        }
+      }
+      throw _missing;
+    },
+  );
 
   Future<Uint8List> read(
     String documentId,
     String versionId,
     DocumentAccess purpose,
   ) => storageBoundary(() async {
-    final version = (await describeVersion(documentId, versionId)).version;
+    final info = await describeVersion(documentId, versionId);
+    final version = info.version;
+    if (info.confirmed &&
+        _sharing != null &&
+        !await ciphertext(versionId).exists()) {
+      await _sharing!.cache(version);
+    }
     final context = _context(
       documentId,
       versionId,

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart' as hash;
 import 'package:cryptography/cryptography.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../core/errors/app_failure.dart';
 import '../../core/security/sealed_file.dart';
@@ -18,12 +19,27 @@ final class DocumentDeviceKeys {
   });
   final String id, signing, exchange;
 
-  factory DocumentDeviceKeys.fromJson(Map<String, Object?> row) =>
-      DocumentDeviceKeys(
-        id: row['id']! as String,
-        signing: row['signing_public']! as String,
-        exchange: row['exchange_public']! as String,
-      );
+  factory DocumentDeviceKeys.fromJson(Map<String, Object?> row) {
+    const invalid = AppFailure(
+      FailureCode.integrity,
+      'Family device keys could not be verified.',
+    );
+    final id = row['id'],
+        signing = row['signing_public'],
+        exchange = row['exchange_public'];
+    if (id is! String ||
+        !Uuid.isValidUUID(fromString: id) ||
+        signing is! String ||
+        exchange is! String) {
+      throw invalid;
+    }
+    final fingerprint = hash.sha256.convert([
+      ...DocumentKeyGrant._hexBytes(signing, 32),
+      ...DocumentKeyGrant._hexBytes(exchange, 32),
+    ]).toString();
+    if (row['fingerprint'] != fingerprint) throw invalid;
+    return DocumentDeviceKeys(id: id, signing: signing, exchange: exchange);
+  }
 }
 
 /// One encrypted content key for one recipient and one immutable file version.
