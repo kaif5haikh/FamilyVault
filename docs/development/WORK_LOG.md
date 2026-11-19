@@ -393,3 +393,16 @@ separately. Continue with the business UI and executable backend policies.
   Corrected the short-upload fixture to fail before storing the final block.
   The 11 targeted tests and the full 123-test check passed.
 - Continue with scoped journals and typed shared finance records.
+
+## 2026-11-19 Shared asset accounting
+
+- Verified `78f8a0f` on the public SSH origin. Added PostgreSQL managed journal
+  scope, typed asset tables and exact-effects checks for valuation, rent and
+  disposal. The receiving Dart cache applies records and receipts together.
+- The first provider replay found that the generated update omitted null
+  fields when restoring a closed asset. Replayed explicit nulls and checked
+  removal of an optional property detail and a disposal tombstone. Two
+  different family members passed all shared asset operations in the local
+  provider, which also rejected an invalid value, a direct rent reversal and
+  a stale concurrent edit.
+- Continue with shared asset links, loan repayments and business accounting.

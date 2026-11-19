@@ -6,6 +6,8 @@ import '../../../core/sync/canonical_json.dart';
 import '../../../core/sync/database_record.dart';
 import '../../../core/sync/sync_protocol.dart';
 
+part 'ledger_module_replay.dart';
+
 /// Replays a server-accepted finance operation using the same local constraints.
 /// The caller owns the transaction and commits the cursor with the resulting rows.
 final class LedgerReplay {
@@ -46,13 +48,24 @@ final class LedgerReplay {
         if (envelope.hasBundle) {
           await _postJournal(syncObject(envelope.bundle['adjustment']));
         }
+      case 'asset':
+        before = await _asset(change);
       default:
         throw syncIntegrityFailure;
     }
     final fact = envelope.hasBundle
         ? {...record, '_bundle': envelope.bundle}
         : record;
-    await _audit(change, envelope.entityType, fact, before: before);
+    await _audit(
+      change,
+      envelope.entityType,
+      fact,
+      before: before,
+      action:
+          before?['deleted_at_us'] != null && record['deleted_at_us'] == null
+          ? 'restore'
+          : null,
+    );
   }
 
   Future<SyncJson?> _account(SyncJson raw, int base) async {
@@ -66,7 +79,9 @@ final class LedgerReplay {
       throw syncIntegrityFailure;
     }
     if ((old?.revision ?? 0) != base) throw SyncReplayConflict(updated.id, raw);
-    await db.into(db.ledgerAccounts).insertOnConflictUpdate(updated);
+    await db
+        .into(db.ledgerAccounts)
+        .insertOnConflictUpdate(updated.toCompanion(false));
     return old == null ? null : databaseRecord(old);
   }
 
@@ -93,7 +108,9 @@ final class LedgerReplay {
         throw SyncReplayConflict(active.id, raw);
       }
     }
-    await db.into(db.monthlyBudgets).insertOnConflictUpdate(updated);
+    await db
+        .into(db.monthlyBudgets)
+        .insertOnConflictUpdate(updated.toCompanion(false));
     return old == null ? null : databaseRecord(old);
   }
 
@@ -133,14 +150,15 @@ final class LedgerReplay {
   Future<void> _cancel(
     SyncChange change,
     SyncJson originalAfter,
-    SyncJson reversal,
-  ) async {
+    SyncJson reversal, {
+    int? originalBase,
+  }) async {
     final updated = _journal(originalAfter);
     final old = await (db.select(
       db.ledgerJournals,
     )..where((t) => t.id.equals(updated.id))).getSingleOrNull();
     if (old == null ||
-        old.revision != change.envelope.baseRevision ||
+        old.revision != (originalBase ?? change.envelope.baseRevision) ||
         old.deletedAtUs != null) {
       throw SyncReplayConflict(updated.id, originalAfter);
     }

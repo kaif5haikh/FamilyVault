@@ -418,3 +418,20 @@ Record exact command, date, outcome and material platform/provider limits below.
   `.cache/checks/m09-schedule-full-20261119-a.txt`.
 - `flutter build apk --debug --no-pub` passed in 15.5 seconds. Transcript
   `.cache/checks/m09-schedule-android-20261119-a.txt`.
+
+## M06c3a Shared assets on 2026-11-19
+
+- `bash tool/check_backend.sh` applied the scoped journal and asset migrations
+  and passed the existing family authorization, documents and ledger SQL
+  suite. Transcript `.cache/checks/m06-shared-assets-sql-20261119-a.txt`.
+- `python3 -B tool/check_supabase.py --mobile --storage` passed on the two
+  enrolled finance devices and the three enrolled document devices. The asset
+  checks exercised exact large paise values, denial of a wrong valuation,
+  duplicate receipt acknowledgement, clearing optional details, retained
+  ownership and quote history, scoped rent reversal, disposal, restoration,
+  metal pricing and concurrent changes. Transcript
+  `.cache/checks/m06-asset-provider-20261119-g.txt`.
+- `bash tool/check.sh` passed analyzer, 123 Flutter tests, five Deno tests,
+  PostgreSQL and proposal checks and the dependency advisory query. The
+  provider tests ran separately. Transcript
+  `.cache/checks/m06-asset-full-20261119-a.txt`.

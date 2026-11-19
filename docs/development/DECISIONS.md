@@ -130,3 +130,8 @@ resumable attempts, independent verified receipts and clean fixture recovery.
 
 ADR 0022 records opt-in capture while the vault is open, per-schedule keys
 and receipts, and optional delivery to the explicitly selected Drive account.
+
+## 2026-11-19 Shared holdings
+
+ADR 0023 records typed holdings, managed ledger accounts, validation of
+scoped journal effects and review of conflicting accepted revisions.

@@ -1,12 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:familyvault/core/database/app_database.dart';
+import 'package:familyvault/core/errors/app_failure.dart';
 import 'package:familyvault/core/finance/money.dart';
 import 'package:familyvault/core/security/vault_identity.dart';
+import 'package:familyvault/core/sync/canonical_json.dart';
 import 'package:familyvault/core/sync/database_record.dart';
 import 'package:familyvault/core/sync/sync_coordinator.dart';
+import 'package:familyvault/core/sync/sync_protocol.dart';
+import 'package:familyvault/features/assets/data/asset_repository.dart';
 import 'package:familyvault/features/auth/cloud_access_gateway.dart';
 import 'package:familyvault/features/auth/cloud_cache.dart';
 import 'package:familyvault/features/finance/data/ledger_replay.dart';
@@ -123,6 +127,271 @@ void main() {
         expect(outbox.single.state, 'acknowledged');
         expect(outbox.single.acceptedRevision, greaterThan(0));
       }
+
+      final local = AssetRepository(first.vault.ledger);
+      final remote = AssetRepository(second.vault.ledger);
+      const property = PropertyDraft(
+        city: 'Mumbai',
+        location: 'Synthetic site',
+      );
+      final holding = await local.create(
+        AssetDraft(
+          name: 'Synthetic property',
+          kind: AssetKind.property,
+          property: const PropertyDraft(
+            city: 'Mumbai',
+            location: 'Synthetic site',
+            areaMilli: 7500,
+            areaUnit: 'm²',
+          ),
+          familyOwnershipBps: 5000,
+          purchaseTotalMinor: 3001,
+          purchasedOn: '2026-01-01',
+          fundingAccountId: account.id,
+          currentTotalMinor: amount,
+          valuedOn: '2026-04-01',
+          owners: [
+            OwnerDraft(
+              'Synthetic creator',
+              2500,
+              memberId: first.vault.identity.memberId,
+            ),
+          ],
+        ),
+      );
+      final pending = await (first.vault.db.select(
+        first.vault.db.pendingMutations,
+      )..where((t) => t.entityId.equals(holding))).getSingle();
+      final envelope = SyncEnvelope.verify(
+        pending.payloadJson,
+        pending.payloadDigest,
+      );
+      final quotes = envelope.bundle['valuations']! as List<Object?>;
+      final invalid = canonicalJson({
+        ...envelope.fields,
+        'bundle': {
+          ...envelope.bundle,
+          'valuations': [
+            syncObject(quotes.first),
+            {...syncObject(quotes.last), 'family_value_minor': 1},
+          ],
+        },
+      });
+      await expectLater(
+        first.sync.transport.push(
+          SyncEnvelope.verify(invalid, payloadDigest(invalid)),
+        ),
+        throwsA(
+          isA<AppFailure>().having(
+            (error) => error.code,
+            'code',
+            FailureCode.validation,
+          ),
+        ),
+      );
+      await first.sync.run();
+      final receipt = await first.sync.transport.push(envelope);
+      expect(receipt.operationId, pending.operationId);
+      await second.sync.run();
+      final shared = await remote.snapshot();
+      expect(shared.latest(holding)!.familyValueMinor, 4503599627370497);
+      final sharedAsset = await remote.asset(holding);
+      expect(sharedAsset.createdBy, first.vault.identity.memberId);
+      expect(shared.properties.single.city, 'Mumbai');
+
+      await remote.edit(
+        holding,
+        sharedAsset.revision,
+        name: 'Synthetic corrected property',
+        notes: 'Synthetic test metadata',
+        property: property,
+        owners: [
+          OwnerDraft(
+            'Synthetic editor',
+            3000,
+            memberId: second.vault.identity.memberId,
+          ),
+        ],
+      );
+      await remote.value(
+        holding,
+        (await remote.asset(holding)).revision,
+        total: Money.fromMinor(6001),
+        valuedOn: '2026-02-01',
+        notes: 'Synthetic backdated quote',
+      );
+      await remote.changeOwnership(
+        holding,
+        (await remote.asset(holding)).revision,
+        shareBps: 6000,
+        wholeValue: Money.fromMinor(100001),
+        effectiveOn: '2026-05-01',
+        reason: 'Synthetic ownership change',
+      );
+      await remote.recordRent(
+        holding,
+        (await remote.asset(holding)).revision,
+        amount: Money.fromMinor(5100),
+        accountId: account.id,
+        receivedOn: '2026-06-01',
+        description: 'Synthetic rent',
+      );
+      final rent =
+          await (second.vault.db.select(second.vault.db.aggregateJournalLinks)
+                ..where(
+                  (t) =>
+                      t.aggregateId.equals(holding) & t.purpose.equals('rent'),
+                ))
+              .getSingle();
+      await second.sync.run();
+      final rentRevision = (await remote.asset(holding)).revision;
+      await remote.reverseRent(
+        holding,
+        rentRevision,
+        rent.journalId,
+        'Synthetic rent correction',
+      );
+      final rentCorrection =
+          await (second.vault.db.select(second.vault.db.pendingMutations)
+                ..where(
+                  (t) =>
+                      t.entityId.equals(holding) &
+                      t.baseRevision.equals(rentRevision),
+                ))
+              .getSingle();
+      final stagedCorrection = SyncEnvelope.verify(
+        rentCorrection.payloadJson,
+        rentCorrection.payloadDigest,
+      );
+      final journalRows = stagedCorrection.bundle['journals']! as List<Object?>;
+      final original = syncObject(journalRows.first),
+          reversal = syncObject(journalRows.last);
+      final wrongScope = canonicalJson({
+        ...stagedCorrection.fields,
+        'entity_id': reversal['id'],
+        'entity_type': 'journal_reversal',
+        'base_revision': 1,
+        'record': reversal,
+        'bundle': {'original': original},
+      });
+      await expectLater(
+        second.sync.transport.push(
+          SyncEnvelope.verify(wrongScope, payloadDigest(wrongScope)),
+        ),
+        throwsA(
+          isA<AppFailure>().having(
+            (error) => error.code,
+            'code',
+            FailureCode.unauthorized,
+          ),
+        ),
+      );
+      await remote.close(
+        holding,
+        (await remote.asset(holding)).revision,
+        closedOn: '2026-07-01',
+        proceeds: Money.fromMinor(50875),
+        accountId: account.id,
+        reason: 'Synthetic disposal',
+      );
+      await second.sync.run();
+      await first.sync.run();
+      final closed = await local.asset(holding);
+      expect(closed.createdBy, first.vault.identity.memberId);
+      expect(closed.updatedBy, second.vault.identity.memberId);
+      expect(closed.closedOn, '2026-07-01');
+      expect(
+        await first.vault.ledger.accountBalance(closed.accountId),
+        BigInt.zero,
+      );
+      final recorded = await local.snapshot();
+      expect(recorded.properties.single.areaMilli, isNull);
+      expect(
+        recorded.owners.where((owner) => owner.deletedAtUs != null),
+        hasLength(1),
+      );
+      expect(recorded.latest(holding)!.familyValueMinor, 60001);
+      expect(
+        recorded.valuations.where((quote) => quote.source == 'carry_forward'),
+        hasLength(1),
+      );
+
+      await local.value(
+        holding,
+        closed.revision,
+        total: Money.fromMinor(120001),
+        valuedOn: '2026-07-01',
+        notes: 'Synthetic final-day quote',
+      );
+      await local.undoClose(
+        holding,
+        (await local.asset(holding)).revision,
+        reason: 'Synthetic disposal correction',
+      );
+      final gold = await local.create(
+        const AssetDraft(
+          name: 'Synthetic gold',
+          kind: AssetKind.gold,
+          metal: MetalDraft(
+            metal: 'gold',
+            weightMg: 2000,
+            purityPpm: 1000000,
+            purityKind: 'nominal',
+            karat: 24,
+          ),
+        ),
+      );
+      await local.value(
+        gold,
+        (await local.asset(gold)).revision,
+        total: Money.fromMinor(401),
+        valuedOn: '2026-07-01',
+        notes: 'Synthetic metal quote',
+        metalRate: Money.fromMinor(200),
+        quotePurityPpm: 997500,
+      );
+      await first.sync.run();
+      await second.sync.run();
+      final restored = await remote.asset(holding);
+      expect(restored.closedOn, isNull);
+      expect(
+        await second.vault.ledger.accountBalance(restored.accountId),
+        BigInt.from(72001),
+      );
+      expect((await remote.snapshot()).latest(gold)!.familyValueMinor, 401);
+      final beforeRace = restored.revision;
+      await local.edit(
+        holding,
+        beforeRace,
+        name: 'Synthetic accepted edit',
+        notes: '',
+        owners: [],
+        property: property,
+      );
+      await remote.edit(
+        holding,
+        beforeRace,
+        name: 'Synthetic outdated edit',
+        notes: '',
+        owners: [],
+        property: property,
+      );
+      await first.sync.run();
+      await expectLater(
+        second.sync.run(),
+        throwsA(
+          isA<AppFailure>().having(
+            (error) => error.code,
+            'code',
+            FailureCode.conflict,
+          ),
+        ),
+      );
+      expect((await local.asset(holding)).name, 'Synthetic accepted edit');
+      final conflicts = await second.vault.db
+          .select(second.vault.db.syncConflicts)
+          .get();
+      expect(conflicts, isNotEmpty);
     },
     skip: fixturePath == null
         ? 'Start the isolated provider check with --mobile'
