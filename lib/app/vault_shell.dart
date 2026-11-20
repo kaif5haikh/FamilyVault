@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../core/localization/vault_strings.dart';
+import 'theme.dart';
 import 'vault_providers.dart';
 
 enum WorkspaceArea {
@@ -163,7 +164,7 @@ class _ReadableNavigation extends StatelessWidget {
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
                 textStyle: Theme.of(context).textTheme.labelLarge
-                    ?.copyWith(fontSize: 14),
+                    ?.copyWith(fontSize: VaultTheme.navigationLabelSize),
               ),
               onPressed: () => select(section.index),
               child: Text(

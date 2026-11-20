@@ -8,6 +8,7 @@ abstract final class VaultTheme {
   static const gap = 12.0;
   static const radius = 16.0;
   static const target = 48.0;
+  static const navigationLabelSize = 12.0;
 
   static ThemeData get light => _create(Brightness.light);
   static ThemeData get dark => _create(Brightness.dark);
@@ -92,7 +93,7 @@ abstract final class VaultTheme {
         height: 66,
         backgroundColor: colors.surfaceContainerLowest,
         labelTextStyle: const WidgetStatePropertyAll(
-          TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          TextStyle(fontSize: navigationLabelSize, fontWeight: FontWeight.w600),
         ),
       ),
     );
