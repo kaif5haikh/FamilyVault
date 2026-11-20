@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/localization/vault_strings.dart';
 import '../../app/vault_providers.dart';
 import '../../core/database/app_database.dart';
 import '../../core/database/mutation_writer.dart';
@@ -66,14 +67,19 @@ class RecordAudit extends ConsumerWidget {
         loading: () => const LinearProgressIndicator(),
         error: (e, _) => FailureNotice(e),
         data: (rows) => ExpansionTile(
-          title: const Text('Change audit'),
-          subtitle: Text('${rows.length} retained events'),
+          title: Text(context.tr('Change audit')),
+          subtitle: Text(
+            context.tr("{count} retained events", {'count': rows.length}),
+          ),
           children: [
             for (final (row, member) in rows)
               ListTile(
-                title: Text('$member · ${row.action}'),
+                title: Text('$member · ${context.tr(row.action)}'),
                 subtitle: Text(
-                  DateFormat('d MMM y, HH:mm', 'en_IN').format(
+                  DateFormat(
+                    'd MMM y, HH:mm',
+                    Localizations.localeOf(context).toString(),
+                  ).format(
                     DateTime.fromMicrosecondsSinceEpoch(
                       row.createdAtUs,
                       isUtc: true,

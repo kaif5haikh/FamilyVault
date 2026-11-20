@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/localization/vault_strings.dart';
 import '../../core/security/vault_identity.dart';
 import '../../shared/widgets/vault_widgets.dart';
 import 'expiry_reminders.dart';
@@ -58,8 +59,8 @@ class _DocumentReminderSettingsState
       children: [
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Document expiry notifications'),
-          subtitle: Text(message),
+          title: Text(context.tr('Document expiry notifications')),
+          subtitle: Text(context.tr(message)),
           value: on,
           onChanged: !_working && preference.hasValue ? _toggle : null,
         ),

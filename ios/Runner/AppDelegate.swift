@@ -142,8 +142,10 @@ private enum DocumentReminders {
         }
       }
     case "replace":
-      guard let values = call.arguments as? [NSNumber], values.count <= identifiers.count
+      guard let options = call.arguments as? [String: Any],
+            let values = options["times"] as? [NSNumber], values.count <= identifiers.count
       else { result(failure); return }
+      let hindi = options["language"] as? String == "hi"
       Task { @MainActor in
         do {
           center.removePendingNotificationRequests(withIdentifiers: identifiers)
@@ -153,7 +155,9 @@ private enum DocumentReminders {
           for (index, date) in dates.enumerated() {
             let content = UNMutableNotificationContent()
             content.title = "FamilyVault"
-            content.body = "Open your vault to review document dates."
+            content.body = hindi
+              ? "दस्तावेज़ों की मियाद देखने के लिए FamilyVault खोलें।"
+              : "Open your vault to review document dates."
             let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, date - now), repeats: false)
             try await center.add(UNNotificationRequest(identifier: identifiers[index], content: content, trigger: trigger))
           }

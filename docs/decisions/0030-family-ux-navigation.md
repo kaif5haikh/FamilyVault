@@ -2,6 +2,8 @@
 
 Accepted 20 November 2026.
 
+The owner updated the language choices in [ADR 0031](0031-english-and-hindi.md).
+
 Use one GoRouter stateful shell for Home, Money, Documents, Family and More.
 Give account lists, records and tools their own Back navigation. Keep the
 existing authenticated route guard and lifecycle lock. Home gives priority to

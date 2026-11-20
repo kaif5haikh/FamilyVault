@@ -1,6 +1,9 @@
 import 'package:flutter/widgets.dart';
 
+import '../errors/app_failure.dart';
+
 part 'guide_strings.dart';
+part 'hindi_messages.dart';
 
 /// Use Indian dates and labels while Money owns exact INR presentation.
 final class VaultStrings {
@@ -9,23 +12,55 @@ final class VaultStrings {
   factory VaultStrings.of(BuildContext context) =>
       VaultStrings(Localizations.localeOf(context));
 
-  static const supported = [
-    Locale('en', 'IN'),
-    Locale('hi', 'IN'),
-    Locale('mr', 'IN'),
-  ];
+  static const supported = [Locale('en', 'IN'), Locale('hi', 'IN')];
 
   final Locale locale;
+  bool get isHindi => locale.languageCode == 'hi';
 
   String text(String key) =>
       switch (locale.languageCode) {
-        'hi' => _hi[key],
+        'hi' => _hi[key] ?? _hindiGuide[key],
         'mr' => _mr[key] ?? _marathiGuide[key],
         _ => null,
       } ??
       _en[key] ??
       _englishGuide[key] ??
       key;
+
+  static final _templateField = RegExp(r'\{([A-Za-z][A-Za-z0-9]*)\}');
+
+  static final _hindiCopy = {
+    for (final entry in _en.entries) entry.value: ?_hi[entry.key],
+    ..._hindiMessages,
+  };
+
+  /// Translate app copy and then insert values, keeping names and numbers intact.
+  String message(String english, [Map<String, Object?> values = const {}]) {
+    final template = isHindi ? _hindiCopy[english] ?? english : english;
+    if (values.isEmpty) return template;
+    return template.replaceAllMapped(
+      _templateField,
+      (field) => values[field[1]]?.toString() ?? field[0]!,
+    );
+  }
+
+  String failure(Object error) {
+    if (error is! AppFailure) return text('unknownError');
+    if (!isHindi) return error.message;
+    return _hindiCopy[error.message] ??
+        switch (error.code) {
+          FailureCode.validation => 'भरी हुई जानकारी जाँचें और फिर कोशिश करें।',
+          FailureCode.locked => 'अपने रिकॉर्ड खोलें और फिर कोशिश करें।',
+          FailureCode.unauthorized => 'इस काम की इजाज़त नहीं है।',
+          FailureCode.conflict => 'रिकॉर्ड बदल गया है। उसे फिर खोलकर देखें।',
+          FailureCode.storage =>
+            'फ़ाइल या रिकॉर्ड पर काम पूरा नहीं हुआ। फिर कोशिश करें।',
+          FailureCode.network => 'इंटरनेट जाँचें और फिर कोशिश करें।',
+          FailureCode.integrity => 'फ़ाइल या रिकॉर्ड की जाँच पूरी नहीं हुई।',
+          FailureCode.configuration =>
+            'इसके लिए पहले ऐप या फ़ोन की सेटिंग्स जाँचें।',
+        };
+  }
 
   static const _en = <String, String>{
     'choosePaperFile': 'Choose a file',
@@ -189,39 +224,164 @@ final class VaultStrings {
   };
 
   static const _hi = <String, String>{
+    'choosePaperFile': 'फ़ाइल चुनें',
+    'scanPaper': 'कैमरा खोलें',
+    'documentUpdates': 'साझा दस्तावेज़ों की जानकारी',
+    'finishPaper': 'दस्तावेज़ जोड़ना पूरा करें',
+    'paperSearch': 'दस्तावेज़ का नाम खोजें',
+    'paperCategory': 'किस्म चुनें',
+    'allCategories': 'सभी किस्में',
+    'archivedPapers': 'अलग रखे दस्तावेज़',
+    'paperAdded': 'दस्तावेज़ जोड़ दिया।',
+    'paperEdited': 'जानकारी सेव हो गई।',
+    'paperName': 'दस्तावेज़ का नाम',
+    'whosePaper': 'यह दस्तावेज़ किसका है?',
+    'sharedPaperOwnerHelp':
+        'परिवार के जिन लोगों को इजाज़त है, वे इसे खोल सकते हैं।',
+    'savePaper': 'दस्तावेज़ सेव करें',
+    'savePaperVersion': 'नई कॉपी सेव करें',
+    'addMoneyRecord': 'पैसों का हिसाब जोड़ें',
+    'moneySearch': 'नाम, तारीख़ या खाता खोजें',
+    'filters': 'क्या देखना है?',
+    'all': 'सभी',
+    'showCorrections': 'सुधारे और हटाए गए हिसाब दिखाएँ',
+    'noMatches': 'ऐसा कोई हिसाब नहीं मिला',
+    'tryAnotherSearch': 'दूसरा नाम, तारीख़ या खाता खोजें।',
+    'recordUndone': 'हटाया गया',
+    'openingRecord': 'शुरू की रकम',
+    'balanceChange': 'बाकी रकम में बदलाव',
+    'reversalRecord': 'हिसाब हटाया गया',
+    'loanPayment': 'कर्ज़ की अदायगी',
+    'moneyRecord': 'पैसों का हिसाब',
+    'twoAccounts': 'पैसों का आना-जाना लिखने के लिए दूसरा खाता जोड़ें',
+    'saving': 'सेव हो रहा है…',
+    'language': 'भाषा चुनें',
+    'about': 'FamilyVault के बारे में',
+    'accessEnded': 'इजाज़त वापस ली गई',
+    'manageFamily': 'किसे इजाज़त दें?',
+    'lockToJoin': 'लॉक करें और परिवार के खाते में जाएँ',
     'dashboard': 'होम',
     'money': 'पैसे',
     'transactions': 'पैसों का हिसाब',
     'accounts': 'खाते',
     'assets': 'हमारे पास क्या है',
-    'liabilities': 'कर्ज़ और उधार',
-    'documents': 'कागज़ात',
-    'business': 'व्यवसाय',
+    'liabilities': 'हमें कितना देना है',
+    'documents': 'दस्तावेज़',
+    'business': 'कारोबार',
     'settings': 'सेटिंग्स',
-    'save': 'सहेजें',
+    'save': 'सेव करें',
     'cancel': 'रद्द करें',
-    'income': 'मिले पैसे',
-    'expense': 'खर्च हुए पैसे',
-    'transfer': 'पैसे भेजें',
+    'income': 'पैसे मिले',
+    'expense': 'पैसे खर्च हुए',
+    'transfer': 'खातों के बीच पैसे',
     'addIncome': 'मिले पैसे जोड़ें',
     'addExpense': 'खर्च जोड़ें',
-    'addDocument': 'कागज़ जोड़ें',
-    'backup': 'सुरक्षित प्रतियाँ',
-    'restore': 'सहेजी जानकारी वापस लाएँ',
+    'addDocument': 'दस्तावेज़ जोड़ें',
+    'backup': 'सुरक्षित कॉपी',
+    'restore': 'सेव किया रिकॉर्ड वापस लाएँ',
     'family': 'परिवार',
     'search': 'खोजें',
-    'lock': 'FamilyVault बंद करें',
+    'lock': 'FamilyVault लॉक करें',
     'reports': 'रिपोर्ट',
     'budgets': 'खर्च की योजना',
     'more': 'और',
-    'help': 'कैसे करें',
+    'help': 'कैसे करें?',
     'shortHelp': 'मदद',
+    'helpSearch': 'सवाल खोजें',
+    'helpEmpty': 'पैसे, सोना, दस्तावेज़ या बैकअप जैसे शब्द खोजें।',
     'next': 'आगे',
     'back': 'पीछे',
     'skip': 'अभी छोड़ें',
+    'exitGuide': 'मदद बंद करें',
     'start': 'FamilyVault शुरू करें',
-    'available': 'उपलब्ध पैसे',
-    'hello': 'स्वागत है',
+    'openScreen': 'यह पन्ना खोलें',
+    'seeGuide': 'ऐप की छोटी-सी झलक',
+    'guideReady': 'अब आप करके देख सकते हैं',
+    'step': '{total} में से {current}',
+    'guideNeedsUnlock': 'इसे आज़माने के लिए पहले अपने रिकॉर्ड खोलें।',
+    'hello': 'नमस्ते',
+    'welcomeTitle': 'परिवार के पैसे और दस्तावेज़',
+    'welcomeBody':
+        'पैसों का हिसाब और ज़रूरी दस्तावेज़ एक सुरक्षित जगह पर रखें।',
+    'localOnly': 'इस फ़ोन पर',
+    'sharedFamily': 'परिवार के साथ साझा',
+    'available': 'हमारे पास पैसे',
+    'cashBankOnly': 'इस ऐप में लिखी नकद और बैंक की रकम',
+    'familyValue': 'परिवार की कुल दौलत का अंदाज़ा',
+    'familyValueHelp': 'जो हमारे पास है, उसकी लिखी हुई कीमत में से देना बाकी रकम घटाई गई है। यह अंदाज़ा बदल सकता है।',
+    'owns': 'हमारे पास क्या है',
+    'owes': 'हमें कितना देना है',
+    'monthSoFar': 'इस महीने',
+    'recent': 'हाल का हिसाब',
+    'allActivity': 'पूरा हिसाब देखें',
+    'noAccountsYet': 'अभी कोई खाता नहीं है',
+    'firstAccount': 'पहला खाता जोड़ें',
+    'firstAccountHelp':
+        'नकद या बैंक खाता जोड़ें। फिर मिले पैसे और खर्च लिख सकेंगे।',
+    'noActivity':
+        'अभी कोई हिसाब नहीं है। शुरुआत के लिए मिले पैसे या खर्च जोड़ें।',
+    'hideAmounts': 'होम पर रकम छिपाएँ',
+    'showAmounts': 'होम पर रकम दिखाएँ',
+    'amountsHidden': 'रकम छिपी हुई है',
+    'findDocument': 'दस्तावेज़ खोजें',
+    'people': 'परिवार के लोग',
+    'you': 'आप',
+    'familyManager': 'परिवार का एडमिन',
+    'familyMember': 'परिवार का सदस्य',
+    'managedAccess': 'सिर्फ़ परिवार का एडमिन लोगों को बुला सकता है और फ़ोन को इजाज़त दे सकता है।',
+    'localFamilyHelp': 'ये रिकॉर्ड इस फ़ोन पर रहते हैं। परिवार के साथ साझा करने के लिए न्योता और साइन इन ज़रूरी है।',
+    'sharedFamilyHelp': 'परिवार के लोग जिन्हें इजाज़त मिली है, साझा हिसाब और दस्तावेज़ इस्तेमाल कर सकते हैं।',
+    'phone': 'यह फ़ोन',
+    'showTourAgain': 'ऐप की झलक फिर देखें',
+    'quickHelp': 'मदद',
+    'familyUnavailable':
+        'रिकॉर्ड साझा करने के लिए पहले परिवार का खाता सेट करना होगा।',
+    'savedLocal': 'इस फ़ोन पर सेव हो गया।',
+    'savedWaiting':
+        'इस फ़ोन पर सेव हो गया। परिवार के रिकॉर्ड में पहुँचना बाकी है।',
+    'tryAgain': 'फिर कोशिश करें',
+    'unknownError': 'यह काम पूरा नहीं हुआ। फिर कोशिश करें।',
+    'unlockTitle': 'आपके रिकॉर्ड लॉक हैं',
+    'unlock': 'अपने रिकॉर्ड खोलें',
+    'unlockHelp': 'रिकॉर्ड खोलने के लिए फ़ोन का स्क्रीन लॉक या फ़िंगरप्रिंट इस्तेमाल करें।',
+    'createTitle': 'परिवार के रिकॉर्ड शुरू करें',
+    'create': 'इस फ़ोन पर शुरू करें',
+    'setupHelp': 'परिवार का नाम और अपना नाम लिखें। रिकॉर्ड में बदलाव के साथ आपका नाम दिखेगा।',
+    'familyName': 'परिवार का नाम',
+    'yourName': 'आपका नाम',
+    'verifyCreate': 'फ़ोन की पहचान करके आगे बढ़ें',
+    'joinFamily': 'परिवार के खाते में साइन इन करें',
+    'privacyHelp': 'बैकअप फ़ाइल और उसे खोलने की चाबी अलग-अलग रखें।',
+    'accountName': 'खाते का नाम',
+    'accountStarting': 'शुरू की रकम (ज़रूरी नहीं)',
+    'noAccount': 'पहले नकद या बैंक खाता जोड़ें',
+    'recordAmount': 'रकम',
+    'recordType': 'आप क्या जोड़ रहे हैं?',
+    'receivedInto': 'किस खाते में पैसे मिले?',
+    'paidFrom': 'किस खाते से पैसे दिए?',
+    'moveFrom': 'किस खाते से?',
+    'moveTo': 'किस खाते में?',
+    'receivedReason': 'पैसे कहाँ से मिले?',
+    'spentReason': 'पैसे किस पर खर्च हुए?',
+    'optionalNote': 'कुछ लिखना हो तो',
+    'addCategory': 'नई किस्म जोड़ें',
+    'addAccount': 'खाता जोड़ें',
+    'editRecord': 'यह हिसाब सुधारें',
+    'saveRecord': 'हिसाब सेव करें',
+    'saveCorrection': 'सुधार सेव करें',
+    'recordSaved': 'हिसाब सेव हो गया।',
+    'moveExplain': 'अपने एक खाते से दूसरे में गए पैसों का हिसाब लिखें।',
+    'chooseAccount': 'एक खाता चुनें।',
+    'chooseAnother': 'कोई दूसरा खाता चुनें।',
+    'chooseCategory': 'एक किस्म चुनें।',
+    'recordDate': 'तारीख़',
+    'correctionExplain':
+        'पुराना हिसाब बना रहेगा। सेव करने पर सुधार अलग से जुड़ेगा।',
+    'correctedReason': 'आप इसे क्यों सुधार रहे हैं?',
+    'chooseKind': 'बताएँ कि यह किस तरह का हिसाब है।',
+    'moneyHelpIn': 'जैसे तनख़्वाह या किसी से मिले पैसे।',
+    'moneyHelpOut': 'जैसे राशन, स्कूल की फ़ीस या कोई बिल।',
+    'nothingToOpen': 'रिकॉर्ड खोलने के बाद मदद से इस पन्ने पर आएँ।',
   };
 
   static const _mr = <String, String>{
@@ -385,5 +545,17 @@ final class VaultStrings {
     'moneyHelpIn': 'उदाहरणार्थ पगार किंवा एखाद्याने दिलेले पैसे.',
     'moneyHelpOut': 'उदाहरणार्थ किराणा, शाळेची फी किंवा बिल.',
     'nothingToOpen': 'नोंदी तयार झाल्यावर मार्गदर्शनातून हे पान उघडा.',
+  };
+}
+
+extension VaultCopy on BuildContext {
+  String tr(String english, [Map<String, Object?> values = const {}]) =>
+      VaultStrings.of(this).message(english, values);
+
+  String? Function(String?) localizedValidator(
+    String? Function(String?) validate,
+  ) => (value) {
+    final error = validate(value);
+    return error == null ? null : tr(error);
   };
 }

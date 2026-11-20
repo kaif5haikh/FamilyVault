@@ -4,13 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../core/database/app_database.dart';
+import '../core/localization/vault_strings.dart';
 import '../core/security/vault_lifecycle.dart';
 import 'vault_providers.dart';
 
 const languageChoices = [
   (Locale('en', 'IN'), 'English (India)'),
-  (Locale('hi', 'IN'), 'हिन्दी (भारत)'),
-  (Locale('mr', 'IN'), 'मराठी (भारत)'),
+  (Locale('hi', 'IN'), 'हिंदी (भारत)'),
 ];
 
 final class AppAppearance {
@@ -48,8 +48,7 @@ class AppearanceController extends Notifier<AppAppearance> {
     return const AppAppearance();
   }
 
-  Locale? _locale(String? code) => languageChoices
-      .map((choice) => choice.$1)
+  Locale? _locale(String? code) => VaultStrings.supported
       .where((locale) => locale.languageCode == code)
       .firstOrNull;
 
@@ -75,7 +74,7 @@ class AppearanceController extends Notifier<AppAppearance> {
       final rows = await session.db.select(session.db.vaultPreferences).get();
       final values = {for (final row in rows) row.key: row.value};
       final locale =
-          _locale(values['ui.language']) ?? await _preferredLanguage();
+          await _preferredLanguage() ?? _locale(values['ui.language']);
       if (!ref.mounted || epoch != _epoch || session.closed) {
         return;
       }
@@ -93,13 +92,15 @@ class AppearanceController extends Notifier<AppAppearance> {
   }
 
   Future<void> change({ThemeMode? theme, Locale? locale}) async {
+    final requested = _locale(locale?.languageCode);
+    if (locale != null && requested == null) return;
     ++_epoch;
     final next = AppAppearance(
       theme: theme ?? state.theme,
-      locale: locale ?? state.locale,
+      locale: requested ?? state.locale,
     );
     state = next;
-    if (locale != null) {
+    if (requested != null) {
       try {
         await ref
             .read(secureStoreProvider)
@@ -115,22 +116,26 @@ class AppearanceController extends Notifier<AppAppearance> {
     }
     try {
       await session.db.transaction(() async {
-        await session.db
-            .into(session.db.vaultPreferences)
-            .insertOnConflictUpdate(
-              VaultPreferencesCompanion.insert(
-                key: 'ui.theme',
-                value: next.theme.name,
-              ),
-            );
-        await session.db
-            .into(session.db.vaultPreferences)
-            .insertOnConflictUpdate(
-              VaultPreferencesCompanion.insert(
-                key: 'ui.language',
-                value: next.locale.languageCode,
-              ),
-            );
+        if (theme != null) {
+          await session.db
+              .into(session.db.vaultPreferences)
+              .insertOnConflictUpdate(
+                VaultPreferencesCompanion.insert(
+                  key: 'ui.theme',
+                  value: theme.name,
+                ),
+              );
+        }
+        if (requested != null) {
+          await session.db
+              .into(session.db.vaultPreferences)
+              .insertOnConflictUpdate(
+                VaultPreferencesCompanion.insert(
+                  key: 'ui.language',
+                  value: requested.languageCode,
+                ),
+              );
+        }
       });
     } catch (_) {
       if (ref.mounted && identical(state, next)) {

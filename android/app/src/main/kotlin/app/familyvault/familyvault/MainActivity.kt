@@ -95,8 +95,8 @@ class MainActivity : FlutterFragmentActivity() {
                         }
                     }
                     "replace" -> {
-                        val times = checkNotNull(call.arguments as? List<*>).map { (it as Number).toLong() }
-                        DocumentReminders.replace(this, times)
+                        val times = checkNotNull(call.argument<List<Number>>("times")).map(Number::toLong)
+                        DocumentReminders.replace(this, times, call.argument<String>("language") ?: "en")
                         reply.success(null)
                     }
                     else -> reply.notImplemented()

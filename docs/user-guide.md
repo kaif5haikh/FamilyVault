@@ -2,6 +2,10 @@
 
 ## Get started
 
+FamilyVault starts in English. Choose **हिंदी (भारत)** on the welcome screen
+or under **More → Settings → Language** for Hindi. Your phone remembers
+the choice the next time you open the app.
+
 Open FamilyVault and choose **Take a short tour** or **Start using FamilyVault**.
 Choose **Set up on this phone** to start your own records. Set a phone screen
 lock first. Enter the family name and the name you want people to see on changes.

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/finance/fixed_decimal.dart';
@@ -181,7 +182,11 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(_editing ? 'Edit item details' : 'Add something we own'),
+      title: Text(
+        _editing
+            ? context.tr('Edit item details')
+            : context.tr('Add something we own'),
+      ),
     ),
     body: AssetView(
       builder: (assets) => FinanceView(
@@ -192,8 +197,10 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                   assets.assets.any(
                     (a) => a.id == widget.id && a.closedOn != null,
                   ))) {
-            return const VaultContent(
-              children: [Text('We couldn’t open that item for changes.')],
+            return VaultContent(
+              children: [
+                Text(context.tr('We couldn’t open that item for changes.')),
+              ],
             );
           }
           final liquid = finance.accounts
@@ -216,22 +223,28 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      _editing ? 'Earlier details stay in the item’s history.' : 'Enter details for the whole item. Your family summary counts just the share you own.',
+                      _editing
+                          ? context.tr(
+                              'Earlier details stay in the item’s history.',
+                            )
+                          : context.tr(
+                              'Enter details for the whole item. Your family summary counts just the share you own.',
+                            ),
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 24),
                     RecordField(
-                      'Item name',
+                      context.tr('Item name'),
                       _name,
                       required: true,
                       enabled: !_busy,
                     ),
                     RecordChoice<AssetKind>(
-                      'Kind of item',
+                      context.tr('Kind of item'),
                       _kind,
                       [
                         for (final k in AssetKind.values)
-                          (k, assetLabel(k.name)),
+                          (k, context.tr(assetLabel(k.name))),
                       ],
                       (v) => setState(() {
                         _kind = v;
@@ -241,21 +254,23 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                       enabled: !_busy && !_editing,
                     ),
                     RecordField(
-                      'Family share (%)',
+                      context.tr('Family share (%)'),
                       _share,
                       required: true,
                       scale: 2,
                       enabled: !_busy && !_editing,
-                      hint: 'Use 100% if your family owns the whole item.',
+                      hint: context.tr(
+                        'Use 100% if your family owns the whole item.',
+                      ),
                     ),
                     if (_isProperty) ...[
-                      const SectionHeading('Property & location'),
+                      SectionHeading(context.tr('Property & location')),
                       Wrap(
                         spacing: 8,
                         children: [
                           for (final city in ['Mumbai', 'Ballia'])
                             ActionChip(
-                              label: Text(city),
+                              label: Text(context.tr(city)),
                               onPressed: _busy
                                   ? null
                                   : () => setState(() => _city.text = city),
@@ -264,45 +279,50 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                       ),
                       const SizedBox(height: 16),
                       RecordField(
-                        'City or district',
+                        context.tr('City or district'),
                         _city,
                         required: true,
                         enabled: !_busy,
                       ),
                       RecordField(
-                        'Location or address (optional)',
+                        context.tr('Location or address (optional)'),
                         _location,
                         enabled: !_busy,
                         lines: 2,
                         maxLength: 500,
                       ),
                       RecordField(
-                        'Area (optional)',
+                        context.tr('Area (optional)'),
                         _area,
                         scale: 3,
                         enabled: !_busy,
                       ),
                       RecordField(
-                        'Recorded area unit (optional)',
+                        context.tr('Recorded area unit (optional)'),
                         _unit,
                         maxLength: 24,
                         enabled: !_busy,
-                        hint: 'For example, square feet or the unit stated in the deed.',
+                        hint: context.tr(
+                          'For example, square feet or the unit stated in the deed.',
+                        ),
                       ),
                       RecordField(
-                        'Property record reference (optional)',
+                        context.tr('Property record reference (optional)'),
                         _reference,
                         maxLength: 200,
                         enabled: !_busy,
                       ),
                     ],
                     if (_isMetal) ...[
-                      const SectionHeading('Metal details'),
+                      SectionHeading(context.tr('Metal details')),
                       if (_kind == AssetKind.jewellery)
                         RecordChoice<String>(
-                          'Metal',
+                          context.tr('Metal'),
                           _metal,
-                          const [('gold', 'Gold'), ('silver', 'Silver')],
+                          [
+                            ('gold', context.tr('Gold')),
+                            ('silver', context.tr('Silver')),
+                          ],
                           (v) => setState(() {
                             _metal = v;
                             _purity = 'unrecorded';
@@ -310,43 +330,43 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                           enabled: !_busy,
                         ),
                       RecordField(
-                        'Weight in grams',
+                        context.tr('Weight in grams'),
                         _weight,
                         required: true,
                         scale: 3,
                         enabled: !_busy,
                       ),
                       RecordChoice<String>(
-                        'Purity',
+                        context.tr('Purity'),
                         _purity,
                         [
-                          ('unrecorded', 'Unrecorded'),
+                          ('unrecorded', context.tr('Unrecorded')),
                           if (_metal == 'gold') ...[
-                            ('18', '18K nominal'),
-                            ('22', '22K nominal'),
-                            ('24', '24K nominal'),
+                            ('18', context.tr('18K nominal')),
+                            ('22', context.tr('22K nominal')),
+                            ('24', context.tr('24K nominal')),
                           ],
-                          ('assayed', 'Recorded assay (%)'),
+                          ('assayed', context.tr('Recorded assay (%)')),
                         ],
                         (v) => setState(() => _purity = v),
                         enabled: !_busy,
                       ),
                       if (_purity == 'assayed')
                         RecordField(
-                          'Assayed purity (%)',
+                          context.tr('Assayed purity (%)'),
                           _assay,
                           required: true,
                           scale: 4,
                           enabled: !_busy,
                         ),
                       RecordField(
-                        'Purchase rate per gram (optional)',
+                        context.tr('Purchase rate per gram (optional)'),
                         _rate,
                         money: true,
                         enabled: !_busy,
                       ),
                       RecordField(
-                        'Making charges (optional)',
+                        context.tr('Making charges (optional)'),
                         _making,
                         money: true,
                         enabled: !_busy,
@@ -387,26 +407,26 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                                     }
                                   },
                             icon: const Icon(Icons.calculate_outlined),
-                            label: const Text('Calculate purchase cost'),
+                            label: Text(context.tr('Calculate purchase cost')),
                           ),
                         ),
                     ],
                     if (_kind == AssetKind.investment) ...[
-                      const SectionHeading('Investment details'),
+                      SectionHeading(context.tr('Investment details')),
                       RecordField(
-                        'Instrument',
+                        context.tr('Instrument'),
                         _instrument,
                         required: true,
                         enabled: !_busy,
                       ),
                       RecordField(
-                        'Symbol or reference (optional)',
+                        context.tr('Symbol or reference (optional)'),
                         _symbol,
                         maxLength: 80,
                         enabled: !_busy,
                       ),
                       RecordField(
-                        'Units (optional)',
+                        context.tr('Units (optional)'),
                         _units,
                         scale: _quantityScale,
                         enabled: !_busy,
@@ -414,14 +434,18 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                     ],
                     if (!_editing) ...[
                       RecordField(
-                        'Estimated value of the whole item (optional)',
+                        context.tr(
+                          'Estimated value of the whole item (optional)',
+                        ),
                         _value,
                         money: true,
                         enabled: !_busy,
-                        hint: 'Use the most recent amount you know.',
+                        hint: context.tr(
+                          'Use the most recent amount you know.',
+                        ),
                       ),
                       RecordDate(
-                        'Date of estimate',
+                        context.tr('Date of estimate'),
                         _valuedOn,
                         (v) => setState(() => _valuedOn = v),
                         enabled: !_busy,
@@ -431,28 +455,36 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                       controller: _purchasePanel,
                       maintainState: true,
                       tilePadding: EdgeInsets.zero,
-                      title: const Text('Purchase and payment details'),
+                      title: Text(context.tr('Purchase and payment details')),
                       children: [
                         RecordField(
-                          'Price paid for the whole item (optional)',
+                          context.tr(
+                            'Price paid for the whole item (optional)',
+                          ),
                           _purchase,
                           money: true,
                           enabled: !_busy && !_editing,
                           hint: _editing
-                              ? 'Acquisition entries retain their posted history.'
-                              : 'Leave blank when unknown. Enter zero only for a known zero price.',
+                              ? context.tr(
+                                  'Acquisition entries retain their posted history.',
+                                )
+                              : context.tr(
+                                  'Leave blank when unknown. Enter zero only for a known zero price.',
+                                ),
                         ),
                         if (!_editing) ...[
                           SwitchListTile.adaptive(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text('Record known purchase date'),
+                            title: Text(
+                              context.tr('Record known purchase date'),
+                            ),
                             value: _knownDate,
                             onChanged: _busy
                                 ? null
                                 : (v) => setState(() => _knownDate = v),
                           ),
                           RecordDate(
-                            'Purchase date',
+                            context.tr('Purchase date'),
                             _purchasedOn,
                             (v) => setState(() {
                               _purchasedOn = v;
@@ -462,11 +494,13 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                           ),
                           SwitchListTile.adaptive(
                             contentPadding: EdgeInsets.zero,
-                            title: const Text(
-                              'Record payment from cash or bank',
+                            title: Text(
+                              context.tr('Record payment from cash or bank'),
                             ),
-                            subtitle: const Text(
-                              'For a new purchase. Leave off for an already owned opening holding.',
+                            subtitle: Text(
+                              context.tr(
+                                'For a new purchase. Leave off for an already owned opening holding.',
+                              ),
                             ),
                             value: _pay,
                             onChanged: _busy
@@ -475,7 +509,7 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                           ),
                           if (_pay)
                             RecordChoice<String>(
-                              'Payment account',
+                              context.tr('Payment account'),
                               _funding,
                               [for (final a in liquid) (a.id, a.name)],
                               (v) => setState(() => _funding = v),
@@ -488,12 +522,14 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                       controller: _peoplePanel,
                       maintainState: true,
                       tilePadding: EdgeInsets.zero,
-                      title: const Text(
-                        'Individual shares and notes (optional)',
+                      title: Text(
+                        context.tr('Individual shares and notes (optional)'),
                       ),
                       children: [
-                        const Text(
-                          'Enter each person’s share of the whole item. Together these shares must fit within the family share.',
+                        Text(
+                          context.tr(
+                            'Enter each person’s share of the whole item. Together these shares must fit within the family share.',
+                          ),
                         ),
                         const SizedBox(height: 16),
                         for (var index = 0; index < _owners.length; index++)
@@ -504,13 +540,17 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   RecordField(
-                                    'Owner ${index + 1} name',
+                                    context.tr("Owner {number} name", {
+                                      'number': index + 1,
+                                    }),
                                     _owners[index].name,
                                     required: true,
                                     enabled: !_busy,
                                   ),
                                   RecordField(
-                                    'Owner ${index + 1} share (%)',
+                                    context.tr("Owner {number} share (%)", {
+                                      'number': index + 1,
+                                    }),
                                     _owners[index].share,
                                     required: true,
                                     scale: 2,
@@ -531,8 +571,8 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                                       icon: const Icon(
                                         Icons.remove_circle_outline,
                                       ),
-                                      label: const Text(
-                                        'Remove person’s share',
+                                      label: Text(
+                                        context.tr('Remove person’s share'),
                                       ),
                                     ),
                                   ),
@@ -546,11 +586,11 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                               : () =>
                                     setState(() => _owners.add(_OwnerFields())),
                           icon: const Icon(Icons.person_add_alt_outlined),
-                          label: const Text('Add a person’s share'),
+                          label: Text(context.tr('Add a person’s share')),
                         ),
                         const SizedBox(height: 20),
                         RecordField(
-                          'Notes (optional)',
+                          context.tr('Notes (optional)'),
                           _notes,
                           lines: 3,
                           maxLength: 4000,
@@ -563,7 +603,9 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                     FilledButton.icon(
                       onPressed: _busy ? null : _save,
                       icon: const Icon(Icons.check),
-                      label: Text(_busy ? 'Saving…' : 'Save item'),
+                      label: Text(
+                        _busy ? context.tr('Saving…') : context.tr('Save item'),
+                      ),
                     ),
                   ],
                 ),

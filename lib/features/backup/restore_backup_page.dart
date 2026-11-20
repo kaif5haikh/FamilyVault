@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:path/path.dart' as p;
 
+import '../../core/localization/vault_strings.dart';
 import '../../app/vault_providers.dart';
 import '../../core/errors/app_failure.dart';
 import '../../shared/widgets/vault_widgets.dart';
@@ -132,15 +133,17 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
     final state = ref.watch(vaultProvider);
     final verified = _verified;
     return VaultPage(
-      title: 'Bring back saved data',
+      title: context.tr('Bring back saved data'),
       children: [
         if (state.hasVault && !_installing) ...[
-          const Text(
-            'This phone already has FamilyVault records. Open those records to keep using them.',
+          Text(
+            context.tr(
+              'This phone already has FamilyVault records. Open those records to keep using them.',
+            ),
           ),
           TextButton(
             onPressed: () => context.go('/access'),
-            child: const Text('Open your records'),
+            child: Text(context.tr('Open your records')),
           ),
         ] else ...[
           if (verified == null) ...[
@@ -149,8 +152,8 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
               icon: const Icon(Icons.folder_open_outlined),
               label: Text(
                 _selected == null
-                    ? 'Choose your safe-copy file'
-                    : 'Choose a different file',
+                    ? context.tr('Choose your safe-copy file')
+                    : context.tr('Choose a different file'),
               ),
             ),
             const SizedBox(height: 16),
@@ -159,7 +162,10 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
               const SizedBox(height: 16),
               if (_drive != null)
                 Text(
-                  'Selected Google Drive copy from ${MaterialLocalizations.of(context).formatMediumDate(_drive!.file.created.toLocal())}',
+                  context.tr("Selected Google Drive copy from {date}", {
+                    'date': MaterialLocalizations.of(context)
+                        .formatMediumDate(_drive!.file.created.toLocal()),
+                  }),
                 ),
               TextField(
                 controller: _key,
@@ -168,26 +174,33 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
                 autocorrect: false,
                 enableSuggestions: false,
                 textCapitalization: TextCapitalization.none,
-                decoration: const InputDecoration(labelText: 'Recovery key'),
+                decoration: InputDecoration(
+                  labelText: context.tr('Recovery key'),
+                ),
               ),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: _working ? null : _verify,
-                child: const Text('Check this copy'),
+                child: Text(context.tr('Check this copy')),
               ),
             ],
           ] else ...[
-            const Text(
-              'Your safe copy is ready. Bring the records back to this phone.',
+            Text(
+              context.tr(
+                'Your safe copy is ready. Bring the records back to this phone.',
+              ),
             ),
             const SizedBox(height: 12),
             Text(
-              '${verified.documents} documents, ${verified.pending} saved changes',
+              context.tr("{documents} documents, {changes} saved changes", {
+                'documents': verified.documents,
+                'changes': verified.pending,
+              }),
             ),
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _working ? null : _restore,
-              child: const Text('Bring back my records'),
+              child: Text(context.tr('Bring back my records')),
             ),
           ],
         ],

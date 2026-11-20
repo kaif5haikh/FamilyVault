@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../shared/widgets/vault_widgets.dart';
 import '../data/asset_repository.dart';
@@ -30,7 +31,7 @@ class AssetView extends ConsumerWidget {
             OutlinedButton.icon(
               onPressed: () => ref.invalidate(assetsProvider),
               icon: const Icon(Icons.refresh),
-              label: const Text('Try again'),
+              label: Text(context.tr('Try again')),
             ),
           ],
         ),

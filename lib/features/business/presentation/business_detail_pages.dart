@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/finance/formatters.dart';
 import '../../../shared/widgets/record_audit.dart';
@@ -60,10 +61,11 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
     final reason = await showDialog<String>(
       context: context,
       builder: (_) => ReasonDialog(
-        title: 'Reverse this $noun?',
-        message:
-            'The original record and its reversal will stay in the history.',
-        confirmLabel: 'Reverse',
+        title: context.tr("Reverse this {kind}?", {'kind': context.tr(noun)}),
+        message: context.tr(
+          'The original record and its reversal will stay in the history.',
+        ),
+        confirmLabel: context.tr('Reverse'),
       ),
     );
     if (reason == null || !mounted) {
@@ -75,7 +77,11 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(widget.isStock ? 'Stock details' : 'Worker details'),
+      title: Text(
+        widget.isStock
+            ? context.tr('Stock details')
+            : context.tr('Worker details'),
+      ),
     ),
     body: BusinessView(
       builder: (data, finance) {
@@ -94,7 +100,9 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
   Widget _stock(BusinessSnapshot data) {
     final row = data.items.where((r) => r.id == widget.id).firstOrNull;
     if (row == null) {
-      return const VaultContent(children: [Text('Stock item unavailable.')]);
+      return VaultContent(
+        children: [Text(context.tr('Stock item unavailable.'))],
+      );
     }
     final position = data.positions[row.id], archived = row.deletedAtUs != null;
     final history = data.movements.where((r) => r.stockItemId == row.id);
@@ -108,8 +116,13 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
           value: '${position?.quantity ?? 0} pieces',
           icon: Icons.inventory_2_outlined,
           emphasis: true,
-          detail:
-              '${formatInr(BigInt.from(position?.costPoolMinor ?? 0))} recorded cost${row.sku == null ? '' : '\nSKU ${row.sku}'}${archived ? '\nArchived' : ''}',
+          detail: context.tr("{cost} recorded cost{sku}{status}", {
+            'cost': formatInr(BigInt.from(position?.costPoolMinor ?? 0)),
+            'sku': row.sku == null
+                ? ''
+                : '\n${context.tr('SKU {code}', {'code': row.sku})}',
+            'status': archived ? '\nArchived' : '',
+          }),
         ),
         const SizedBox(height: 20),
         Wrap(
@@ -120,12 +133,12 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
               FilledButton.icon(
                 onPressed: () => context.push('/stock/${row.id}/move'),
                 icon: const Icon(Icons.add),
-                label: const Text('Record stock movement'),
+                label: Text(context.tr('Record stock movement')),
               ),
               OutlinedButton.icon(
                 onPressed: () => context.push('/stock/${row.id}/edit'),
                 icon: const Icon(Icons.edit_outlined),
-                label: const Text('Edit stock item'),
+                label: Text(context.tr('Edit stock item')),
               ),
             ],
             if (archived || position?.quantity == 0)
@@ -142,24 +155,37 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
                 icon: Icon(
                   archived ? Icons.unarchive_outlined : Icons.archive_outlined,
                 ),
-                label: Text(archived ? 'Restore item' : 'Archive item'),
+                label: Text(
+                  archived
+                      ? context.tr('Restore item')
+                      : context.tr('Archive item'),
+                ),
               ),
           ],
         ),
         if (_error != null) FailureNotice(_error!),
         const SizedBox(height: 24),
-        const SectionHeading('Stock movement history'),
-        if (history.isEmpty) const Text('No stock movements recorded.'),
+        SectionHeading(context.tr('Stock movement history')),
+        if (history.isEmpty) Text(context.tr('No stock movements recorded.')),
         for (final move in history)
           Card.outlined(
             child: Column(
               children: [
                 ListTile(
                   title: Text(
-                    '${stockLabel(move.kind)}${reversed.contains(move.id) ? ' · Reversed' : ''}',
+                    '${context.tr(stockLabel(move.kind))}${reversed.contains(move.id) ? context.tr(' · Reversed') : ''}',
                   ),
                   subtitle: Text(
-                    '${move.occurredOn} · ${move.quantityDelta > 0 ? '+' : ''}${move.quantityDelta} pieces\n${formatInr(BigInt.from(move.valueDeltaMinor))}${move.notes.isEmpty ? '' : '\n${move.notes}'}',
+                    context.tr(
+                      "{date} · {sign}{quantity} pieces\n{value}{note}",
+                      {
+                        'date': move.occurredOn,
+                        'sign': move.quantityDelta > 0 ? '+' : '',
+                        'quantity': move.quantityDelta,
+                        'value': formatInr(BigInt.from(move.valueDeltaMinor)),
+                        'note': move.notes.isEmpty ? '' : '\n${move.notes}',
+                      },
+                    ),
                   ),
                   trailing: move.journalId == null
                       ? null
@@ -180,7 +206,7 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
                               : () => context.push(
                                   '/stock/${row.id}/move/${move.id}',
                                 ),
-                          child: const Text('Correct movement'),
+                          child: Text(context.tr('Correct movement')),
                         ),
                         TextButton(
                           onPressed: _busy
@@ -194,7 +220,7 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
                                     reason,
                                   ),
                                 ),
-                          child: const Text('Undo stock change'),
+                          child: Text(context.tr('Undo stock change')),
                         ),
                       ],
                     ),
@@ -210,7 +236,7 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
   Widget _worker(BusinessSnapshot data, Set<String> reversed) {
     final row = data.workers.where((r) => r.id == widget.id).firstOrNull;
     if (row == null) {
-      return const VaultContent(children: [Text('Worker unavailable.')]);
+      return VaultContent(children: [Text(context.tr('Worker unavailable.'))]);
     }
     final archived = row.deletedAtUs != null;
     final payments = data.salaries.where((r) => r.workerId == row.id);
@@ -225,8 +251,12 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
           value: formatInr(paid),
           icon: Icons.person_outline,
           emphasis: true,
-          detail:
-              'Total wages recorded${archived ? ' · Archived' : ''}\n${row.monthlySalaryMinor == null ? 'Monthly pay unrecorded' : '${formatInr(BigInt.from(row.monthlySalaryMinor!))} agreed monthly pay'}',
+          detail: context.tr("Total wages recorded{status}\n{monthly}", {
+            'status': archived ? context.tr(' · Archived') : '',
+            'monthly': row.monthlySalaryMinor == null
+                ? context.tr('Monthly pay unrecorded')
+                : '${formatInr(BigInt.from(row.monthlySalaryMinor!))} agreed monthly pay',
+          }),
         ),
         if (row.notes.isNotEmpty)
           Padding(
@@ -242,12 +272,12 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
               FilledButton.icon(
                 onPressed: () => context.push('/worker/${row.id}/pay'),
                 icon: const Icon(Icons.payments_outlined),
-                label: const Text('Record salary payment'),
+                label: Text(context.tr('Record salary payment')),
               ),
               OutlinedButton.icon(
                 onPressed: () => context.push('/worker/${row.id}/edit'),
                 icon: const Icon(Icons.edit_outlined),
-                label: const Text('Edit worker'),
+                label: Text(context.tr('Edit worker')),
               ),
             ],
             OutlinedButton.icon(
@@ -263,15 +293,19 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
               icon: Icon(
                 archived ? Icons.unarchive_outlined : Icons.archive_outlined,
               ),
-              label: Text(archived ? 'Restore worker' : 'Archive worker'),
+              label: Text(
+                archived
+                    ? context.tr('Restore worker')
+                    : context.tr('Archive worker'),
+              ),
             ),
           ],
         ),
         if (_error != null) FailureNotice(_error!),
         const SizedBox(height: 24),
-        const SectionHeading('Salary payment history'),
+        SectionHeading(context.tr('Salary payment history')),
         if (payments.isEmpty)
-          const Text('No salaries recorded for this worker.'),
+          Text(context.tr('No salaries recorded for this worker.')),
         for (final payment in payments)
           Card.outlined(
             child: Column(
@@ -281,7 +315,13 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
                     '${payment.period} · ${formatInr(BigInt.from(payment.amountMinor))}',
                   ),
                   subtitle: Text(
-                    'Paid ${payment.paidOn}${reversed.contains(payment.journalId) ? ' · Reversed' : ''}${payment.notes.isEmpty ? '' : '\n${payment.notes}'}',
+                    context.tr("Paid {date}{status}{note}", {
+                      'date': payment.paidOn,
+                      'status': reversed.contains(payment.journalId)
+                          ? context.tr(' · Reversed')
+                          : '',
+                      'note': payment.notes.isEmpty ? '' : '\n${payment.notes}',
+                    }),
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () =>
@@ -299,7 +339,7 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
                               : () => context.push(
                                   '/worker/${row.id}/pay/${payment.id}',
                                 ),
-                          child: const Text('Correct payment'),
+                          child: Text(context.tr('Correct payment')),
                         ),
                         TextButton(
                           onPressed: _busy
@@ -313,7 +353,7 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
                                     reason,
                                   ),
                                 ),
-                          child: const Text('Reverse payment'),
+                          child: Text(context.tr('Reverse payment')),
                         ),
                       ],
                     ),

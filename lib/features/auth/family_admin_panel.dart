@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/localization/vault_strings.dart';
 import '../../shared/widgets/vault_widgets.dart';
 import 'cloud_access_gateway.dart';
 import 'cloud_providers.dart';
@@ -115,18 +116,22 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Revoke this $kind?'),
-        content: const Text(
-          'This removes future family access. Files already saved to a phone can stay there.',
+        title: Text(
+          context.tr('Revoke this {kind}?', {'kind': context.tr(kind)}),
+        ),
+        content: Text(
+          context.tr(
+            'This removes future family access. Files already saved to a phone can stay there.',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remove access'),
+            child: Text(context.tr('Remove access')),
           ),
         ],
       ),
@@ -145,18 +150,18 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
       OutlinedButton.icon(
         onPressed: _busy ? null : _verifyAdministrator,
         icon: const Icon(Icons.admin_panel_settings_outlined),
-        label: const Text('Confirm you manage the family'),
+        label: Text(context.tr('Confirm you manage the family')),
       ),
       if (_busy) const LinearProgressIndicator(),
       if (_error != null) FailureNotice(_error!),
       if (_loaded) ...[
         const SizedBox(height: 18),
         SectionHeading(
-          'Family members',
+          context.tr('Family members'),
           action: FilledButton.icon(
             onPressed: _busy ? null : _newInvite,
             icon: const Icon(Icons.person_add_alt_outlined),
-            label: const Text('Invite a family member'),
+            label: Text(context.tr('Invite a family member')),
           ),
         ),
         for (final row in _members)
@@ -165,32 +170,33 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
             title: Text(cloudText(row, 'display_name')),
             subtitle: Text(
               row['active'] != true
-                  ? 'Access removed'
+                  ? context.tr('Access removed')
                   : row['role'] == 'administrator'
-                  ? 'Family administrator'
-                  : 'Family member',
+                  ? context.tr('Family administrator')
+                  : context.tr('Family member'),
             ),
             trailing: row['active'] == true && row['role'] == 'member'
                 ? IconButton(
-                    tooltip: 'Remove family access',
+                    tooltip: context.tr('Remove family access'),
                     icon: const Icon(Icons.person_remove_outlined),
                     onPressed: _busy ? null : () => _revoke('member', row),
                   )
                 : null,
           ),
-        if (_invites.isNotEmpty) const SectionHeading('Pending invitations'),
+        if (_invites.isNotEmpty)
+          SectionHeading(context.tr('Pending invitations')),
         for (final row in _invites)
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: Text(cloudText(row, 'display_name')),
             subtitle: Text(cloudText(row, 'email')),
             trailing: IconButton(
-              tooltip: 'Cancel invitation',
+              tooltip: context.tr('Cancel invitation'),
               icon: const Icon(Icons.cancel_outlined),
               onPressed: _busy ? null : () => _revoke('invitation', row),
             ),
           ),
-        const SectionHeading('Family phones'),
+        SectionHeading(context.tr('Family phones')),
         for (final row in _devices)
           Card.outlined(
             child: Padding(
@@ -203,10 +209,10 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   Text(switch (row['state']) {
-                    'pending' => 'Waiting for approval',
-                    'approved' => 'Approved',
-                    'revoked' => 'Access removed',
-                    _ => 'Check phone access',
+                    'pending' => context.tr('Waiting for approval'),
+                    'approved' => context.tr('Approved'),
+                    'revoked' => context.tr('Access removed'),
+                    _ => context.tr('Check phone access'),
                   }),
                   if (row['state'] != 'revoked')
                     Wrap(
@@ -216,13 +222,13 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
                         if (row['state'] == 'pending')
                           TextButton(
                             onPressed: _busy ? null : () => _approve(row),
-                            child: const Text('Approve phone'),
+                            child: Text(context.tr('Approve phone')),
                           ),
                         TextButton(
                           onPressed: _busy
                               ? null
                               : () => _revoke('device', row),
-                          child: const Text('Remove phone access'),
+                          child: Text(context.tr('Remove phone access')),
                         ),
                       ],
                     ),
@@ -231,11 +237,13 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
             ),
           ),
         ExpansionTile(
-          title: const Text('Access history'),
+          title: Text(context.tr('Access history')),
           children: [
             for (final row in _audit)
               ListTile(
-                title: Text(cloudText(row, 'action').replaceAll('_', ' ')),
+                title: Text(
+                  context.tr(cloudText(row, 'action').replaceAll('_', ' ')),
+                ),
                 subtitle: Text(cloudText(row, 'occurred_at')),
               ),
           ],
@@ -307,19 +315,23 @@ class _AdministratorVerificationState
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Confirm family access'),
+    title: Text(context.tr('Confirm family access')),
     content: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Verify a code from your authenticator app before changing family access.',
+          Text(
+            context.tr(
+              'Verify a code from your authenticator app before changing family access.',
+            ),
           ),
           if (_secret != null) ...[
             const SizedBox(height: 12),
-            const Text(
-              'Add FamilyVault to your authenticator using this setup key.',
+            Text(
+              context.tr(
+                'Add FamilyVault to your authenticator using this setup key.',
+              ),
             ),
             SelectableText(groupedFingerprint(_secret!)),
           ],
@@ -329,8 +341,8 @@ class _AdministratorVerificationState
               keyboardType: TextInputType.number,
               maxLength: 6,
               enabled: !_working,
-              decoration: const InputDecoration(
-                labelText: 'Authenticator code',
+              decoration: InputDecoration(
+                labelText: context.tr('Authenticator code'),
               ),
             ),
           if (_error != null) FailureNotice(_error!),
@@ -340,16 +352,16 @@ class _AdministratorVerificationState
     actions: [
       TextButton(
         onPressed: _working ? null : () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.tr('Cancel')),
       ),
       FilledButton(
         onPressed: _working ? null : _verify,
         child: Text(
           _working
-              ? 'Checking…'
+              ? context.tr('Checking…')
               : _factorId == null
-              ? 'Continue'
-              : 'Verify code',
+              ? context.tr('Continue')
+              : context.tr('Verify code'),
         ),
       ),
     ],
@@ -377,32 +389,38 @@ class _InviteDialogState extends State<_InviteDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Invite a family member'),
+    title: Text(context.tr('Invite a family member')),
     content: SingleChildScrollView(
       child: Form(
         key: _form,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Use the email address on their own family account.'),
+            Text(
+              context.tr('Use the email address on their own family account.'),
+            ),
             TextFormField(
               controller: _email,
               maxLength: 254,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'Account email'),
-              validator: requiredText,
+              decoration: InputDecoration(
+                labelText: context.tr('Account email'),
+              ),
+              validator: context.localizedValidator(requiredText),
             ),
             TextFormField(
               controller: _name,
               maxLength: 80,
-              decoration: const InputDecoration(labelText: 'Name'),
-              validator: requiredText,
+              decoration: InputDecoration(labelText: context.tr('Name')),
+              validator: context.localizedValidator(requiredText),
             ),
             TextFormField(
               controller: _relationship,
               maxLength: 40,
-              decoration: const InputDecoration(labelText: 'Relationship'),
-              validator: requiredText,
+              decoration: InputDecoration(
+                labelText: context.tr('Relationship'),
+              ),
+              validator: context.localizedValidator(requiredText),
             ),
           ],
         ),
@@ -411,7 +429,7 @@ class _InviteDialogState extends State<_InviteDialog> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.tr('Cancel')),
       ),
       FilledButton(
         onPressed: () {
@@ -423,7 +441,7 @@ class _InviteDialogState extends State<_InviteDialog> {
             ));
           }
         },
-        child: const Text('Invite a family member'),
+        child: Text(context.tr('Invite a family member')),
       ),
     ],
   );
@@ -450,29 +468,31 @@ class _FingerprintDialogState extends State<_FingerprintDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: Text('Approve ${widget.label}'),
+    title: Text(context.tr("Approve {phone}", {'phone': widget.label})),
     content: SingleChildScrollView(
       child: Form(
         key: _form,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Enter the fingerprint shown on the phone you are approving.',
+            Text(
+              context.tr(
+                'Enter the fingerprint shown on the phone you are approving.',
+              ),
             ),
             TextFormField(
               controller: _fingerprint,
               maxLines: 3,
               autocorrect: false,
               enableSuggestions: false,
-              decoration: const InputDecoration(
-                labelText: 'Device fingerprint',
+              decoration: InputDecoration(
+                labelText: context.tr('Device fingerprint'),
               ),
               validator: (v) =>
                   v?.replaceAll(RegExp(r'\s+'), '').toLowerCase() ==
                       widget.expectedFingerprint
                   ? null
-                  : 'The fingerprints do not match.',
+                  : context.tr('The fingerprints do not match.'),
             ),
           ],
         ),
@@ -481,7 +501,7 @@ class _FingerprintDialogState extends State<_FingerprintDialog> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.tr('Cancel')),
       ),
       FilledButton(
         onPressed: () {
@@ -492,7 +512,7 @@ class _FingerprintDialogState extends State<_FingerprintDialog> {
             );
           }
         },
-        child: const Text('Approve device'),
+        child: Text(context.tr('Approve device')),
       ),
     ],
   );

@@ -8,8 +8,8 @@ import '../../app/theme.dart';
 import '../../app/vault_providers.dart';
 import '../../core/security/vault_lifecycle.dart';
 import '../../core/localization/vault_strings.dart';
+import '../../shared/widgets/language_picker.dart';
 import '../../shared/widgets/vault_widgets.dart';
-import '../../app/appearance.dart';
 import '../guidance/welcome_tour.dart';
 import '../auth/cloud_access_panel.dart';
 import '../auth/cloud_providers.dart';
@@ -41,18 +41,6 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
     final seen = ref.watch(introSeenProvider).asData?.value ?? false;
     return VaultPage(
       title: 'FamilyVault',
-      actions: [
-        PopupMenuButton<Locale>(
-          tooltip: strings.text('language'),
-          icon: const Icon(Icons.language_outlined),
-          onSelected: (locale) =>
-              ref.read(appearanceProvider.notifier).change(locale: locale),
-          itemBuilder: (_) => [
-            for (final (locale, name) in languageChoices)
-              PopupMenuItem(value: locale, child: Text(name)),
-          ],
-        ),
-      ],
       children: [
         const SizedBox(height: 20),
         const Align(
@@ -63,6 +51,8 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
         Text(strings.text('welcomeTitle'), style: text.headlineMedium),
         const SizedBox(height: 10),
         Text(strings.text('welcomeBody'), style: text.bodyLarge),
+        const SizedBox(height: 16),
+        const LanguagePicker(),
         const SizedBox(height: 22),
         SizedBox(
           width: double.infinity,
@@ -154,7 +144,7 @@ class _AccessPageState extends ConsumerState<AccessPage> {
           Semantics(
             liveRegion: true,
             child: Text(
-              status.failure!.message,
+              strings.failure(status.failure!),
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
@@ -171,7 +161,7 @@ class _AccessPageState extends ConsumerState<AccessPage> {
           OutlinedButton.icon(
             onPressed: controller.retry,
             icon: const Icon(Icons.refresh),
-            label: const Text('Try again'),
+            label: Text(context.tr('Try again')),
           ),
         if (!busy && status.hasVault)
           FilledButton.icon(
@@ -208,7 +198,7 @@ class _AccessPageState extends ConsumerState<AccessPage> {
                   decoration: InputDecoration(
                     labelText: strings.text('familyName'),
                   ),
-                  validator: _required,
+                  validator: context.localizedValidator(_required),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -219,7 +209,7 @@ class _AccessPageState extends ConsumerState<AccessPage> {
                   decoration: InputDecoration(
                     labelText: strings.text('yourName'),
                   ),
-                  validator: _required,
+                  validator: context.localizedValidator(_required),
                 ),
                 const SizedBox(height: 20),
                 FilledButton.icon(
@@ -261,18 +251,22 @@ class AboutPage extends StatelessWidget {
   const AboutPage({super.key});
   @override
   Widget build(BuildContext context) => VaultPage(
-    title: 'About FamilyVault',
+    title: context.tr('About FamilyVault'),
     children: [
       Text('FamilyVault', style: Theme.of(context).textTheme.headlineMedium),
       const SizedBox(height: 8),
-      const Text('Version 0.1.0 · Private family finance'),
+      Text(context.tr('Version 0.1.0 · Private family finance')),
       const SizedBox(height: 24),
-      const Text(
-        'Built to keep your family’s finances and important records together.',
+      Text(
+        context.tr(
+          'Built to keep your family’s finances and important records together.',
+        ),
       ),
       const SizedBox(height: 16),
-      const Text(
-        'Records you start on this phone stay here. Shared families use an invitation and a separate sign-in for each person.',
+      Text(
+        context.tr(
+          'Records you start on this phone stay here. Shared families use an invitation and a separate sign-in for each person.',
+        ),
       ),
       const SizedBox(height: 24),
       const LicensePageButton(),
@@ -290,7 +284,7 @@ class LicensePageButton extends StatelessWidget {
       applicationVersion: '0.1.0',
     ),
     icon: const Icon(Icons.description_outlined),
-    label: const Text('Open-source licences'),
+    label: Text(context.tr('Open-source licences')),
   );
 }
 

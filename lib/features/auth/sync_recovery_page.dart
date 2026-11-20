@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/localization/vault_strings.dart';
 import '../../app/vault_providers.dart';
 import '../../core/database/app_database.dart';
 import '../../core/errors/app_failure.dart';
@@ -66,18 +67,20 @@ class _SyncRecoveryPageState extends ConsumerState<SyncRecoveryPage> {
     final replace = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Keep the family’s version?'),
-        content: const Text(
-          'FamilyVault will fetch the accepted family records. Changes waiting on this device will stay encrypted in Changes saved on this phone.',
+        title: Text(context.tr('Keep the family’s version?')),
+        content: Text(
+          context.tr(
+            'FamilyVault will fetch the accepted family records. Changes waiting on this device will stay encrypted in Changes saved on this phone.',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Use family records'),
+            child: Text(context.tr('Use family records')),
           ),
         ],
       ),
@@ -110,7 +113,7 @@ class _SyncRecoveryPageState extends ConsumerState<SyncRecoveryPage> {
   Widget build(BuildContext context) {
     final session = ref.watch(vaultProvider).session;
     return VaultPage(
-      title: 'Changes saved on this phone',
+      title: context.tr('Changes saved on this phone'),
       children: [
         FutureBuilder<
           ({List<_SavedChange> blocked, List<_SavedChange> retained})
@@ -130,22 +133,24 @@ class _SyncRecoveryPageState extends ConsumerState<SyncRecoveryPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (canRebuild) ...[
-                  const SectionHeading('Changes to review'),
+                  SectionHeading(context.tr('Changes to review')),
                   for (final row in data.blocked) _SavedChangeTile(row),
                   const SizedBox(height: 12),
                   FilledButton.icon(
                     onPressed: _busy ? null : () => _useShared(session),
                     icon: const Icon(Icons.restore),
-                    label: const Text('Use family records'),
+                    label: Text(context.tr('Use family records')),
                   ),
                 ],
                 if (data.retained.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  const SectionHeading('Earlier changes from this device'),
+                  SectionHeading(
+                    context.tr('Earlier changes from this device'),
+                  ),
                   for (final row in data.retained) _SavedChangeTile(row),
                 ],
                 if (!canRebuild && data.retained.isEmpty)
-                  const Text('There are no saved changes to review.'),
+                  Text(context.tr('There are no saved changes to review.')),
               ],
             );
           },
@@ -175,15 +180,15 @@ class _SavedChangeTile extends StatelessWidget {
         title: Text(
           label is String ? label : row.local.entityType.replaceAll('_', ' '),
         ),
-        subtitle: const Text('Saved on this phone'),
+        subtitle: Text(context.tr('Saved on this phone')),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Device entry'),
+          Text(context.tr('Device entry')),
           Text(format.convert(record)),
           if (shared != null) ...[
             const SizedBox(height: 12),
-            const Text('Accepted family entry'),
+            Text(context.tr('Accepted family entry')),
             Text(format.convert(jsonDecode(shared.serverSnapshotJson))),
           ],
         ],

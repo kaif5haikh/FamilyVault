@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/finance/fixed_decimal.dart';
@@ -121,15 +122,15 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(_title)),
+    appBar: AppBar(title: Text(context.tr(_title))),
     body: DebtView(
       builder: (rows, finance) {
         final row = rows.contracts.where((r) => r.id == widget.id).firstOrNull;
         final cash = _cashAccounts(finance);
         if (!_creating) {
           if (row == null || row.deletedAtUs != null) {
-            return const VaultContent(
-              children: [Text('Loan unavailable for editing.')],
+            return VaultContent(
+              children: [Text(context.tr('Loan unavailable for editing.'))],
             );
           }
           _prepare(row, finance, cash);
@@ -149,30 +150,34 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Your original record stays in history. The corrected amount and date must still fit the payments you’ve already saved.',
+                    Text(
+                      context.tr(
+                        'Your original record stays in history. The corrected amount and date must still fit the payments you’ve already saved.',
+                      ),
                     ),
                     const SizedBox(height: 24),
                   ] else ...[
                     RecordField(
-                      'Loan name',
+                      context.tr('Loan name'),
                       _name,
                       required: true,
                       enabled: enabled,
                     ),
                     if (_creating)
                       RecordChoice<DebtDirection>(
-                        'Who received the money?',
+                        context.tr('Who received the money?'),
                         _direction,
                         [
                           for (final value in DebtDirection.values)
-                            (value, debtDirection(value.code)),
+                            (value, context.tr(debtDirection(value.code))),
                         ],
                         (v) => setState(() => _direction = v),
                         enabled: enabled,
                       ),
                     RecordField(
-                      _direction == DebtDirection.lent ? 'Borrower' : 'Lender',
+                      _direction == DebtDirection.lent
+                          ? context.tr('Borrower')
+                          : context.tr('Lender'),
                       _counterparty,
                       required: true,
                       enabled: enabled,
@@ -180,14 +185,14 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                   ],
                   if (_creating || _correcting) ...[
                     RecordField(
-                      'Original loan amount',
+                      context.tr('Original loan amount'),
                       _principal,
                       money: true,
                       required: true,
                       enabled: enabled,
                     ),
                     RecordDate(
-                      'Date the loan started',
+                      context.tr('Date the loan started'),
                       _date,
                       (v) => setState(() => _date = v),
                       enabled: enabled,
@@ -195,11 +200,15 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                     SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
                       value: _funded,
-                      title: const Text(
-                        'Also record money going into or out of an account',
+                      title: Text(
+                        context.tr(
+                          'Also record money going into or out of an account',
+                        ),
                       ),
-                      subtitle: const Text(
-                        'Turn this on to show the money movement in the account. Leave it off for an existing loan balance.',
+                      subtitle: Text(
+                        context.tr(
+                          'Turn this on to show the money movement in the account. Leave it off for an existing loan balance.',
+                        ),
                       ),
                       onChanged: enabled
                           ? (v) => setState(() => _funded = v)
@@ -208,8 +217,8 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                     if (_funded)
                       RecordChoice<String>(
                         _direction == DebtDirection.lent
-                            ? 'Paid from'
-                            : 'Received into',
+                            ? context.tr('Paid from')
+                            : context.tr('Received into'),
                         cash.any((a) => a.id == _cash) ? _cash : null,
                         [for (final a in cash) (a.id, a.name)],
                         (v) => setState(() => _cash = v),
@@ -219,7 +228,7 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                   ],
                   if (_correcting)
                     RecordField(
-                      'Reason for correction',
+                      context.tr('Reason for correction'),
                       _reason,
                       required: true,
                       enabled: enabled,
@@ -231,54 +240,56 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                       controller: _termsPanel,
                       maintainState: true,
                       tilePadding: EdgeInsets.zero,
-                      title: const Text(
-                        'Interest and payment dates (optional)',
+                      title: Text(
+                        context.tr('Interest and payment dates (optional)'),
                       ),
                       children: [
                         RecordChoice<InterestMethod>(
-                          'Interest method',
+                          context.tr('Interest method'),
                           _method,
                           [
                             for (final method in InterestMethod.values)
-                              (method, interestLabel(method)),
+                              (method, context.tr(interestLabel(method))),
                           ],
                           (v) => setState(() => _method = v),
                           enabled: enabled,
                         ),
                         if (_method != InterestMethod.unrecorded)
                           RecordField(
-                            'Interest per year (%)',
+                            context.tr('Interest per year (%)'),
                             _rate,
                             scale: 2,
                             required: true,
                             enabled: enabled,
-                            hint: 'Enter zero for a confirmed interest-free loan.',
+                            hint: context.tr(
+                              'Enter zero for a confirmed interest-free loan.',
+                            ),
                           ),
                         RecordField(
-                          'Months to repay (optional)',
+                          context.tr('Months to repay (optional)'),
                           _months,
                           scale: 0,
                           enabled: enabled,
                         ),
                         RecordField(
-                          'Agreed monthly payment (optional)',
+                          context.tr('Agreed monthly payment (optional)'),
                           _emi,
                           money: true,
                           enabled: enabled,
                         ),
                         _optionalDate(
-                          'First instalment due',
+                          context.tr('First instalment due'),
                           _firstDue,
                           (v) => setState(() => _firstDue = v),
                         ),
                         _optionalDate(
-                          'Final due date',
+                          context.tr('Final due date'),
                           _due,
                           (v) => setState(() => _due = v),
                         ),
                         const SizedBox(height: 18),
                         RecordField(
-                          'Notes (optional)',
+                          context.tr('Notes (optional)'),
                           _notes,
                           maxLength: 4000,
                           lines: 3,
@@ -293,10 +304,10 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                     icon: const Icon(Icons.check),
                     label: Text(
                       _saving
-                          ? 'Saving…'
+                          ? context.tr('Saving…')
                           : _correcting
-                          ? 'Save the corrected loan amount'
-                          : 'Save loan',
+                          ? context.tr('Save the corrected loan amount')
+                          : context.tr('Save loan'),
                     ),
                   ),
                 ],
@@ -317,7 +328,9 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
     children: [
       SwitchListTile.adaptive(
         contentPadding: EdgeInsets.zero,
-        title: Text('Record $label'.toLowerCase()),
+        title: Text(
+          context.tr("Record {dateType}", {'dateType': label}).toLowerCase(),
+        ),
         value: value != null,
         onChanged: _saving ? null : (v) => onChanged(v ? _date : null),
       ),
@@ -444,7 +457,9 @@ class _RepaymentEditorState extends ConsumerState<RepaymentEditor> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(
-        widget.repaymentId == null ? 'Record repayment' : 'Correct repayment',
+        widget.repaymentId == null
+            ? context.tr('Record repayment')
+            : context.tr('Correct repayment'),
       ),
     ),
     body: DebtView(
@@ -462,8 +477,8 @@ class _RepaymentEditorState extends ConsumerState<RepaymentEditor> {
             row.deletedAtUs != null ||
             (widget.repaymentId != null &&
                 (journal == null || journal.deletedAtUs != null))) {
-          return const VaultContent(
-            children: [Text('Repayment unavailable for editing.')],
+          return VaultContent(
+            children: [Text(context.tr('Repayment unavailable for editing.'))],
           );
         }
         final cash = _cashAccounts(finance);
@@ -498,44 +513,50 @@ class _RepaymentEditorState extends ConsumerState<RepaymentEditor> {
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Enter the principal and interest from the actual payment. Leave either blank when it was zero.',
+                  Text(
+                    context.tr(
+                      'Enter the principal and interest from the actual payment. Leave either blank when it was zero.',
+                    ),
                   ),
                   const SizedBox(height: 24),
                   RecordField(
-                    'Amount paid toward the loan',
+                    context.tr('Amount paid toward the loan'),
                     _principal,
                     money: true,
                     enabled: !_saving,
                   ),
                   RecordField(
-                    'Interest paid',
+                    context.tr('Interest paid'),
                     _interest,
                     money: true,
                     enabled: !_saving,
                   ),
                   RecordChoice<String>(
-                    row.direction == 'lent' ? 'Received into' : 'Paid from',
+                    row.direction == 'lent'
+                        ? context.tr('Received into')
+                        : context.tr('Paid from'),
                     cash.any((a) => a.id == _account) ? _account : null,
                     [for (final a in cash) (a.id, a.name)],
                     (v) => setState(() => _account = v),
                     enabled: !_saving,
                   ),
                   if (cash.isEmpty)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(bottom: 20),
                       child: Text(
-                        'Add a cash or bank account to record a repayment.',
+                        context.tr(
+                          'Add a cash or bank account to record a repayment.',
+                        ),
                       ),
                     ),
                   RecordDate(
-                    'Payment date',
+                    context.tr('Payment date'),
                     _date,
                     (v) => setState(() => _date = v),
                     enabled: !_saving,
                   ),
                   RecordField(
-                    'Notes (optional)',
+                    context.tr('Notes (optional)'),
                     _notes,
                     lines: 3,
                     maxLength: 4000,
@@ -543,7 +564,7 @@ class _RepaymentEditorState extends ConsumerState<RepaymentEditor> {
                   ),
                   if (original != null)
                     RecordField(
-                      'Reason for correction',
+                      context.tr('Reason for correction'),
                       _reason,
                       required: true,
                       maxLength: 400,
@@ -556,10 +577,10 @@ class _RepaymentEditorState extends ConsumerState<RepaymentEditor> {
                     icon: const Icon(Icons.check),
                     label: Text(
                       _saving
-                          ? 'Saving…'
+                          ? context.tr('Saving…')
                           : original == null
-                          ? 'Save repayment'
-                          : 'Save repayment correction',
+                          ? context.tr('Save repayment')
+                          : context.tr('Save repayment correction'),
                     ),
                   ),
                 ],

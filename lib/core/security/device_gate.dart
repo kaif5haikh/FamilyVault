@@ -7,9 +7,10 @@ abstract interface class DeviceGate {
 }
 
 final class PlatformDeviceGate implements DeviceGate {
-  PlatformDeviceGate({LocalAuthentication? authentication})
+  PlatformDeviceGate({LocalAuthentication? authentication, this.reason})
     : _authentication = authentication ?? LocalAuthentication();
   final LocalAuthentication _authentication;
+  final String Function()? reason;
   @override
   Future<bool> authenticate() async {
     try {
@@ -20,7 +21,7 @@ final class PlatformDeviceGate implements DeviceGate {
         );
       }
       return await _authentication.authenticate(
-        localizedReason: 'Unlock your private FamilyVault',
+        localizedReason: reason?.call() ?? 'Unlock your private FamilyVault',
         sensitiveTransaction: true,
         persistAcrossBackgrounding: false,
       );

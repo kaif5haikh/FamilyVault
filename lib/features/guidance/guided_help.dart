@@ -11,32 +11,32 @@ enum HelpTopic {
   received(
     Icons.south_west_rounded,
     '/transaction/new?kind=income&guide=1',
-    'income salary deposit add money',
+    'income salary deposit add money आमदनी तनख़्वाह पगार आय',
   ),
   spent(
     Icons.north_east_rounded,
     '/transaction/new?kind=expense&guide=1',
-    'expense bill spending add money',
+    'expense bill spending add money ख़र्च भुगतान बिल राशन',
   ),
   move(
     Icons.swap_horiz_rounded,
     '/transaction/new?kind=transfer&guide=1',
-    'transfer move money',
+    'transfer move money ट्रांसफ़र जमा',
   ),
   available(
     Icons.account_balance_wallet_outlined,
     '/accounts',
-    'balance cash available savings money',
+    'balance cash available savings money नकद बचत बाकी बैलेंस',
   ),
   bank(
     Icons.account_balance_outlined,
     '/account/new?subtype=bank',
-    'bank cash account add money',
+    'bank cash account add money बैंक खाता अकाउंट',
   ),
   gold(
     Icons.diamond_outlined,
     '/asset/new?kind=gold',
-    'gold jewellery jewelry metal सोने',
+    'gold jewellery jewelry metal सोने सोना गहने',
   ),
   property(
     Icons.home_work_outlined,
@@ -56,27 +56,27 @@ enum HelpTopic {
   addPaper(
     Icons.note_add_outlined,
     '/documents?guide=add',
-    'document paper upload scan photo file add',
+    'document paper upload scan photo file add डॉक्यूमेंट फ़ाइल कागज़ जोड़ें',
   ),
   findPaper(
     Icons.folder_open_outlined,
     '/documents?guide=find',
-    'document paper find locate file search',
+    'document paper find locate file search डॉक्यूमेंट फ़ाइल कागज़ ढूँढें',
   ),
   copy(
     Icons.cloud_upload_outlined,
     '/backups',
-    'backup safe copy drive export recovery',
+    'backup safe copy drive export recovery बैकअप कॉपी',
   ),
   recover(
     Icons.settings_backup_restore,
     '/restore',
-    'backup safe copy restore recovery bring back',
+    'backup safe copy restore recovery bring back बैकअप रिस्टोर फ़ाइल',
   ),
   invite(
     Icons.person_add_alt_outlined,
     '/family',
-    'family member invite sign in add access',
+    'family member invite sign in add access न्योता बुलाएँ इजाज़त',
   ),
   own(
     Icons.inventory_2_outlined,
@@ -99,15 +99,22 @@ enum HelpTopic {
   String second(VaultStrings strings) => strings.text('help.$name.second');
 
   static Iterable<HelpTopic> search(String query, VaultStrings strings) {
-    final words = query
-        .toLowerCase()
+    final words = _searchText(query)
         .split(RegExp(r'[\s,.?!]+'))
         .where((part) => part.isNotEmpty);
     return values.where((topic) {
-      final terms = '${topic.title(strings)} ${topic.keywords}'.toLowerCase();
+      final terms = _searchText('${topic.title(strings)} ${topic.keywords}');
       return words.every(terms.contains);
     });
   }
+
+  static String _searchText(String value) => value
+      .toLowerCase()
+      .replaceAll('\u093c', '')
+      .replaceAllMapped(
+        RegExp(r'[क़ख़ग़ज़ड़ढ़फ़य़]'),
+        (match) => 'कखगजडढफय'['क़ख़ग़ज़ड़ढ़फ़य़'.indexOf(match[0]!)],
+      );
 }
 
 class HelpPage extends StatefulWidget {

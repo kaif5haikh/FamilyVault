@@ -11,6 +11,7 @@ final class _ReminderFixture implements DocumentReminderPlatform {
   bool permission = false;
   int requests = 0;
   final batches = <List<int>>[];
+  final languages = <String>[];
 
   @override
   bool get supported => true;
@@ -25,7 +26,10 @@ final class _ReminderFixture implements DocumentReminderPlatform {
   Future<bool> allowed() async => permission;
 
   @override
-  Future<void> replace(List<int> times) async => batches.add(List.of(times));
+  Future<void> replace(List<int> times, {required String language}) async {
+    batches.add(List.of(times));
+    languages.add(language);
+  }
 }
 
 void main() {
@@ -99,6 +103,10 @@ void main() {
       expect(native.requests, 2);
       expect(native.batches, hasLength(1));
       expect(native.batches.single, hasLength(2));
+      await service.refresh(session, ['2026-12-31'], language: 'hi');
+      await service.refresh(session, ['2026-12-31'], language: 'hi');
+      expect(native.languages, ['en', 'hi']);
+      expect(native.batches.first, native.batches.last);
 
       native.permission = false;
       await service.refresh(session, ['2026-12-31']);
@@ -108,7 +116,7 @@ void main() {
       await service.refresh(session, ['2026-12-31']);
       await lifecycle.lock();
       await service.refresh(session, ['2027-01-01']);
-      expect(native.batches, hasLength(3));
+      expect(native.batches, hasLength(4));
       await service.setEnabled(session.identity, false);
       expect(native.batches.last, isEmpty);
       expect(await service.enabled(session.identity), isFalse);

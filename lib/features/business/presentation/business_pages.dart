@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/finance/formatters.dart';
 import '../../../shared/widgets/record_audit.dart';
@@ -35,7 +36,7 @@ class BusinessView extends ConsumerWidget {
             OutlinedButton.icon(
               onPressed: () => ref.invalidate(businessProvider),
               icon: const Icon(Icons.refresh),
-              label: const Text('Try again'),
+              label: Text(context.tr('Try again')),
             ),
           ],
         ),
@@ -51,18 +52,20 @@ class BusinessesPage extends StatelessWidget {
     builder: (data, finance) => VaultContent(
       children: [
         SectionHeading(
-          'Your businesses',
+          context.tr('Your businesses'),
           action: FilledButton.icon(
             onPressed: () => context.push('/business/new'),
             icon: const Icon(Icons.add),
-            label: const Text('Add business'),
+            label: Text(context.tr('Add business')),
           ),
         ),
         if (data.businesses.isEmpty)
-          const EmptyNotice(
+          EmptyNotice(
             icon: Icons.storefront_outlined,
-            title: 'No businesses recorded yet',
-            message: 'Add a business to keep its sales, bills, stock and wages together.',
+            title: context.tr('No businesses recorded yet'),
+            message: context.tr(
+              'Add a business to keep its sales, bills, stock and wages together.',
+            ),
           ),
         for (final row in data.businesses)
           Card.outlined(
@@ -70,7 +73,9 @@ class BusinessesPage extends StatelessWidget {
               leading: const Icon(Icons.storefront_outlined),
               title: Text(row.name),
               subtitle: Text(
-                row.notes.isEmpty ? 'Money, stock and wages' : row.notes,
+                row.notes.isEmpty
+                    ? context.tr('Money, stock and wages')
+                    : row.notes,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -96,14 +101,16 @@ class _BusinessPageState extends State<BusinessPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Business details')),
+    appBar: AppBar(title: Text(context.tr('Business details'))),
     body: BusinessView(
       builder: (data, finance) {
         final business = data.businesses
             .where((r) => r.id == widget.id)
             .firstOrNull;
         if (business == null || business.deletedAtUs != null) {
-          return const VaultContent(children: [Text('Business unavailable.')]);
+          return VaultContent(
+            children: [Text(context.tr('Business unavailable.'))],
+          );
         }
         final month = DateTime.parse(_date),
             period = ReportPeriod.month(month.year, month.month);
@@ -136,7 +143,7 @@ class _BusinessPageState extends State<BusinessPage> {
               action: OutlinedButton.icon(
                 onPressed: () => context.push('/business/${business.id}/edit'),
                 icon: const Icon(Icons.edit_outlined),
-                label: const Text('Edit business'),
+                label: Text(context.tr('Edit business')),
               ),
             ),
             if (business.notes.isNotEmpty)
@@ -152,77 +159,88 @@ class _BusinessPageState extends State<BusinessPage> {
                   onPressed: () =>
                       context.push('/business/${business.id}/revenue'),
                   icon: const Icon(Icons.add),
-                  label: const Text('Add money from sales'),
+                  label: Text(context.tr('Add money from sales')),
                 ),
                 OutlinedButton.icon(
                   onPressed: () =>
                       context.push('/business/${business.id}/expense'),
                   icon: const Icon(Icons.payments_outlined),
-                  label: const Text('Add a business cost'),
+                  label: Text(context.tr('Add a business cost')),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             RecordDate(
-              'Report month',
+              context.tr('Report month'),
               _date,
               (value) => setState(() => _date = value),
             ),
             ResponsiveCards(
               children: [
                 MetricCard(
-                  title: 'Business profit',
+                  title: context.tr('Business profit'),
                   value: formatInr(profit.net),
                   icon: Icons.insights_outlined,
                   detail: period.label,
                   emphasis: true,
                 ),
                 MetricCard(
-                  title: 'Money from sales',
+                  title: context.tr('Money from sales'),
                   value: formatInr(profit.revenue),
                   icon: Icons.trending_up,
                 ),
                 MetricCard(
-                  title: 'Value of stock left',
+                  title: context.tr('Value of stock left'),
                   value: formatInr(
                     finance.balances()[business.inventoryAccountId] ??
                         BigInt.zero,
                   ),
                   icon: Icons.inventory_2_outlined,
-                  detail: 'Based on what you paid for it',
+                  detail: context.tr('Based on what you paid for it'),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             Card.outlined(
               child: ExpansionTile(
-                title: const Text('How profit is worked out'),
+                title: Text(context.tr('How profit is worked out')),
                 children: [
-                  _ProfitLine('Cost of stock used', profit.costOfGoods),
-                  _ProfitLine('Sales minus stock costs', profit.gross),
-                  _ProfitLine('Wages paid', profit.salaries),
-                  _ProfitLine('Business costs', profit.operatingExpenses),
+                  _ProfitLine(
+                    context.tr('Cost of stock used'),
+                    profit.costOfGoods,
+                  ),
+                  _ProfitLine(
+                    context.tr('Sales minus stock costs'),
+                    profit.gross,
+                  ),
+                  _ProfitLine(context.tr('Wages paid'), profit.salaries),
+                  _ProfitLine(
+                    context.tr('Business costs'),
+                    profit.operatingExpenses,
+                  ),
                 ],
               ),
             ),
             const SizedBox(height: 26),
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Show archived items and workers'),
+              title: Text(context.tr('Show archived items and workers')),
               value: _showArchived,
               onChanged: (v) => setState(() => _showArchived = v),
             ),
             SectionHeading(
-              'Stock',
+              context.tr('Stock'),
               action: OutlinedButton.icon(
                 onPressed: () => context.push('/business/${business.id}/item'),
                 icon: const Icon(Icons.add),
-                label: const Text('Add stock item'),
+                label: Text(context.tr('Add stock item')),
               ),
             ),
             if (stock.isEmpty)
-              const Text(
-                'Add a stock item before recording purchases or issues.',
+              Text(
+                context.tr(
+                  'Add a stock item before recording purchases or issues.',
+                ),
               ),
             for (final item in stock)
               Card.outlined(
@@ -230,7 +248,15 @@ class _BusinessPageState extends State<BusinessPage> {
                   title: Text(item.name),
                   leading: const Icon(Icons.inventory_2_outlined),
                   subtitle: Text(
-                    '${data.positions[item.id]?.quantity ?? 0} pieces · ${formatInr(BigInt.from(data.positions[item.id]?.costPoolMinor ?? 0))}${item.deletedAtUs == null ? '' : ' · Archived'}',
+                    context.tr("{quantity} pieces · {cost}{status}", {
+                      'quantity': data.positions[item.id]?.quantity ?? 0,
+                      'cost': formatInr(
+                        BigInt.from(
+                          data.positions[item.id]?.costPoolMinor ?? 0,
+                        ),
+                      ),
+                      'status': item.deletedAtUs == null ? '' : ' · Archived',
+                    }),
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/stock/${item.id}'),
@@ -238,17 +264,19 @@ class _BusinessPageState extends State<BusinessPage> {
               ),
             const SizedBox(height: 24),
             SectionHeading(
-              'Workers',
+              context.tr('Workers'),
               action: OutlinedButton.icon(
                 onPressed: () =>
                     context.push('/business/${business.id}/worker'),
                 icon: const Icon(Icons.person_add_alt_outlined),
-                label: const Text('Add worker'),
+                label: Text(context.tr('Add worker')),
               ),
             ),
             if (workers.isEmpty)
-              const Text(
-                'Worker records keep agreed wages and actual payment history.',
+              Text(
+                context.tr(
+                  'Worker records keep agreed wages and actual payment history.',
+                ),
               ),
             for (final worker in workers)
               Card.outlined(
@@ -257,19 +285,25 @@ class _BusinessPageState extends State<BusinessPage> {
                   leading: const Icon(Icons.person_outline),
                   subtitle: Text(
                     worker.deletedAtUs != null
-                        ? 'Archived'
+                        ? context.tr('Archived')
                         : worker.monthlySalaryMinor == null
-                        ? 'Monthly pay unrecorded'
-                        : '${formatInr(BigInt.from(worker.monthlySalaryMinor!))} agreed monthly pay',
+                        ? context.tr('Monthly pay unrecorded')
+                        : context.tr("{amount} agreed monthly pay", {
+                            'amount': formatInr(
+                              BigInt.from(worker.monthlySalaryMinor!),
+                            ),
+                          }),
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/worker/${worker.id}'),
                 ),
               ),
             const SizedBox(height: 24),
-            SectionHeading('Money activity · ${period.label}'),
+            SectionHeading(
+              context.tr("Money activity · {period}", {'period': period.label}),
+            ),
             if (entries.isEmpty)
-              const Text('No business entries in this month.'),
+              Text(context.tr('No business entries in this month.')),
             for (final row in entries)
               ListTile(
                 contentPadding: EdgeInsets.zero,
@@ -328,7 +362,7 @@ class BusinessOverview extends ConsumerWidget {
       child: Card.filled(
         child: ListTile(
           leading: const Icon(Icons.storefront_outlined),
-          title: const Text('Business profit for this period'),
+          title: Text(context.tr('Business profit for this period')),
           subtitle: Text(formatInr(amount)),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/businesses'),

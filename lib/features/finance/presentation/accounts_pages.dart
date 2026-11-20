@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'account_labels.dart';
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/errors/app_failure.dart';
@@ -53,11 +55,11 @@ class _AccountsPageState extends State<AccountsPage> {
       return VaultContent(
         children: [
           SectionHeading(
-            'Your accounts',
+            context.tr('Your accounts'),
             action: FilledButton.icon(
               onPressed: () => context.push('/account/new'),
               icon: const Icon(Icons.add),
-              label: const Text('Add account'),
+              label: Text(context.tr('Add account')),
             ),
           ),
           Wrap(
@@ -66,7 +68,7 @@ class _AccountsPageState extends State<AccountsPage> {
             children: [
               for (final group in ['Balances', 'Categories', 'Archived'])
                 ChoiceChip(
-                  label: Text(group),
+                  label: Text(context.tr(group)),
                   selected: _group == group,
                   onSelected: (_) => setState(() => _group = group),
                 ),
@@ -77,11 +79,13 @@ class _AccountsPageState extends State<AccountsPage> {
             EmptyNotice(
               icon: Icons.account_balance_outlined,
               title: _group == 'Archived'
-                  ? 'No archived accounts'
-                  : 'No accounts here yet',
+                  ? context.tr('No archived accounts')
+                  : context.tr('No accounts here yet'),
               message: _group == 'Archived'
-                  ? 'Archived accounts keep their complete history.'
-                  : 'Add the cash or bank account you use. Starting with zero is fine.',
+                  ? context.tr('Archived accounts keep their complete history.')
+                  : context.tr(
+                      'Add the cash or bank account you use. Starting with zero is fine.',
+                    ),
             ),
           for (final a in accounts)
             Padding(
@@ -95,9 +99,9 @@ class _AccountsPageState extends State<AccountsPage> {
                         ? Icons.request_quote_outlined
                         : Icons.category_outlined,
                   ),
-                  title: Text(a.name),
+                  title: Text(accountDisplayName(context, a)),
                   subtitle: Text(
-                    '${_accountLabel(a)}\n${formatInr(a.kind == 'liability' || a.kind == 'income' ? -(balances[a.id] ?? BigInt.zero) : balances[a.id] ?? BigInt.zero)}',
+                    '${context.tr(_accountLabel(a))}\n${formatInr(a.kind == 'liability' || a.kind == 'income' ? -(balances[a.id] ?? BigInt.zero) : balances[a.id] ?? BigInt.zero)}',
                   ),
                   isThreeLine: true,
                   trailing: const Icon(Icons.chevron_right),
@@ -166,7 +170,9 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(
-        widget.accountId == null ? 'Add account or category' : 'Rename account',
+        widget.accountId == null
+            ? context.tr('Add account or category')
+            : context.tr('Rename account'),
       ),
     ),
     body: FinanceView(
@@ -179,8 +185,10 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
               row.systemAccount ||
               row.deletedAtUs != null ||
               data.managedAccountIds.contains(row.id)) {
-            return const VaultContent(
-              children: [Text('This account is unavailable for editing.')],
+            return VaultContent(
+              children: [
+                Text(context.tr('This account is unavailable for editing.')),
+              ],
             );
           }
           _name.text = row.name;
@@ -202,16 +210,16 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
                     enabled: !_busy,
                     maxLength: 120,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(labelText: 'Name'),
-                    validator: requiredText,
+                    decoration: InputDecoration(labelText: context.tr('Name')),
+                    validator: context.localizedValidator(requiredText),
                   ),
                   const SizedBox(height: 20),
                   if (widget.accountId == null) ...[
                     DropdownButtonFormField<AccountKind>(
                       initialValue: _kind,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Kind of account',
+                      decoration: InputDecoration(
+                        labelText: context.tr('Kind of account'),
                       ),
                       items: [
                         for (final kind in AccountKind.values.where(
@@ -220,10 +228,14 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
                           DropdownMenuItem(
                             value: kind,
                             child: Text(switch (kind) {
-                              AccountKind.asset => 'Cash, bank or property',
-                              AccountKind.liability => 'Money owed',
-                              AccountKind.income => 'Kind of money received',
-                              _ => 'Kind of spending',
+                              AccountKind.asset => context.tr(
+                                'Cash, bank or property',
+                              ),
+                              AccountKind.liability => context.tr('Money owed'),
+                              AccountKind.income => context.tr(
+                                'Kind of money received',
+                              ),
+                              _ => context.tr('Kind of spending'),
                             }),
                           ),
                       ],
@@ -238,12 +250,14 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
                     DropdownButtonFormField<String>(
                       key: ValueKey(_kind),
                       initialValue: _subtype,
-                      decoration: const InputDecoration(labelText: 'Category'),
+                      decoration: InputDecoration(
+                        labelText: context.tr('Category'),
+                      ),
                       items: [
                         for (final subtype in _subtypes(_kind))
                           DropdownMenuItem(
                             value: subtype,
-                            child: Text(_subtypeLabel(subtype)),
+                            child: Text(context.tr(_subtypeLabel(subtype))),
                           ),
                       ],
                       onChanged: _busy
@@ -261,10 +275,12 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
                           decimal: true,
                           signed: true,
                         ),
-                        decoration: const InputDecoration(
-                          labelText: 'Starting amount (optional)',
+                        decoration: InputDecoration(
+                          labelText: context.tr('Starting amount (optional)'),
                           prefixText: '₹ ',
-                          helperText: 'Enter what was there when you started your records. Leave empty to start at zero.',
+                          helperText: context.tr(
+                            'Enter what was there when you started your records. Leave empty to start at zero.',
+                          ),
                         ),
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
@@ -273,7 +289,7 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
                           try {
                             Money.parseInr(v);
                           } on AppFailure catch (e) {
-                            return e.message;
+                            return VaultStrings.of(context).failure(e);
                           }
                           return null;
                         },
@@ -298,7 +314,11 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
                                 }
                               },
                         icon: const Icon(Icons.calendar_today_outlined),
-                        label: Text('Opening date: $_openedOn'),
+                        label: Text(
+                          context.tr("Opening date: {date}", {
+                            'date': _openedOn,
+                          }),
+                        ),
                       ),
                     ],
                   ],
@@ -310,7 +330,11 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
                   FilledButton.icon(
                     onPressed: _busy ? null : _save,
                     icon: const Icon(Icons.check),
-                    label: Text(_busy ? 'Saving…' : 'Save account'),
+                    label: Text(
+                      _busy
+                          ? context.tr('Saving…')
+                          : context.tr('Save account'),
+                    ),
                   ),
                 ],
               ),
@@ -378,12 +402,14 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
   Object? _error;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Account details')),
+    appBar: AppBar(title: Text(context.tr('Account details'))),
     body: FinanceView(
       builder: (data) {
         final a = data.accounts.where((a) => a.id == widget.id).firstOrNull;
         if (a == null) {
-          return const VaultContent(children: [Text('Account unavailable.')]);
+          return VaultContent(
+            children: [Text(context.tr('Account unavailable.'))],
+          );
         }
         final balance = data.balances()[a.id] ?? BigInt.zero;
         final managed = data.managedAccountIds.contains(a.id);
@@ -398,13 +424,13 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
           maxWidth: 800,
           children: [
             MetricCard(
-              title: a.name,
+              title: accountDisplayName(context, a),
               value: formatInr(
                 ['liability', 'income'].contains(a.kind) ? -balance : balance,
               ),
               icon: Icons.account_balance_outlined,
               detail:
-                  '${_accountLabel(a)}${a.deletedAtUs != null ? ' · Archived' : ''}',
+                  '${context.tr(_accountLabel(a))}${a.deletedAtUs != null ? context.tr(' · Archived') : ''}',
               emphasis: true,
             ),
             const SizedBox(height: 20),
@@ -416,7 +442,7 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
                   OutlinedButton.icon(
                     onPressed: () => context.push('/account/${a.id}/edit'),
                     icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Rename'),
+                    label: Text(context.tr('Rename')),
                   ),
                 if (a.kind == 'asset' &&
                     ['cash', 'bank'].contains(a.subtype) &&
@@ -424,7 +450,7 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
                   OutlinedButton.icon(
                     onPressed: () => context.push('/account/${a.id}/reconcile'),
                     icon: const Icon(Icons.fact_check_outlined),
-                    label: const Text('Check the amount'),
+                    label: Text(context.tr('Check the amount')),
                   ),
                 if (!managed && !a.systemAccount)
                   OutlinedButton.icon(
@@ -435,28 +461,33 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
                           : Icons.unarchive_outlined,
                     ),
                     label: Text(
-                      a.deletedAtUs == null ? 'Archive' : 'Restore account',
+                      a.deletedAtUs == null
+                          ? context.tr('Archive')
+                          : context.tr('Restore account'),
                     ),
                   ),
               ],
             ),
             if (managed)
-              const Text(
-                'To change this amount, open the related item, loan or business.',
+              Text(
+                context.tr(
+                  'To change this amount, open the related item, loan or business.',
+                ),
               ),
             if (_error != null) ...[
               const SizedBox(height: 16),
               FailureNotice(_error!),
             ],
             const SizedBox(height: 28),
-            const SectionHeading('Account history'),
-            if (journals.isEmpty) const Text('No entries in this account yet.'),
+            SectionHeading(context.tr('Account history')),
+            if (journals.isEmpty)
+              Text(context.tr('No entries in this account yet.')),
             for (final j in journals)
               Card.outlined(
                 child: ListTile(
                   title: Text(j.description),
                   subtitle: Text(
-                    '${j.occurredOn} · ${j.kind}${j.deletedAtUs != null ? ' · Reversed' : ''}',
+                    '${j.occurredOn} · ${j.kind}${j.deletedAtUs != null ? context.tr(' · Reversed') : ''}',
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/transaction/${j.id}'),
@@ -473,22 +504,26 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
       builder: (context) => AlertDialog(
         title: Text(
           a.deletedAtUs == null
-              ? 'Archive this account?'
-              : 'Restore this account?',
+              ? context.tr('Archive this account?')
+              : context.tr('Restore this account?'),
         ),
         content: Text(
           a.deletedAtUs == null
-              ? 'All entries and audit history stay intact. Accounts with a balance must be reconciled first.'
-              : 'The account becomes available for new transactions.',
+              ? context.tr(
+                  'All entries and audit history stay intact. Accounts with a balance must be reconciled first.',
+                )
+              : context.tr(
+                  'The account becomes available for new transactions.',
+                ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Continue'),
+            child: Text(context.tr('Continue')),
           ),
         ],
       ),

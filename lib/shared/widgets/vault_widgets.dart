@@ -3,7 +3,6 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../app/vault_providers.dart';
 import '../../app/theme.dart';
-import '../../core/errors/app_failure.dart';
 import '../../core/localization/vault_strings.dart';
 import '../../features/finance/data/ledger_repository.dart';
 
@@ -158,9 +157,7 @@ class FailureNotice extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Text(
-          error is AppFailure
-              ? (error as AppFailure).message
-              : VaultStrings.of(context).text('unknownError'),
+          VaultStrings.of(context).failure(error),
           style: TextStyle(
             color: Theme.of(context).colorScheme.onErrorContainer,
           ),
@@ -349,8 +346,8 @@ class _ReasonDialogState extends State<ReasonDialog> {
             TextFormField(
               controller: _reason,
               maxLength: 400,
-              decoration: const InputDecoration(labelText: 'Reason'),
-              validator: requiredText,
+              decoration: InputDecoration(labelText: context.tr('Reason')),
+              validator: context.localizedValidator(requiredText),
             ),
           ],
         ),
@@ -359,7 +356,7 @@ class _ReasonDialogState extends State<ReasonDialog> {
     actions: [
       TextButton(
         onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+        child: Text(context.tr('Cancel')),
       ),
       FilledButton(
         onPressed: () {

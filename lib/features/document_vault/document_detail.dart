@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:pdfrx/pdfrx.dart';
 
+import '../../core/localization/vault_strings.dart';
 import '../../core/database/app_database.dart';
 import '../../core/errors/app_failure.dart';
 import '../../shared/widgets/vault_widgets.dart';
@@ -17,7 +18,7 @@ import 'document_repository.dart';
 
 typedef _DocumentRecord = ({
   VaultDocument details,
-  String owner,
+  String? owner,
   List<VaultDocumentVersion> versions,
   List<VaultDocumentLink> links,
 });
@@ -40,12 +41,10 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
     final members = await repository.members();
     return (
       details: doc,
-      owner:
-          members
-              .where((member) => member.id == doc.ownerId)
-              .firstOrNull
-              ?.displayName ??
-          'Family member',
+      owner: members
+          .where((member) => member.id == doc.ownerId)
+          .firstOrNull
+          ?.displayName,
       versions: await repository.versions(doc.id),
       links: await repository.links(doc.id),
     );
@@ -99,12 +98,12 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
         await showDialog<({String label, String? journal, String? asset})>(
           context: context,
           builder: (context) => SimpleDialog(
-            title: const Text('Link to a record'),
+            title: Text(context.tr('Link to a record')),
             children: [
               if (choices.isEmpty)
                 Padding(
                   padding: EdgeInsets.all(24),
-                  child: Text('Add an item or money record first.'),
+                  child: Text(context.tr('Add an item or money record first.')),
                 ),
               for (final choice in choices)
                 SimpleDialogOption(
@@ -128,7 +127,7 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
     final repository = ref.watch(documentRepositoryProvider);
     if (repository == null) return const SizedBox.shrink();
     return VaultPage(
-      title: 'Document',
+      title: context.tr('Document'),
       children: [
         FutureBuilder<_DocumentRecord>(
           future: _record ??= _load(repository),
@@ -149,11 +148,11 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${categoryLabel(DocumentCategory.values.byName(doc.category))} · ${record.owner}',
+                  '${categoryLabel(context, DocumentCategory.values.byName(doc.category))} · ${record.owner ?? context.tr('Family member')}',
                 ),
                 if (expiryLabel(context, doc.expiryOn) case final expiry?)
                   Text(expiry),
-                if (archived) const Text('Archived'),
+                if (archived) Text(context.tr('Archived')),
                 if (_error != null) FailureNotice(_error!),
                 const SizedBox(height: 12),
                 if (record.versions.firstOrNull case final latest?) ...[
@@ -162,7 +161,7 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                       '/document/${doc.id}/version/${latest.id}',
                     ),
                     icon: const Icon(Icons.visibility_outlined),
-                    label: const Text('Open document'),
+                    label: Text(context.tr('Open document')),
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -178,7 +177,7 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                               ? null
                               : () => context.push('/document/${doc.id}/edit'),
                           icon: const Icon(Icons.edit_outlined),
-                          label: const Text('Edit details'),
+                          label: Text(context.tr('Edit details')),
                         ),
                         OutlinedButton.icon(
                           onPressed: _busy
@@ -190,7 +189,7 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                                   versionOf: doc,
                                 ),
                           icon: const Icon(Icons.add),
-                          label: const Text('Add a new version'),
+                          label: Text(context.tr('Add a new version')),
                         ),
                         OutlinedButton.icon(
                           onPressed: _busy
@@ -200,7 +199,9 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                                   () => _link(repository, doc.id),
                                 ),
                           icon: const Icon(Icons.link),
-                          label: const Text('Link to an item or money record'),
+                          label: Text(
+                            context.tr('Link to an item or money record'),
+                          ),
                         ),
                       ],
                       TextButton.icon(
@@ -221,20 +222,24 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                         ),
                         label: Text(
                           archived
-                              ? 'Put back in Documents'
-                              : 'Move to Archived',
+                              ? context.tr('Put back in Documents')
+                              : context.tr('Move to Archived'),
                         ),
                       ),
                     ],
                   ),
                 const SizedBox(height: 18),
-                const SectionHeading('Versions'),
+                SectionHeading(context.tr('Versions')),
                 for (final version in record.versions)
                   Card.outlined(
                     child: ListTile(
-                      title: Text('Version ${version.version}'),
+                      title: Text(
+                        context.tr("Version {version}", {
+                          'version': version.version,
+                        }),
+                      ),
                       subtitle: Text(
-                        '${version.mimeType == 'application/pdf' ? 'PDF' : 'Image'} · ${_size(version.plaintextBytes)}',
+                        '${version.mimeType == 'application/pdf' ? 'PDF' : context.tr('Image')} · ${_size(version.plaintextBytes)}',
                       ),
                       onTap: () => context.push(
                         '/document/${doc.id}/version/${version.id}',
@@ -244,12 +249,14 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                   ),
                 if (record.links.isNotEmpty) ...[
                   const SizedBox(height: 18),
-                  const SectionHeading('Linked records'),
+                  SectionHeading(context.tr('Linked records')),
                   for (final link in record.links)
                     ListTile(
                       leading: const Icon(Icons.link),
                       title: Text(
-                        link.assetId == null ? 'Money record' : 'Item we own',
+                        link.assetId == null
+                            ? context.tr('Money record')
+                            : context.tr('Item we own'),
                       ),
                       onTap: () => context.push(
                         link.assetId == null
@@ -257,7 +264,7 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                             : '/asset/${link.assetId}',
                       ),
                       trailing: IconButton(
-                        tooltip: 'Unlink record',
+                        tooltip: context.tr('Unlink record'),
                         icon: const Icon(Icons.link_off),
                         onPressed: _busy
                             ? null
@@ -346,16 +353,20 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Share this saved file?'),
-          content: Text('This will add a new version to ${document.title}.'),
+          title: Text(context.tr('Share this saved file?')),
+          content: Text(
+            context.tr("This will add a new version to {document}.", {
+              'document': document.title,
+            }),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(context.tr('Cancel')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Add a new version'),
+              child: Text(context.tr('Add a new version')),
             ),
           ],
         ),
@@ -370,8 +381,9 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
       unawaited(repository.session.sync?.check());
     } on AppFailure catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.message)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(VaultStrings.of(context).failure(error))),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -401,13 +413,15 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
         bytes: bytes,
       );
       if (saved && mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('Document saved.')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(context.tr('Document saved.'))));
       }
     } on AppFailure catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(error.message)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(VaultStrings.of(context).failure(error))),
+        );
       }
     } finally {
       bytes?.fillRange(0, bytes.length, 0);
@@ -432,19 +446,19 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
       future: _loading ??= _load(repository),
       builder: (context, snapshot) => Scaffold(
         appBar: AppBar(
-          title: Text(_title),
+          title: Text(context.tr(_title)),
           actions: [
             if (_canRetry)
               IconButton(
                 onPressed: _saving ? null : () => _retry(repository),
-                tooltip: 'Add saved file as a new version',
+                tooltip: context.tr('Add saved file as a new version'),
                 icon: const Icon(Icons.cloud_upload_outlined),
               ),
             IconButton(
               onPressed: _data == null || _saving
                   ? null
                   : () => _download(repository),
-              tooltip: 'Save a copy',
+              tooltip: context.tr('Save a copy'),
               icon: const Icon(Icons.download_outlined),
             ),
           ],
@@ -467,7 +481,7 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
           textSelectionParams: const PdfTextSelectionParams(enabled: false),
           linkHandlerParams: PdfLinkHandlerParams(onLinkTap: (_) {}),
           errorBannerBuilder: (_, _, _, _) =>
-              const Center(child: Text('This PDF could not be opened.')),
+              Center(child: Text(context.tr('This PDF could not be opened.'))),
         ),
       );
     }
@@ -479,7 +493,7 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
           fit: BoxFit.contain,
           semanticLabel: _title,
           errorBuilder: (_, _, _) =>
-              const Text('This image could not be opened.'),
+              Text(context.tr('This image could not be opened.')),
         ),
       ),
     );

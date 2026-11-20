@@ -26,8 +26,16 @@ phone approval codes when the person needs it to act safely. Explain these
 where they are used. Leave accounting lines and change history available
 in details.
 
-English (India) is the default. Existing Hindi remains available. Marathi
-covers the tour, help and shared navigation, setup and daily money text.
-Detailed screens with untranslated labels use English. Add translations
-through `VaultStrings`, with complete paired English and Marathi entries
-for each new tour step and help topic.
+English (India) is the default. The language picker offers Hindi in
+Devanagari on the first screen and in Settings. Use everyday words such
+as «पैसे मिले», «पैसे खर्च हुए», «हमें कितना देना है» and «दस्तावेज़ जोड़ें».
+Use familiar words like «हिसाब», «रकम», «कर्ज़» and «इजाज़त».
+
+Use `VaultStrings` for shared labels and help. Use named placeholders
+when a message includes an amount, date or name. Keep exact Indian
+rupee formatting and use «लाख» and «करोड़» in Hindi summaries. Names
+and notes entered by the family keep their original wording.
+
+The existing Marathi catalogs are preserved. Phones with an older
+Marathi preference use English until the user chooses English or Hindi.
+[Hindi copy audit](hindi-copy-audit.md).

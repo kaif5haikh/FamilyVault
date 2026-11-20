@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/localization/vault_strings.dart';
 import '../../app/vault_providers.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/security/vault_lifecycle.dart';
@@ -88,7 +89,7 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
     final destination = ref.watch(localBackupProvider);
     final generated = _generated;
     return VaultPage(
-      title: 'Safe copies',
+      title: context.tr('Safe copies'),
       children: [
         FutureBuilder<LocalBackupStatus?>(
           future: _last ??= destination.read(session.identity),
@@ -99,8 +100,10 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
             }
             final status = snapshot.data;
             if (status == null) {
-              return const Text(
-                'Keep a safe copy so you can bring your records back if you lose this phone.',
+              return Text(
+                context.tr(
+                  'Keep a safe copy so you can bring your records back if you lose this phone.',
+                ),
               );
             }
             final date = DateTime.fromMicrosecondsSinceEpoch(
@@ -110,13 +113,15 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionHeading('Latest safe copy'),
+                SectionHeading(context.tr('Latest safe copy')),
                 Text(MaterialLocalizations.of(context).formatMediumDate(date)),
                 const SizedBox(height: 8),
                 Text(
                   status.exportedAtUs == null
-                      ? 'Your safe copy is ready on this phone.'
-                      : 'Your saved file was checked and is ready to use.',
+                      ? context.tr('Your safe copy is ready on this phone.')
+                      : context.tr(
+                          'Your saved file was checked and is ready to use.',
+                        ),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
@@ -124,20 +129,24 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
                       ? null
                       : () => _copy(session, destination, status),
                   icon: const Icon(Icons.download_outlined),
-                  label: const Text('Save a copy file'),
+                  label: Text(context.tr('Save a copy file')),
                 ),
               ],
             );
           },
         ),
         const SizedBox(height: 24),
-        const SectionHeading('Recovery key'),
+        SectionHeading(context.tr('Recovery key')),
         if (session.identity.isCloud)
-          const Text(
-            'This copy includes the records and changes saved on this phone.',
+          Text(
+            context.tr(
+              'This copy includes the records and changes saved on this phone.',
+            ),
           ),
-        const Text(
-          'The recovery key opens your safe copy. Keep it somewhere separate from the file.',
+        Text(
+          context.tr(
+            'The recovery key opens your safe copy. Keep it somewhere separate from the file.',
+          ),
         ),
         const SizedBox(height: 12),
         if (generated == null) ...[
@@ -147,7 +156,7 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
             obscureText: true,
             autocorrect: false,
             enableSuggestions: false,
-            decoration: const InputDecoration(labelText: 'Recovery key'),
+            decoration: InputDecoration(labelText: context.tr('Recovery key')),
           ),
           TextButton(
             onPressed: _busy
@@ -157,14 +166,14 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
                     _generated = BackupRecoveryKey.generate();
                     _savedKey = false;
                   }),
-            child: const Text('Create a new recovery key'),
+            child: Text(context.tr('Create a new recovery key')),
           ),
         ] else ...[
           SelectableText(generated.code),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
             value: _savedKey,
-            title: const Text('I saved the recovery key separately'),
+            title: Text(context.tr('I saved the recovery key separately')),
             onChanged: _busy
                 ? null
                 : (value) => setState(() => _savedKey = value ?? false),
@@ -175,7 +184,7 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
               ? null
               : () => _create(session, destination),
           icon: const Icon(Icons.backup_outlined),
-          label: const Text('Make a safe copy'),
+          label: Text(context.tr('Make a safe copy')),
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) FailureNotice(_error!),

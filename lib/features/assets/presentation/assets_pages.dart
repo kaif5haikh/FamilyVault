@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/finance/fixed_decimal.dart';
@@ -49,25 +50,28 @@ class _AssetsPageState extends State<AssetsPage> {
         return VaultContent(
           children: [
             SectionHeading(
-              'Items and property',
+              context.tr('Items and property'),
               action: FilledButton.icon(
                 onPressed: () => context.push('/asset/new'),
                 icon: const Icon(Icons.add),
-                label: const Text('Add an item'),
+                label: Text(context.tr('Add an item')),
               ),
             ),
             MetricCard(
-              title: 'Estimated value of our items',
+              title: context.tr('Estimated value of our items'),
               value: formatInr(total),
               icon: Icons.diamond_outlined,
-              detail:
-                  'Only your family’s share is counted${unknown > 0 ? '\n$unknown item${unknown == 1 ? '' : 's'} without an estimate' : ''}',
+              detail: context.tr("Only your family’s share is counted{more}", {
+                'more': unknown > 0
+                    ? '\n${context.tr(unknown == 1 ? '1 item without an estimate' : '{count} items without an estimate', {'count': unknown})}'
+                    : '',
+              }),
               emphasis: true,
             ),
             const SizedBox(height: 24),
             TextField(
-              decoration: const InputDecoration(
-                labelText: 'Search name or place',
+              decoration: InputDecoration(
+                labelText: context.tr('Search name or place'),
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: (v) => setState(() => _search = v),
@@ -78,7 +82,7 @@ class _AssetsPageState extends State<AssetsPage> {
               children: [
                 for (final label in ['Active', 'Closed'])
                   ChoiceChip(
-                    label: Text(label),
+                    label: Text(context.tr(label)),
                     selected: _filter == label,
                     onSelected: (_) => setState(() => _filter = label),
                   ),
@@ -88,10 +92,12 @@ class _AssetsPageState extends State<AssetsPage> {
             if (rows.isEmpty)
               EmptyNotice(
                 icon: Icons.home_work_outlined,
-                title: 'Nothing recorded yet',
+                title: context.tr('Nothing recorded yet'),
                 message: _search.isEmpty
-                    ? 'Add a home, land, gold, a vehicle or an investment. You can add an estimate later.'
-                    : 'No items match that search.',
+                    ? context.tr(
+                        'Add a home, land, gold, a vehicle or an investment. You can add an estimate later.',
+                      )
+                    : context.tr('No items match that search.'),
               ),
             for (final a in rows)
               Card.outlined(
@@ -99,11 +105,18 @@ class _AssetsPageState extends State<AssetsPage> {
                   leading: Icon(assetIcon(a.kind)),
                   title: Text(a.name),
                   subtitle: Text(
-                    '${assetLabel(a.kind)} · ${FixedDecimal.format(a.familyOwnershipBps, scale: 2)}% family share\n${a.valuationState == 'unrecorded'
-                        ? 'No value added yet'
-                        : a.valuationState == 'closed'
-                        ? 'Closed ${a.closedOn}'
-                        : formatInr(balances[a.accountId] ?? BigInt.zero)}',
+                    context.tr("{item} · {share}% family share\n{value}", {
+                      'item': context.tr(assetLabel(a.kind)),
+                      'share': FixedDecimal.format(
+                        a.familyOwnershipBps,
+                        scale: 2,
+                      ),
+                      'value': a.valuationState == 'unrecorded'
+                          ? context.tr('No value added yet')
+                          : a.valuationState == 'closed'
+                          ? context.tr('Closed {date}', {'date': a.closedOn})
+                          : formatInr(balances[a.accountId] ?? BigInt.zero),
+                    }),
                   ),
                   isThreeLine: true,
                   trailing: const Icon(Icons.chevron_right),
@@ -129,14 +142,14 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
   bool _busy = false;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Item details')),
+    appBar: AppBar(title: Text(context.tr('Item details'))),
     body: AssetView(
       builder: (assets) => FinanceView(
         builder: (finance) {
           final a = assets.assets.where((a) => a.id == widget.id).firstOrNull;
           if (a == null) {
-            return const VaultContent(
-              children: [Text('We couldn’t find that item.')],
+            return VaultContent(
+              children: [Text(context.tr('We couldn’t find that item.'))],
             );
           }
           final property = assets.properties
@@ -164,11 +177,16 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
               MetricCard(
                 title: a.name,
                 value: a.valuationState == 'unrecorded'
-                    ? 'No value added yet'
+                    ? context.tr('No value added yet')
                     : formatInr(current),
                 icon: assetIcon(a.kind),
-                detail:
-                    '${assetLabel(a.kind)} · ${FixedDecimal.format(a.familyOwnershipBps, scale: 2)}% family share${a.closedOn == null ? '' : '\nClosed ${a.closedOn}'}',
+                detail: context.tr("{item} · {share}% family share{status}", {
+                  'item': context.tr(assetLabel(a.kind)),
+                  'share': FixedDecimal.format(a.familyOwnershipBps, scale: 2),
+                  'status': a.closedOn == null
+                      ? ''
+                      : '\n${context.tr('Closed {date}', {'date': a.closedOn})}',
+                }),
                 emphasis: true,
               ),
               const SizedBox(height: 20),
@@ -180,34 +198,34 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                     FilledButton.icon(
                       onPressed: () => context.push('/asset/${a.id}/value'),
                       icon: const Icon(Icons.trending_up),
-                      label: const Text('Update estimated value'),
+                      label: Text(context.tr('Update estimated value')),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => context.push('/asset/${a.id}/edit'),
                       icon: const Icon(Icons.edit_outlined),
-                      label: const Text('Edit details'),
+                      label: Text(context.tr('Edit details')),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => context.push('/asset/${a.id}/ownership'),
                       icon: const Icon(Icons.groups_outlined),
-                      label: const Text('Change family share'),
+                      label: Text(context.tr('Change family share')),
                     ),
                     if (property != null)
                       OutlinedButton.icon(
                         onPressed: () => context.push('/asset/${a.id}/rent'),
                         icon: const Icon(Icons.payments_outlined),
-                        label: const Text('Add rent received'),
+                        label: Text(context.tr('Add rent received')),
                       ),
                     OutlinedButton.icon(
                       onPressed: () => context.push('/asset/${a.id}/close'),
                       icon: const Icon(Icons.archive_outlined),
-                      label: const Text('Close this item'),
+                      label: Text(context.tr('Close this item')),
                     ),
                   ] else ...[
                     OutlinedButton.icon(
                       onPressed: () => context.push('/asset/${a.id}/value'),
                       icon: const Icon(Icons.history),
-                      label: const Text('Add an older estimate'),
+                      label: Text(context.tr('Add an older estimate')),
                     ),
                     OutlinedButton.icon(
                       onPressed: _busy
@@ -215,10 +233,12 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                           : () async {
                               final reason = await showDialog<String>(
                                 context: context,
-                                builder: (_) => const ReasonDialog(
-                                  title: 'Undo this closure?',
-                                  message: 'This puts the item back in your list and keeps the earlier change in history. If you bought it again, add it as a new item.',
-                                  confirmLabel: 'Undo closure',
+                                builder: (_) => ReasonDialog(
+                                  title: context.tr('Undo this closure?'),
+                                  message: context.tr(
+                                    'This puts the item back in your list and keeps the earlier change in history. If you bought it again, add it as a new item.',
+                                  ),
+                                  confirmLabel: context.tr('Undo closure'),
                                 ),
                               );
                               if (reason == null || !mounted) {
@@ -243,34 +263,63 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                               }
                             },
                       icon: const Icon(Icons.unarchive_outlined),
-                      label: Text(_busy ? 'Restoring…' : 'Undo closure'),
+                      label: Text(
+                        _busy
+                            ? context.tr('Restoring…')
+                            : context.tr('Undo closure'),
+                      ),
                     ),
                   ],
                 ],
               ),
               if (_error != null) FailureNotice(_error!),
               const SizedBox(height: 28),
-              const SectionHeading('About this item'),
+              SectionHeading(context.tr('About this item')),
               Text(
-                'Price paid for the whole item: ${a.purchaseTotalMinor == null ? 'Unrecorded' : formatInr(BigInt.from(a.purchaseTotalMinor!))}\nPurchase date: ${a.purchasedOn ?? 'Unrecorded'}',
+                context.tr(
+                  "Price paid for the whole item: {price}\nPurchase date: {date}",
+                  {
+                    'price': a.purchaseTotalMinor == null
+                        ? context.tr('Unrecorded')
+                        : formatInr(BigInt.from(a.purchaseTotalMinor!)),
+                    'date': a.purchasedOn ?? context.tr('Unrecorded'),
+                  },
+                ),
               ),
               if (property != null) ...[
                 const SizedBox(height: 12),
                 Text('${property.city}\n${property.location}'),
                 if (property.areaMilli != null)
                   Text(
-                    'Area: ${FixedDecimal.format(property.areaMilli!, scale: 3)} ${property.areaUnit}',
+                    context.tr("Area: {size} {unit}", {
+                      'size': FixedDecimal.format(
+                        property.areaMilli!,
+                        scale: 3,
+                      ),
+                      'unit': property.areaUnit,
+                    }),
                   ),
                 if (property.recordReference?.isNotEmpty == true)
-                  Text('Record reference: ${property.recordReference}'),
+                  Text(
+                    context.tr("Record reference: {record}", {
+                      'record': property.recordReference,
+                    }),
+                  ),
               ],
               if (metal != null) ...[
                 const SizedBox(height: 12),
                 Text(
-                  '${FixedDecimal.format(metal.weightMg, scale: 3)} g ${metal.metal}\n${metal.purityPpm == null ? 'Purity unrecorded' : '${FixedDecimal.format(metal.purityPpm!, scale: 4)}% · ${metal.purityKind}${metal.karat == null ? '' : ' ${metal.karat}K'}'}',
+                  '${FixedDecimal.format(metal.weightMg, scale: 3)} g ${context.tr(metal.metal)}\n${metal.purityPpm == null ? context.tr('Purity unrecorded') : '${FixedDecimal.format(metal.purityPpm!, scale: 4)}% · ${context.tr(metal.purityKind)}${metal.karat == null ? '' : ' ${metal.karat}K'}'}',
                 ),
                 Text(
-                  'Purchase rate: ${metal.purchaseRateMinorPerGram == null ? 'Unrecorded' : '${formatInr(BigInt.from(metal.purchaseRateMinorPerGram!))}/g'}\nMaking charges: ${metal.makingChargesMinor == null ? 'Unrecorded' : formatInr(BigInt.from(metal.makingChargesMinor!))}',
+                  context.tr("Purchase rate: {rate}\nMaking charges: {charge}", {
+                    'rate': metal.purchaseRateMinorPerGram == null
+                        ? context.tr('Unrecorded')
+                        : '${formatInr(BigInt.from(metal.purchaseRateMinorPerGram!))}/g',
+                    'charge': metal.makingChargesMinor == null
+                        ? context.tr('Unrecorded')
+                        : formatInr(BigInt.from(metal.makingChargesMinor!)),
+                  }),
                 ),
               ],
               if (investment != null) ...[
@@ -280,7 +329,12 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                 ),
                 if (investment.quantityScaled != null)
                   Text(
-                    'Units: ${FixedDecimal.format(investment.quantityScaled!, scale: investment.quantityScale!)}',
+                    context.tr("Units: {quantity}", {
+                      'quantity': FixedDecimal.format(
+                        investment.quantityScaled!,
+                        scale: investment.quantityScale!,
+                      ),
+                    }),
                   ),
               ],
               if (a.notes.isNotEmpty) ...[
@@ -288,10 +342,12 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                 Text(a.notes),
               ],
               const SizedBox(height: 24),
-              const SectionHeading('Who owns it'),
+              SectionHeading(context.tr('Who owns it')),
               if (owners.isEmpty)
-                const Text(
-                  'Individual shares haven’t been added. Everyone approved for this family can see this item.',
+                Text(
+                  context.tr(
+                    'Individual shares haven’t been added. Everyone approved for this family can see this item.',
+                  ),
                 ),
               for (final o in owners)
                 ListTile(
@@ -299,14 +355,18 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                   leading: const Icon(Icons.person_outline),
                   title: Text(o.ownerLabel),
                   subtitle: Text(
-                    '${FixedDecimal.format(o.shareBps, scale: 2)}% of the whole holding',
+                    context.tr("{share}% of the whole holding", {
+                      'share': FixedDecimal.format(o.shareBps, scale: 2),
+                    }),
                   ),
                 ),
               const SizedBox(height: 24),
-              const SectionHeading('Value over time'),
+              SectionHeading(context.tr('Value over time')),
               if (history.isEmpty)
-                const Text(
-                  'No valuation recorded. A missing value is excluded from recorded net worth.',
+                Text(
+                  context.tr(
+                    'No valuation recorded. A missing value is excluded from recorded net worth.',
+                  ),
                 ),
               for (final v in history)
                 Card.outlined(
@@ -315,7 +375,11 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                       '${v.valuedOn} · ${v.source.replaceAll('_', ' ')}',
                     ),
                     subtitle: Text(
-                      'Whole: ${formatInr(BigInt.from(v.totalValueMinor))}\nFamily: ${formatInr(BigInt.from(v.familyValueMinor))}\n${v.notes}',
+                      context.tr("Whole: {whole}\nFamily: {share}\n{note}", {
+                        'whole': formatInr(BigInt.from(v.totalValueMinor)),
+                        'share': formatInr(BigInt.from(v.familyValueMinor)),
+                        'note': v.notes,
+                      }),
                     ),
                     trailing: v.journalId == null
                         ? null
@@ -327,7 +391,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                 ),
               const SizedBox(height: 24),
               LinkedDocuments(assetId: a.id),
-              const SectionHeading('Linked accounting history'),
+              SectionHeading(context.tr('Linked accounting history')),
               for (final j in journals)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -339,7 +403,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                       finance.journalLinks[j.id]?.purpose == 'rent' &&
                           j.deletedAtUs == null
                       ? IconButton(
-                          tooltip: 'Reverse rent',
+                          tooltip: context.tr('Reverse rent'),
                           icon: const Icon(Icons.undo),
                           onPressed: _busy ? null : () => _reverseRent(a, j.id),
                         )
@@ -357,10 +421,12 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
   Future<void> _reverseRent(WealthAsset a, String journalId) async {
     final reason = await showDialog<String>(
       context: context,
-      builder: (_) => const ReasonDialog(
-        title: 'Reverse this rent entry?',
-        message: 'Its original entry stays in the accounting history.',
-        confirmLabel: 'Reverse rent',
+      builder: (_) => ReasonDialog(
+        title: context.tr('Reverse this rent entry?'),
+        message: context.tr(
+          'Its original entry stays in the accounting history.',
+        ),
+        confirmLabel: context.tr('Reverse rent'),
       ),
     );
     if (reason == null || !mounted) {

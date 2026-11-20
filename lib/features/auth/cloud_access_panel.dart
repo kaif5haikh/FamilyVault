@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/localization/vault_strings.dart';
 import '../../app/vault_providers.dart';
 import '../../core/security/vault_identity.dart';
 import '../../shared/widgets/vault_widgets.dart';
@@ -26,7 +27,7 @@ class CloudAccessPanel extends ConsumerWidget {
             FailureNotice(error),
             OutlinedButton(
               onPressed: () => ref.invalidate(cloudGatewayProvider),
-              child: const Text('Try family sign-in again'),
+              child: Text(context.tr('Try family sign-in again')),
             ),
           ],
         ),
@@ -222,15 +223,17 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
             _invitations.isEmpty &&
             !_busy &&
             _error == null)
-          const Text(
-            'We found no invitation for this email. Ask the person who manages your family access to invite you.',
+          Text(
+            context.tr(
+              'We found no invitation for this email. Ask the person who manages your family access to invite you.',
+            ),
           ),
         for (final invite in _invitations)
           Card.outlined(
             child: ListTile(
               leading: const Icon(Icons.mail_outline),
               title: Text(cloudText(invite, 'family_name')),
-              subtitle: const Text('Family invitation'),
+              subtitle: Text(context.tr('Family invitation')),
               trailing: const Icon(Icons.chevron_right),
               onTap: _busy
                   ? null
@@ -247,8 +250,8 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
               title: Text(cloudText(family, 'family_name')),
               subtitle: Text(
                 cloudText(family, 'role') == 'administrator'
-                    ? 'Administrator'
-                    : 'Family member',
+                    ? context.tr('Administrator')
+                    : context.tr('Family member'),
               ),
               trailing: const Icon(Icons.chevron_right),
               onTap: _busy ? null : () => _register(family),
@@ -257,28 +260,36 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
         if (_enrollment case final enrollment?) ...[
           const SizedBox(height: 16),
           if (enrollment.state == 'pending') ...[
-            const SectionHeading('Waiting for device approval'),
-            const Text(
-              'Show this phone code to your family administrator. They should check that it matches before approving your phone.',
+            SectionHeading(context.tr('Waiting for device approval')),
+            Text(
+              context.tr(
+                'Show this phone code to your family administrator. They should check that it matches before approving your phone.',
+              ),
             ),
             const SizedBox(height: 10),
             SelectableText(groupedFingerprint(enrollment.fingerprint)),
             const SizedBox(height: 8),
             ExpansionTile(
-              title: const Text('Phone details'),
-              children: [SelectableText('Phone ID ${enrollment.deviceId}')],
+              title: Text(context.tr('Phone details')),
+              children: [
+                SelectableText(
+                  context.tr('Phone ID {id}', {'id': enrollment.deviceId}),
+                ),
+              ],
             ),
             OutlinedButton.icon(
               onPressed: _busy ? null : () => _register(_selected!),
               icon: const Icon(Icons.refresh),
-              label: const Text('Check approval'),
+              label: Text(context.tr('Check approval')),
             ),
           ] else if (enrollment.state == 'revoked')
-            const Text(
-              'This phone no longer has access. Ask your family administrator for help.',
+            Text(
+              context.tr(
+                'This phone no longer has access. Ask your family administrator for help.',
+              ),
             )
           else ...[
-            const SectionHeading('Device approved'),
+            SectionHeading(context.tr('Device approved')),
             if (_selected case final selection?)
               FilledButton.icon(
                 onPressed: _busy
@@ -288,7 +299,7 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
                         cloudText(selection, 'member_id'),
                       ),
                 icon: const Icon(Icons.folder_open_outlined),
-                label: const Text('Open family records'),
+                label: Text(context.tr('Open family records')),
               ),
             if (_selected != null &&
                 enrollment.workspace?['role'] == 'administrator')
@@ -314,17 +325,17 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
                         deviceId: recent.deviceId,
                       ),
                 icon: const Icon(Icons.history),
-                label: const Text('Open the last family’s records'),
+                label: Text(context.tr('Open the last family’s records')),
               ),
             TextButton.icon(
               onPressed: _busy ? null : () => _run(_refresh),
               icon: const Icon(Icons.refresh),
-              label: const Text('Check for family updates'),
+              label: Text(context.tr('Check for family updates')),
             ),
             TextButton.icon(
               onPressed: _busy ? null : _signOut,
               icon: const Icon(Icons.logout),
-              label: const Text('Sign out'),
+              label: Text(context.tr('Sign out')),
             ),
           ],
         ),
@@ -337,16 +348,16 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SectionHeading('Sign in to your family account'),
+        SectionHeading(context.tr('Sign in to your family account')),
         TextFormField(
           controller: _email,
           keyboardType: TextInputType.emailAddress,
           autocorrect: false,
           autofillHints: const [AutofillHints.username],
-          decoration: const InputDecoration(labelText: 'Email address'),
+          decoration: InputDecoration(labelText: context.tr('Email address')),
           enabled: !_busy,
           maxLength: 254,
-          validator: requiredText,
+          validator: context.localizedValidator(requiredText),
         ),
         const SizedBox(height: 16),
         TextFormField(
@@ -355,16 +366,18 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
           autocorrect: false,
           enableSuggestions: false,
           autofillHints: const [AutofillHints.password],
-          decoration: const InputDecoration(labelText: 'Password'),
+          decoration: InputDecoration(labelText: context.tr('Password')),
           enabled: !_busy,
-          validator: requiredText,
+          validator: context.localizedValidator(requiredText),
         ),
         const SizedBox(height: 20),
         if (_error != null) FailureNotice(_error!),
         FilledButton.icon(
           onPressed: _busy ? null : _signIn,
           icon: const Icon(Icons.login),
-          label: Text(_busy ? 'Signing in…' : 'Sign in'),
+          label: Text(
+            _busy ? context.tr('Signing in…') : context.tr('Sign in'),
+          ),
         ),
       ],
     ),

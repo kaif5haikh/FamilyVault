@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'account_labels.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/finance/formatters.dart';
@@ -71,7 +72,12 @@ class _TransactionsPageState extends State<TransactionsPage> {
         }
         if (query.isEmpty) return true;
         final names = (postings[entry.id] ?? [])
-            .map((posting) => accounts[posting.accountId]?.name ?? '')
+            .map((posting) {
+              final account = accounts[posting.accountId];
+              return account == null
+                  ? ''
+                  : accountDisplayName(context, account);
+            })
             .join(' ');
         final date = localizations.formatMediumDate(
           DateTime.parse(entry.occurredOn),
@@ -213,7 +219,7 @@ class JournalTile extends StatelessWidget {
       for (final posting in ordered)
         if (accounts[posting.accountId] case final account?)
           if (account.kind == 'asset' || account.kind == 'liability')
-            account.name,
+            accountDisplayName(context, account),
     };
     final date = MaterialLocalizations.of(context)
         .formatMediumDate(DateTime.parse(journal.occurredOn));
@@ -276,15 +282,15 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
   Object? _error;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Money record')),
+    appBar: AppBar(title: Text(context.tr('Money record'))),
     body: FinanceView(
       builder: (data) {
         final journal = data.journals
             .where((j) => j.id == widget.id)
             .firstOrNull;
         if (journal == null) {
-          return const VaultContent(
-            children: [Text('We couldn’t find this money record.')],
+          return VaultContent(
+            children: [Text(context.tr('We couldn’t find this money record.'))],
           );
         }
         final postings =
@@ -320,10 +326,18 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            Text('Created by ${members[journal.createdBy] ?? 'family member'}'),
+            Text(
+              context.tr("Created by {member}", {
+                'member':
+                    members[journal.createdBy] ?? context.tr('family member'),
+              }),
+            ),
             if (journal.updatedBy != journal.createdBy)
               Text(
-                'Last modified by ${members[journal.updatedBy] ?? 'family member'}',
+                context.tr("Last modified by {member}", {
+                  'member':
+                      members[journal.updatedBy] ?? context.tr('family member'),
+                }),
               ),
             const SizedBox(height: 20),
             if (link?.aggregateType == 'asset' ||
@@ -331,32 +345,32 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
               TextButton.icon(
                 onPressed: () => context.push('/asset/${link!.aggregateId}'),
                 icon: const Icon(Icons.diamond_outlined),
-                label: const Text('Open the related item'),
+                label: Text(context.tr('Open the related item')),
               ),
             if (link?.aggregateType == 'debt')
               TextButton.icon(
                 onPressed: () => context.push('/loan/${link!.aggregateId}'),
                 icon: const Icon(Icons.request_quote_outlined),
-                label: const Text('View related loan'),
+                label: Text(context.tr('View related loan')),
               ),
             if (link?.aggregateType == 'stock')
               TextButton.icon(
                 onPressed: () => context.push('/stock/${link!.aggregateId}'),
                 icon: const Icon(Icons.inventory_2_outlined),
-                label: const Text('View stock item'),
+                label: Text(context.tr('View stock item')),
               ),
             if (link?.aggregateType == 'salary')
               TextButton.icon(
                 onPressed: () => context.push('/worker/${link!.aggregateId}'),
                 icon: const Icon(Icons.person_outline),
-                label: const Text('View worker'),
+                label: Text(context.tr('View worker')),
               ),
             if (journal.businessId != null)
               TextButton.icon(
                 onPressed: () =>
                     context.push('/business/${journal.businessId}'),
                 icon: const Icon(Icons.storefront_outlined),
-                label: const Text('View business'),
+                label: Text(context.tr('View business')),
               ),
             if (link == null &&
                 journal.deletedAtUs == null &&
@@ -375,12 +389,12 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
                               context.push('/transaction/${journal.id}/edit');
                             },
                       icon: const Icon(Icons.edit_outlined),
-                      label: const Text('Correct this record'),
+                      label: Text(context.tr('Correct this record')),
                     ),
                   OutlinedButton.icon(
                     onPressed: _busy ? null : () => _reverse(journal.id),
                     icon: const Icon(Icons.undo),
-                    label: const Text('Undo this record'),
+                    label: Text(context.tr('Undo this record')),
                   ),
                 ],
               ),
@@ -389,13 +403,13 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
                 onPressed: () =>
                     context.push('/transaction/${journal.reversesId}'),
                 icon: const Icon(Icons.history),
-                label: const Text('See the original record'),
+                label: Text(context.tr('See the original record')),
               ),
             if (reversed != null)
               TextButton.icon(
                 onPressed: () => context.push('/transaction/${reversed.id}'),
                 icon: const Icon(Icons.undo),
-                label: const Text('See the undo record'),
+                label: Text(context.tr('See the undo record')),
               ),
             if (_error != null) ...[
               const SizedBox(height: 16),
@@ -404,7 +418,7 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
             const SizedBox(height: 24),
             Card.outlined(
               child: ExpansionTile(
-                title: const Text('Accounts in this record'),
+                title: Text(context.tr('Accounts in this record')),
                 children: [
                   for (final posting in postings)
                     ListTile(
@@ -413,10 +427,10 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
                                 .where((a) => a.id == posting.accountId)
                                 .firstOrNull
                                 ?.name ??
-                            'Account',
+                            context.tr('Account'),
                       ),
                       subtitle: Text(
-                        '${posting.amountMinor > 0 ? 'Debit' : 'Credit'} · ${formatInr(BigInt.from(posting.amountMinor).abs())}',
+                        '${posting.amountMinor > 0 ? context.tr('Debit') : context.tr('Credit')} · ${formatInr(BigInt.from(posting.amountMinor).abs())}',
                       ),
                     ),
                 ],
@@ -424,7 +438,7 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
             ),
             const SizedBox(height: 24),
             LinkedDocuments(journalId: journal.id),
-            const SectionHeading('Change history'),
+            SectionHeading(context.tr('Change history')),
             AuditHistory(entityId: journal.id),
           ],
         );
@@ -434,10 +448,12 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
   Future<void> _reverse(String id) async {
     final text = await showDialog<String>(
       context: context,
-      builder: (_) => const ReasonDialog(
-        title: 'Undo this money record?',
-        message: 'This adds equal and opposite entries. The original and its audit trail stay intact.',
-        confirmLabel: 'Reverse',
+      builder: (_) => ReasonDialog(
+        title: context.tr('Undo this money record?'),
+        message: context.tr(
+          'This adds equal and opposite entries. The original and its audit trail stay intact.',
+        ),
+        confirmLabel: context.tr('Reverse'),
       ),
     );
     if (text == null || !mounted) {
@@ -488,7 +504,7 @@ class AuditHistory extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${event.action} · ${members[event.actorId] ?? 'Family member'}',
+                          '${context.tr(event.action)} · ${members[event.actorId] ?? context.tr('Family member')}',
                           style: Theme.of(context).textTheme.titleSmall,
                         ),
                         const SizedBox(height: 6),
@@ -516,8 +532,8 @@ class AuditHistory extends ConsumerWidget {
                                         '/transaction/${original['id']}',
                                       ),
                                       icon: const Icon(Icons.history),
-                                      label: const Text(
-                                        'View corrected original',
+                                      label: Text(
+                                        context.tr('View corrected original'),
                                       ),
                                     );
                             },

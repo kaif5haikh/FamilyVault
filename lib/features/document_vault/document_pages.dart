@@ -14,19 +14,20 @@ import '../foundation/foundation_pages.dart' show VaultPage;
 import 'document_inputs.dart';
 import 'document_repository.dart';
 
-String categoryLabel(DocumentCategory category) => switch (category) {
-  DocumentCategory.aadhaar => 'Aadhaar',
-  DocumentCategory.pan => 'PAN',
-  DocumentCategory.passport => 'Passport',
-  DocumentCategory.drivingLicence => 'Driving licence',
-  DocumentCategory.voterId => 'Voter ID',
-  DocumentCategory.property => 'Property and land',
-  DocumentCategory.utilities => 'Utility bills',
-  DocumentCategory.education => 'Education',
-  DocumentCategory.medical => 'Medical',
-  DocumentCategory.insurance => 'Insurance',
-  DocumentCategory.general => 'General',
-};
+String categoryLabel(BuildContext context, DocumentCategory category) =>
+    context.tr(switch (category) {
+      DocumentCategory.aadhaar => 'Aadhaar',
+      DocumentCategory.pan => 'PAN',
+      DocumentCategory.passport => 'Passport',
+      DocumentCategory.drivingLicence => 'Driving licence',
+      DocumentCategory.voterId => 'Voter ID',
+      DocumentCategory.property => 'Property and land',
+      DocumentCategory.utilities => 'Utility bills',
+      DocumentCategory.education => 'Education',
+      DocumentCategory.medical => 'Medical',
+      DocumentCategory.insurance => 'Insurance',
+      DocumentCategory.general => 'General',
+    });
 
 String? expiryLabel(BuildContext context, String? expiry) {
   if (expiry == null) return null;
@@ -34,10 +35,10 @@ String? expiryLabel(BuildContext context, String? expiry) {
   final remaining = date.difference(DateUtils.dateOnly(DateTime.now())).inDays;
   final when = MaterialLocalizations.of(context).formatMediumDate(date);
   return remaining < 0
-      ? 'Expired $when'
+      ? context.tr('Expired {date}', {'date': when})
       : remaining <= 30
-      ? 'Due soon $when'
-      : 'Expires $when';
+      ? context.tr('Due soon {date}', {'date': when})
+      : context.tr('Expires {date}', {'date': when});
 }
 
 Future<void> chooseDocument(
@@ -56,7 +57,7 @@ Future<void> chooseDocument(
           ListTile(
             leading: const Icon(Icons.folder_open_outlined),
             title: Text(strings.text('choosePaperFile')),
-            subtitle: const Text('PDF, JPG or PNG'),
+            subtitle: Text(context.tr('PDF, JPG or PNG')),
             onTap: () => Navigator.of(context).pop(DocumentPicker.files),
           ),
           ListTile(
@@ -83,8 +84,9 @@ Future<void> chooseDocument(
     }
   } on AppFailure catch (error) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error.message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(VaultStrings.of(context).failure(error))),
+      );
     }
   }
 }
@@ -111,8 +113,10 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
     final selection = ref.watch(documentIntakeProvider);
     if (repository == null) return const SizedBox.shrink();
     if (repository.session.identity.isCloud && !repository.sharingAvailable) {
-      return const VaultContent(
-        children: [Text('Shared papers are unavailable for this account.')],
+      return VaultContent(
+        children: [
+          Text(context.tr('Shared papers are unavailable for this account.')),
+        ],
       );
     }
     return VaultContent(
@@ -168,7 +172,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                 for (final category in DocumentCategory.values)
                   PopupMenuItem(
                     value: category.name,
-                    child: Text(categoryLabel(category)),
+                    child: Text(categoryLabel(context, category)),
                   ),
               ],
               child: ConstrainedBox(
@@ -182,7 +186,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                       child: Text(
                         _category == null
                             ? strings.text('allCategories')
-                            : categoryLabel(_category!),
+                            : categoryLabel(context, _category!),
                       ),
                     ),
                     const Icon(Icons.arrow_drop_down),
@@ -225,7 +229,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                               ? null
                               : sync.check,
                           icon: const Icon(Icons.sync),
-                          label: const Text('Check for shared documents'),
+                          label: Text(context.tr('Check for shared documents')),
                         ),
                         if (failure != null) FailureNotice(failure),
                       ],
@@ -243,7 +247,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SectionHeading('Papers saved on this phone'),
+                      SectionHeading(context.tr('Papers saved on this phone')),
                       for (final job in uploads)
                         Card.outlined(
                           child: ListTile(
@@ -251,13 +255,22 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                             title: Text(job.title),
                             subtitle: Text(
                               !repository.sharingAvailable
-                                  ? 'Brought back and saved on this phone.'
+                                  ? context.tr(
+                                      'Brought back and saved on this phone.',
+                                    )
                                   : switch (job.state) {
-                                      'acknowledged' =>
+                                      'acknowledged' => context.tr(
                                         'Shared. The family list is updating.',
-                                      'conflicted' => 'The family document changed. Your copy is here.',
-                                      'rejected' => 'Could not share this version. Your copy is here.',
-                                      _ => 'Saved here. Waiting to share with the family.',
+                                      ),
+                                      'conflicted' => context.tr(
+                                        'The family document changed. Your copy is here.',
+                                      ),
+                                      'rejected' => context.tr(
+                                        'Could not share this version. Your copy is here.',
+                                      ),
+                                      _ => context.tr(
+                                        'Saved here. Waiting to share with the family.',
+                                      ),
                                     },
                             ),
                             trailing: const Icon(Icons.chevron_right),
@@ -289,19 +302,31 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                               leading: const Icon(Icons.edit_outlined),
                               title: Text(edit.title),
                               subtitle: Text(switch (edit.state) {
-                                'conflicted' => 'The family document changed. Open it to review.',
-                                'rejected' => 'Could not share this edit.',
-                                'acknowledged' =>
+                                'conflicted' => context.tr(
+                                  'The family document changed. Open it to review.',
+                                ),
+                                'rejected' => context.tr(
+                                  'Could not share this edit.',
+                                ),
+                                'acknowledged' => context.tr(
                                   'Shared. The family list is updating.',
+                                ),
                                 _ => switch (edit.action) {
-                                  'archive' =>
+                                  'archive' => context.tr(
                                     'Waiting to confirm the archive.',
-                                  'restore' =>
+                                  ),
+                                  'restore' => context.tr(
                                     'Waiting to confirm the restore.',
-                                  'link' =>
+                                  ),
+                                  'link' => context.tr(
                                     'Waiting to confirm the transaction link.',
-                                  'unlink' => 'Waiting to confirm removal of the transaction link.',
-                                  _ => 'Waiting to confirm the edited details.',
+                                  ),
+                                  'unlink' => context.tr(
+                                    'Waiting to confirm removal of the transaction link.',
+                                  ),
+                                  _ => context.tr(
+                                    'Waiting to confirm the edited details.',
+                                  ),
                                 },
                               }),
                               trailing: const Icon(Icons.chevron_right),
@@ -330,10 +355,10 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
             if (items.isEmpty) {
               return Text(
                 _search.isNotEmpty
-                    ? 'No matching documents.'
+                    ? context.tr('No matching documents.')
                     : _archive
-                    ? 'No archived documents.'
-                    : 'Add your first document to this vault.',
+                    ? context.tr('No archived documents.')
+                    : context.tr('Add your first document to this vault.'),
               );
             }
             return Column(
@@ -346,6 +371,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                       subtitle: Text(
                         [
                           categoryLabel(
+                            context,
                             DocumentCategory.values.byName(row.category),
                           ),
                           ?expiryLabel(context, row.expiryOn),
@@ -376,13 +402,13 @@ class DocumentEditorPage extends ConsumerWidget {
     return VaultPage(
       title: edit == null
           ? VaultStrings.of(context).text('addDocument')
-          : 'Edit document',
+          : context.tr('Edit document'),
       children: [
         if (repository == null ||
             edit == null &&
                 (selection == null ||
                     !selection.belongsTo(repository.session.identity)))
-          const Text('Choose a file in the document vault to continue.')
+          Text(context.tr('Choose a file in the document vault to continue.'))
         else
           FutureBuilder(
             future: _load(repository, edit),
@@ -534,7 +560,7 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (version)
-            const Text('Save the selected file as the next version.')
+            Text(context.tr('Save the selected file as the next version.'))
           else ...[
             TextFormField(
               controller: _title,
@@ -542,19 +568,19 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
               textCapitalization: TextCapitalization.sentences,
               decoration: InputDecoration(labelText: strings.text('paperName')),
               validator: (value) => value == null || value.trim().isEmpty
-                  ? 'Enter a title'
+                  ? context.tr('Enter a title')
                   : null,
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<DocumentCategory>(
               initialValue: _category,
               isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Category'),
+              decoration: InputDecoration(labelText: context.tr('Category')),
               items: [
                 for (final category in DocumentCategory.values)
                   DropdownMenuItem(
                     value: category,
-                    child: Text(categoryLabel(category)),
+                    child: Text(categoryLabel(context, category)),
                   ),
               ],
               onChanged: _busy
@@ -594,7 +620,8 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
                   onPressed: _busy ? null : _pickExpiry,
                   icon: const Icon(Icons.event_outlined),
                   label: Text(
-                    expiryLabel(context, _expiry) ?? 'Add expiry date',
+                    expiryLabel(context, _expiry) ??
+                        context.tr('Add expiry date'),
                   ),
                 ),
                 if (_expiry != null)
@@ -602,7 +629,7 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
                     onPressed: _busy
                         ? null
                         : () => setState(() => _expiry = null),
-                    child: const Text('Remove date'),
+                    child: Text(context.tr('Remove date')),
                   ),
               ],
             ),
@@ -614,7 +641,7 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
             icon: const Icon(Icons.save_outlined),
             label: Text(
               _busy
-                  ? 'Saving…'
+                  ? context.tr('Saving…')
                   : version
                   ? strings.text('savePaperVersion')
                   : strings.text('savePaper'),
@@ -629,7 +656,7 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
                       if (context.mounted) context.go('/documents');
                       await intake.clear();
                     },
-              child: const Text('Cancel import'),
+              child: Text(context.tr('Cancel import')),
             ),
         ],
       ),

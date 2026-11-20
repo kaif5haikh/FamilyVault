@@ -373,11 +373,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
-      appBar: AppBar(title: const Text('Page unavailable')),
+      appBar: AppBar(title: Text(context.tr('Page unavailable'))),
       body: Center(
         child: FilledButton(
           onPressed: () => context.go('/'),
-          child: const Text('Return to FamilyVault'),
+          child: Text(context.tr('Return to FamilyVault')),
         ),
       ),
     ),

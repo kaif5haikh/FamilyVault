@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/finance/fixed_decimal.dart';
 import '../../../core/finance/money.dart';
@@ -67,14 +68,14 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(_title)),
+    appBar: AppBar(title: Text(context.tr(_title))),
     body: AssetView(
       builder: (assets) => FinanceView(
         builder: (finance) {
           final a = assets.assets.where((a) => a.id == widget.id).firstOrNull;
           if (a == null || (a.closedOn != null && !_value)) {
-            return const VaultContent(
-              children: [Text('We couldn’t open that item.')],
+            return VaultContent(
+              children: [Text(context.tr('We couldn’t open that item.'))],
             );
           }
           final metal = assets.metals
@@ -118,18 +119,26 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
                     const SizedBox(height: 12),
                     Text(
                       _value
-                          ? 'Record a whole-holding estimate. The family share is calculated once. Later recorded valuations stay intact when adding historical values.'
+                          ? context.tr(
+                              'Record a whole-holding estimate. The family share is calculated once. Later recorded valuations stay intact when adding historical values.',
+                            )
                           : _ownership
-                          ? 'Record the new family share and the whole holding’s value on that date. Earlier valuations retain their recorded share.'
+                          ? context.tr(
+                              'Record the new family share and the whole holding’s value on that date. Earlier valuations retain their recorded share.',
+                            )
                           : _rent
-                          ? 'Rental income posts to your chosen cash or bank account and stays linked to this property.'
-                          : 'Record the family’s actual proceeds, including zero for a gift or write-off. Prior values and accounting entries remain in history.',
+                          ? context.tr(
+                              'Rental income posts to your chosen cash or bank account and stays linked to this property.',
+                            )
+                          : context.tr(
+                              'Record the family’s actual proceeds, including zero for a gift or write-off. Prior values and accounting entries remain in history.',
+                            ),
                     ),
                     const SizedBox(height: 24),
                     if (_value && metal?.purityPpm != null) ...[
                       SwitchListTile.adaptive(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Estimate from a metal rate'),
+                        title: Text(context.tr('Estimate from a metal rate')),
                         value: _metalQuote,
                         onChanged: _busy
                             ? null
@@ -137,25 +146,25 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
                       ),
                       if (_metalQuote) ...[
                         RecordField(
-                          'Quoted rate per gram',
+                          context.tr('Quoted rate per gram'),
                           _rate,
                           money: true,
                           required: true,
                           enabled: !_busy,
                         ),
                         RecordChoice<int>(
-                          'Quoted rate purity',
+                          context.tr('Quoted rate purity'),
                           _quotePurity,
                           [
-                            (1000000, '24K / 100% nominal'),
+                            (1000000, context.tr('24K / 100% nominal')),
                             if (metal!.metal == 'gold') ...[
                               (
                                 MetalCalculator.nominalPurity(22),
-                                '22K nominal',
+                                context.tr('22K nominal'),
                               ),
                               (
                                 MetalCalculator.nominalPurity(18),
-                                '18K nominal',
+                                context.tr('18K nominal'),
                               ),
                             ],
                           ],
@@ -182,14 +191,14 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
                                   }
                                 },
                           icon: const Icon(Icons.calculate_outlined),
-                          label: const Text('Calculate estimate'),
+                          label: Text(context.tr('Calculate estimate')),
                         ),
                         const SizedBox(height: 18),
                       ],
                     ],
                     if (_ownership)
                       RecordField(
-                        'New family ownership (%)',
+                        context.tr('New family ownership (%)'),
                         _share,
                         scale: 2,
                         required: true,
@@ -197,10 +206,10 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
                       ),
                     RecordField(
                       _quote
-                          ? 'Value of the whole item'
+                          ? context.tr('Value of the whole item')
                           : _rent
-                          ? 'Rent received'
-                          : 'Family proceeds',
+                          ? context.tr('Rent received')
+                          : context.tr('Family proceeds'),
                       _amount,
                       money: true,
                       required: true,
@@ -209,26 +218,28 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
                     ),
                     RecordDate(
                       _ownership
-                          ? 'Effective date'
+                          ? context.tr('Effective date')
                           : _value
-                          ? 'Valuation date'
+                          ? context.tr('Valuation date')
                           : _rent
-                          ? 'Received on'
-                          : 'Closed on',
+                          ? context.tr('Received on')
+                          : context.tr('Closed on'),
                       _date,
                       (v) => setState(() => _date = v),
                       enabled: !_busy,
                     ),
                     if (_needsAccount) ...[
                       if (liquid.isEmpty)
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(bottom: 18),
                           child: Text(
-                            'Add a cash or bank account before recording a payment.',
+                            context.tr(
+                              'Add a cash or bank account before recording a payment.',
+                            ),
                           ),
                         ),
                       RecordChoice<String>(
-                        'Received into',
+                        context.tr('Received into'),
                         _account,
                         [for (final a in liquid) (a.id, a.name)],
                         (v) => setState(() => _account = v),
@@ -237,12 +248,12 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
                     ],
                     RecordField(
                       _ownership
-                          ? 'Reason for share change'
+                          ? context.tr('Reason for share change')
                           : _value
-                          ? 'Where did the estimate come from?'
+                          ? context.tr('Where did the estimate come from?')
                           : _rent
-                          ? 'Description'
-                          : 'Closure reason',
+                          ? context.tr('Description')
+                          : context.tr('Closure reason'),
                       _note,
                       required: true,
                       lines: 3,
@@ -256,14 +267,14 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
                       icon: const Icon(Icons.check),
                       label: Text(
                         _busy
-                            ? 'Saving…'
+                            ? context.tr('Saving…')
                             : _value
-                            ? 'Save estimate'
+                            ? context.tr('Save estimate')
                             : _rent
-                            ? 'Save rent'
+                            ? context.tr('Save rent')
                             : _ownership
-                            ? 'Save family share'
-                            : 'Close this item',
+                            ? context.tr('Save family share')
+                            : context.tr('Close this item'),
                       ),
                     ),
                   ],

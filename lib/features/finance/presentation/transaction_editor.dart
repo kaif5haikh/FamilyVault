@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:uuid/uuid.dart';
 
+import 'account_labels.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/finance/money.dart';
@@ -115,12 +116,14 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
                     'expense',
                     'transfer',
                   ].contains(originals.single.kind))) {
-            return const VaultContent(
+            return VaultContent(
               children: [
                 EmptyNotice(
                   icon: Icons.history,
-                  title: 'This record can’t be corrected here',
-                  message: 'Open the latest record or see the earlier changes.',
+                  title: context.tr('This record can’t be corrected here'),
+                  message: context.tr(
+                    'Open the latest record or see the earlier changes.',
+                  ),
                 ),
               ],
             );
@@ -247,7 +250,7 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
                         prefixText: '₹ ',
                         hintText: '0.00',
                       ),
-                      validator: positiveAmount,
+                      validator: context.localizedValidator(positiveAmount),
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
@@ -266,7 +269,7 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
                           DropdownMenuItem(
                             value: a.id,
                             child: Text(
-                              a.name,
+                              accountDisplayName(context, a),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -299,7 +302,7 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
                           DropdownMenuItem(
                             value: a.id,
                             child: Text(
-                              a.name,
+                              accountDisplayName(context, a),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -365,7 +368,7 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
                         decoration: InputDecoration(
                           labelText: strings.text('correctedReason'),
                         ),
-                        validator: requiredText,
+                        validator: context.localizedValidator(requiredText),
                       ),
                     ],
                     if (_error != null) ...[

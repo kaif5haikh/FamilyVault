@@ -14,6 +14,7 @@ internal object DocumentReminders {
     private const val CHANNEL = "document_expiry"
     private const val PREFERENCES = "familyvault_document_reminders"
     private const val TIMES = "times"
+    private const val LANGUAGE = "language"
     private const val ALARM = "app.familyvault.familyvault.DOCUMENT_REMINDER"
     private const val TIME = "scheduled_time"
     private const val LIMIT = 32
@@ -31,12 +32,15 @@ internal object DocumentReminders {
             notifications.getNotificationChannel(CHANNEL)?.importance != NotificationManager.IMPORTANCE_NONE
     }
 
-    fun replace(context: Context, requested: List<Long>) {
+    fun replace(context: Context, requested: List<Long>, language: String = "en") {
         require(requested.size <= LIMIT)
         val now = System.currentTimeMillis()
         val times = requested.filter { it > now }.distinct().sorted()
         val alarms = checkNotNull(context.getSystemService(AlarmManager::class.java))
-        check(preferences(context).edit().putString(TIMES, times.joinToString(",")).commit())
+        check(preferences(context).edit()
+            .putString(TIMES, times.joinToString(","))
+            .putString(LANGUAGE, if (language == "hi") "hi" else "en")
+            .commit())
         for (slot in 0 until LIMIT) {
             val old = PendingIntent.getBroadcast(
                 context, slot, intent(context), PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
@@ -60,8 +64,9 @@ internal object DocumentReminders {
         Intent(context, DocumentReminderReceiver::class.java).setAction(ALARM)
 
     fun receive(context: Context, intent: Intent) {
+        val language = preferences(context).getString(LANGUAGE, "en") ?: "en"
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            if (allowed(context)) replace(context, stored(context))
+            if (allowed(context)) replace(context, stored(context), language)
             return
         }
         if (intent.action != ALARM || !allowed(context)) return
@@ -71,9 +76,14 @@ internal object DocumentReminders {
         check(preferences(context).edit().putString(TIMES, times.filter { it != time }.joinToString(",")).commit())
 
         val notifications = manager(context) ?: return
+        val hindi = language == "hi"
         val builder = if (Build.VERSION.SDK_INT >= 26) {
             notifications.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Document reminders", NotificationManager.IMPORTANCE_DEFAULT),
+                NotificationChannel(
+                    CHANNEL,
+                    if (hindi) "दस्तावेज़ की मियाद की याद" else "Document reminders",
+                    NotificationManager.IMPORTANCE_DEFAULT,
+                ),
             )
             Notification.Builder(context, CHANNEL)
         } else {
@@ -88,7 +98,10 @@ internal object DocumentReminders {
             NOTIFICATION_ID,
             builder.setSmallIcon(android.R.drawable.ic_popup_reminder)
                 .setContentTitle("FamilyVault")
-                .setContentText("Open your vault to review document dates.")
+                .setContentText(
+                    if (hindi) "दस्तावेज़ों की मियाद देखने के लिए FamilyVault खोलें।"
+                    else "Open your vault to review document dates.",
+                )
                 .setVisibility(Notification.VISIBILITY_PRIVATE)
                 .setAutoCancel(true)
                 .setContentIntent(open)

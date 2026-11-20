@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'account_labels.dart';
+import '../../../core/localization/vault_strings.dart';
 import '../../../core/finance/formatters.dart';
 import '../../../shared/widgets/vault_widgets.dart';
 import '../domain/finance_report.dart';
@@ -37,23 +39,27 @@ class _ReportsPageState extends State<ReportsPage> {
       return VaultContent(
         children: [
           SectionHeading(
-            'Your money over time',
+            context.tr('Your money over time'),
             action: OutlinedButton.icon(
               onPressed: _chooseDate,
               icon: const Icon(Icons.calendar_today_outlined),
-              label: Text(report.period.label),
+              label: Text(
+                _yearly
+                    ? context.tr('{year} (calendar year)', {'year': _date.year})
+                    : report.period.label,
+              ),
             ),
           ),
           Wrap(
             spacing: 12,
             children: [
               ChoiceChip(
-                label: const Text('Monthly'),
+                label: Text(context.tr('Monthly')),
                 selected: !_yearly,
                 onSelected: (_) => setState(() => _yearly = false),
               ),
               ChoiceChip(
-                label: const Text('Yearly'),
+                label: Text(context.tr('Yearly')),
                 selected: _yearly,
                 onSelected: (_) => setState(() => _yearly = true),
               ),
@@ -63,32 +69,33 @@ class _ReportsPageState extends State<ReportsPage> {
           ResponsiveCards(
             children: [
               MetricCard(
-                title: 'Money received',
+                title: context.tr('Money received'),
                 value: formatInr(report.income),
                 icon: Icons.south_west,
               ),
               MetricCard(
-                title: 'Money spent',
+                title: context.tr('Money spent'),
                 value: formatInr(report.expenses),
                 icon: Icons.north_east,
               ),
               MetricCard(
-                title: 'Money left this period',
+                title: context.tr('Money left this period'),
                 value: formatInr(report.savings),
                 icon: Icons.savings_outlined,
-                detail:
-                    'Share left ${formatPercentage(report.savings, report.income)}',
+                detail: context.tr("Share left {share}", {
+                  'share': formatPercentage(report.savings, report.income),
+                }),
               ),
               MetricCard(
-                title: 'Estimated family value',
+                title: context.tr('Estimated family value'),
                 value: formatInr(report.netWorth),
                 icon: Icons.account_balance_outlined,
-                detail: 'As of ${report.period.end}',
+                detail: context.tr("As of {date}", {'date': report.period.end}),
               ),
             ],
           ),
           const SizedBox(height: 32),
-          const SectionHeading('Money in and out'),
+          SectionHeading(context.tr('Money in and out')),
           Card.outlined(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -101,29 +108,35 @@ class _ReportsPageState extends State<ReportsPage> {
               contentPadding: EdgeInsets.zero,
               title: Text(month.period.label),
               subtitle: Text(
-                'Received ${formatInr(month.income)} · Spent ${formatInr(month.expenses)}',
+                context.tr("Received {received} · Spent {spent}", {
+                  'received': formatInr(month.income),
+                  'spent': formatInr(month.expenses),
+                }),
               ),
             ),
           const SizedBox(height: 24),
-          const SectionHeading('Category breakdown'),
+          SectionHeading(context.tr('Category breakdown')),
           for (final kind in ['income', 'expense']) ...[
             Text(
               kind == 'income'
-                  ? 'Where money came from'
-                  : 'What money was spent on',
+                  ? context.tr('Where money came from')
+                  : context.tr('What money was spent on'),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
             if (report.categories(kind).isEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(bottom: 16),
-                child: Text('No activity for this period.'),
+                child: Text(context.tr('No activity for this period.')),
               ),
             for (final entry in report.categories(kind).entries)
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(
-                  data.accounts.where((a) => a.id == entry.key).first.name,
+                  accountDisplayName(
+                    context,
+                    data.accounts.firstWhere((a) => a.id == entry.key),
+                  ),
                 ),
                 subtitle: Text(formatInr(entry.value)),
               ),
@@ -135,7 +148,7 @@ class _ReportsPageState extends State<ReportsPage> {
             through: report.period.end,
           ),
           const SizedBox(height: 18),
-          const SectionHeading('What makes up what we own'),
+          SectionHeading(context.tr('What makes up what we own')),
           Card.outlined(
             child: Padding(
               padding: const EdgeInsets.all(24),
@@ -155,8 +168,8 @@ class _ReportsPageState extends State<ReportsPage> {
       firstDate: DateTime(1901),
       lastDate: DateTime(2200, 12, 31),
       helpText: _yearly
-          ? 'Choose a day in the reporting year'
-          : 'Choose a day in the reporting month',
+          ? context.tr('Choose a day in the reporting year')
+          : context.tr('Choose a day in the reporting month'),
     );
     if (value != null && mounted) {
       setState(() => _date = value);

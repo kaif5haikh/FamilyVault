@@ -8,6 +8,7 @@ import '../../core/errors/app_failure.dart';
 import '../../core/localization/vault_strings.dart';
 import '../../core/security/vault_lifecycle.dart';
 import '../../core/sync/live_sync.dart';
+import '../../shared/widgets/language_picker.dart';
 import '../../shared/widgets/vault_widgets.dart';
 import '../auth/cloud_device_registration.dart';
 import '../auth/cloud_cache_access.dart';
@@ -53,7 +54,7 @@ class SettingsPage extends ConsumerWidget {
     return VaultContent(
       maxWidth: 800,
       children: [
-        const SectionHeading('Look and language'),
+        SectionHeading(context.tr('Look and language')),
         Card.outlined(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -61,7 +62,7 @@ class SettingsPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Appearance',
+                  context.tr('Appearance'),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 16),
@@ -72,9 +73,9 @@ class SettingsPage extends ConsumerWidget {
                     for (final mode in ThemeMode.values)
                       ChoiceChip(
                         label: Text(switch (mode) {
-                          ThemeMode.system => 'Device default',
-                          ThemeMode.light => 'Light',
-                          ThemeMode.dark => 'Dark',
+                          ThemeMode.system => context.tr('Device default'),
+                          ThemeMode.light => context.tr('Light'),
+                          ThemeMode.dark => context.tr('Dark'),
                         }),
                         selected: appearance.theme == mode,
                         onSelected: (_) => controller.change(theme: mode),
@@ -82,24 +83,14 @@ class SettingsPage extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 24),
-                DropdownButtonFormField<String>(
-                  initialValue: appearance.locale.languageCode,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Language'),
-                  items: [
-                    for (final (locale, name) in languageChoices)
-                      DropdownMenuItem(
-                        value: locale.languageCode,
-                        child: Text(name),
-                      ),
-                  ],
-                  onChanged: (v) => controller.change(locale: Locale(v!, 'IN')),
-                ),
+                const LanguagePicker(),
                 if (!appearance.saved)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 16),
                     child: Text(
-                      'This change is showing now. To keep it, open your records again and try saving.',
+                      context.tr(
+                        'This change is showing now. To keep it, open your records again and try saving.',
+                      ),
                     ),
                   ),
               ],
@@ -107,7 +98,7 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        const SectionHeading('Privacy'),
+        SectionHeading(context.tr('Privacy')),
         Card.outlined(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -127,8 +118,10 @@ class SettingsPage extends ConsumerWidget {
                       : strings.text('localFamilyHelp'),
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'FamilyVault locks when you leave the app or after five idle minutes. Use your phone’s screen lock to open it again.',
+                Text(
+                  context.tr(
+                    'FamilyVault locks when you leave the app or after five idle minutes. Use your phone’s screen lock to open it again.',
+                  ),
                 ),
                 const SizedBox(height: 20),
                 OutlinedButton.icon(
@@ -156,7 +149,7 @@ class SettingsPage extends ConsumerWidget {
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.info_outline),
-          title: const Text('About & open-source licences'),
+          title: Text(context.tr('About & open-source licences')),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/about'),
         ),
@@ -215,7 +208,7 @@ class _SyncSection extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Family updates',
+                context.tr('Family updates'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 10),
@@ -223,8 +216,16 @@ class _SyncSection extends ConsumerWidget {
               if (value.pending case final pending?)
                 Text(
                   pending == 0
-                      ? 'Your changes are up to date.'
-                      : '$pending ${pending == 1 ? 'change is' : 'changes are'} waiting to update the family.',
+                      ? context.tr('Your changes are up to date.')
+                      : context.tr(
+                          "{count} {grammar} waiting to update the family.",
+                          {
+                            'count': pending,
+                            'grammar': pending == 1
+                                ? 'change is'
+                                : 'changes are',
+                          },
+                        ),
                 ),
               if (value.failure case final failure?) FailureNotice(failure),
               const SizedBox(height: 14),
@@ -235,17 +236,17 @@ class _SyncSection extends ConsumerWidget {
                   OutlinedButton.icon(
                     onPressed: value.checking ? null : sync.check,
                     icon: const Icon(Icons.sync),
-                    label: const Text('Check for updates'),
+                    label: Text(context.tr('Check for updates')),
                   ),
                   TextButton.icon(
                     onPressed: () => context.push('/family-recovery'),
                     icon: const Icon(Icons.history),
-                    label: const Text('Changes saved on this phone'),
+                    label: Text(context.tr('Changes saved on this phone')),
                   ),
                   TextButton.icon(
                     onPressed: () => _signOut(ref),
                     icon: const Icon(Icons.logout),
-                    label: const Text('Sign out on this device'),
+                    label: Text(context.tr('Sign out on this device')),
                   ),
                 ],
               ),

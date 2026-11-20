@@ -21,6 +21,14 @@ void main() {
       );
     }
     expect(formatPercentage(BigInt.one, BigInt.from(3)), '33.33%');
+    expect(
+      formatInr(BigInt.from(12500000), compact: true, hindi: true),
+      '₹1.25 लाख',
+    );
+    expect(
+      formatInr(BigInt.from(-1500000000), compact: true, hindi: true),
+      '-₹1.5 करोड़',
+    );
     expect(formatPercentage(-BigInt.one, BigInt.from(3)), '-33.33%');
     expect(formatPercentage(BigInt.one, BigInt.zero), '—');
     final huge = BigInt.one << 150;

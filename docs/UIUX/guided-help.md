@@ -27,5 +27,6 @@ vault. If shared access needs setup or an administrator, the guide says so
 and the Family screen keeps the same access rules.
 
 `HelpTopic` maps the question, search equivalents and route. The English and
-Marathi steps are in the locale catalog. Add tests when changing a route,
-opening condition or translated topic.
+Hindi steps are in the locale catalog. Search accepts familiar spellings
+with or without the dot under letters, such as दस्तावेज़ and दस्तावेज.
+Add tests when changing a route, opening condition or translated topic.

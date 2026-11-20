@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'account_labels.dart';
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/finance/formatters.dart';
@@ -41,17 +43,17 @@ class _PlanningPageState extends State<PlanningPage> {
       return VaultContent(
         children: [
           SectionHeading(
-            'Plan for this month',
+            context.tr('Plan for this month'),
             action: FilledButton.icon(
               onPressed: () => context.push('/budget/new?month=$month'),
               icon: const Icon(Icons.add),
-              label: const Text('Plan spending'),
+              label: Text(context.tr('Plan spending')),
             ),
           ),
           Row(
             children: [
               IconButton(
-                tooltip: 'Previous month',
+                tooltip: context.tr('Previous month'),
                 onPressed: _month.year <= 1900
                     ? null
                     : () => setState(
@@ -67,7 +69,7 @@ class _PlanningPageState extends State<PlanningPage> {
                 ),
               ),
               IconButton(
-                tooltip: 'Next month',
+                tooltip: context.tr('Next month'),
                 onPressed: _month.year >= 2200
                     ? null
                     : () => setState(
@@ -81,12 +83,12 @@ class _PlanningPageState extends State<PlanningPage> {
           ResponsiveCards(
             children: [
               MetricCard(
-                title: 'Planned spending',
+                title: context.tr('Planned spending'),
                 value: formatInr(target),
                 icon: Icons.savings_outlined,
               ),
               MetricCard(
-                title: 'Money spent this month',
+                title: context.tr('Money spent this month'),
                 value: formatInr(expenses),
                 icon: Icons.receipt_long_outlined,
               ),
@@ -94,10 +96,12 @@ class _PlanningPageState extends State<PlanningPage> {
           ),
           const SizedBox(height: 28),
           if (budgets.isEmpty)
-            const EmptyNotice(
+            EmptyNotice(
               icon: Icons.savings_outlined,
-              title: 'No spending plans yet',
-              message: 'Choose what you’re planning to spend on and set an amount for this month.',
+              title: context.tr('No spending plans yet'),
+              message: context.tr(
+                'Choose what you’re planning to spend on and set an amount for this month.',
+              ),
             ),
           for (final budget in budgets)
             Padding(
@@ -115,12 +119,12 @@ class _PlanningPageState extends State<PlanningPage> {
                         final progress = limit == BigInt.zero
                             ? (actual > BigInt.zero ? 1.0 : 0.0)
                             : chartRatio(actual, limit);
-                        final name =
-                            data.accounts
-                                .where((a) => a.id == budget.accountId)
-                                .firstOrNull
-                                ?.name ??
-                            'Expense category';
+                        final account = data.accounts
+                            .where((a) => a.id == budget.accountId)
+                            .firstOrNull;
+                        final name = account == null
+                            ? context.tr('Expense category')
+                            : accountDisplayName(context, account);
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -129,7 +133,12 @@ class _PlanningPageState extends State<PlanningPage> {
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 12),
-                            Text('${formatInr(actual)} of ${formatInr(limit)}'),
+                            Text(
+                              context.tr("{used} of {total}", {
+                                'used': formatInr(actual),
+                                'total': formatInr(limit),
+                              }),
+                            ),
                             const SizedBox(height: 14),
                             LinearProgressIndicator(
                               value: progress,
@@ -142,8 +151,12 @@ class _PlanningPageState extends State<PlanningPage> {
                             const SizedBox(height: 10),
                             Text(
                               actual > limit
-                                  ? '${formatInr(actual - limit)} above budget'
-                                  : '${formatInr(limit - actual)} remaining',
+                                  ? context.tr("{extra} above budget", {
+                                      'extra': formatInr(actual - limit),
+                                    })
+                                  : context.tr("{amount} remaining", {
+                                      'amount': formatInr(limit - actual),
+                                    }),
                             ),
                           ],
                         );
@@ -191,7 +204,9 @@ class _BudgetEditorState extends ConsumerState<BudgetEditor> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(
-        widget.id == null ? 'Plan monthly spending' : 'Edit spending plan',
+        widget.id == null
+            ? context.tr('Plan monthly spending')
+            : context.tr('Edit spending plan'),
       ),
     ),
     body: FinanceView(
@@ -199,8 +214,8 @@ class _BudgetEditorState extends ConsumerState<BudgetEditor> {
         if (widget.id != null && !_prepared) {
           final b = data.budgets.where((b) => b.id == widget.id).firstOrNull;
           if (b == null) {
-            return const VaultContent(
-              children: [Text('This budget is unavailable.')],
+            return VaultContent(
+              children: [Text(context.tr('This budget is unavailable.'))],
             );
           }
           _month.text = b.month;
@@ -228,34 +243,38 @@ class _BudgetEditorState extends ConsumerState<BudgetEditor> {
                   DropdownButtonFormField<String>(
                     initialValue: _category,
                     isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Expense category',
+                    decoration: InputDecoration(
+                      labelText: context.tr('Expense category'),
                     ),
                     items: [
                       for (final a in categories)
                         DropdownMenuItem(
                           value: a.id,
-                          child: Text(a.name, overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            accountDisplayName(context, a),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                     ],
                     onChanged: _busy || widget.id != null
                         ? null
                         : (v) => setState(() => _category = v),
-                    validator: (v) => v == null ? 'Choose a category.' : null,
+                    validator: (v) =>
+                        v == null ? context.tr('Choose a category.') : null,
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
                     controller: _month,
                     enabled: !_busy && widget.id == null,
                     maxLength: 7,
-                    decoration: const InputDecoration(
-                      labelText: 'Month (YYYY-MM)',
+                    decoration: InputDecoration(
+                      labelText: context.tr('Month (YYYY-MM)'),
                     ),
                     validator: (v) {
                       try {
                         LedgerRepository.validateDate('${v ?? ''}-01');
                       } on AppFailure catch (e) {
-                        return e.message;
+                        return VaultStrings.of(context).failure(e);
                       }
                       return null;
                     },
@@ -268,17 +287,17 @@ class _BudgetEditorState extends ConsumerState<BudgetEditor> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: 'Monthly limit',
+                    decoration: InputDecoration(
+                      labelText: context.tr('Monthly limit'),
                       prefixText: '₹ ',
                     ),
                     validator: (v) {
                       try {
                         if (Money.parseInr(v ?? '').minor < 0) {
-                          return 'Use zero or a positive amount.';
+                          return context.tr('Use zero or a positive amount.');
                         }
                       } on AppFailure catch (e) {
-                        return e.message;
+                        return VaultStrings.of(context).failure(e);
                       }
                       return null;
                     },
@@ -291,14 +310,18 @@ class _BudgetEditorState extends ConsumerState<BudgetEditor> {
                   FilledButton.icon(
                     onPressed: _busy ? null : _save,
                     icon: const Icon(Icons.check),
-                    label: Text(_busy ? 'Saving…' : 'Save spending plan'),
+                    label: Text(
+                      _busy
+                          ? context.tr('Saving…')
+                          : context.tr('Save spending plan'),
+                    ),
                   ),
                   if (widget.id != null) ...[
                     const SizedBox(height: 16),
                     OutlinedButton.icon(
                       onPressed: _busy ? null : _remove,
                       icon: const Icon(Icons.delete_outline),
-                      label: const Text('Remove budget'),
+                      label: Text(context.tr('Remove budget')),
                     ),
                   ],
                 ],
@@ -331,18 +354,20 @@ class _BudgetEditorState extends ConsumerState<BudgetEditor> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove this budget?'),
-        content: const Text(
-          'Your expenses and the budget audit history are preserved.',
+        title: Text(context.tr('Remove this budget?')),
+        content: Text(
+          context.tr(
+            'Your expenses and the budget audit history are preserved.',
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(context.tr('Cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Remove'),
+            child: Text(context.tr('Remove')),
           ),
         ],
       ),
@@ -408,14 +433,16 @@ class _ReconciliationEditorState extends ConsumerState<ReconciliationEditor> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Check that the amounts match')),
+    appBar: AppBar(title: Text(context.tr('Check that the amounts match'))),
     body: FinanceView(
       builder: (data) {
         final a = data.accounts
             .where((a) => a.id == widget.accountId)
             .firstOrNull;
         if (a == null) {
-          return const VaultContent(children: [Text('Account unavailable.')]);
+          return VaultContent(
+            children: [Text(context.tr('Account unavailable.'))],
+          );
         }
         final balance = data.balances(through: _date)[a.id] ?? BigInt.zero;
         return VaultContent(
@@ -423,7 +450,12 @@ class _ReconciliationEditorState extends ConsumerState<ReconciliationEditor> {
           children: [
             Text(a.name, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
-            Text('Amount in FamilyVault on $_date: ${formatInr(balance)}'),
+            Text(
+              context.tr("Amount in FamilyVault on {date}: {amount}", {
+                'date': _date,
+                'amount': formatInr(balance),
+              }),
+            ),
             const SizedBox(height: 24),
             Form(
               key: _form,
@@ -447,7 +479,9 @@ class _ReconciliationEditorState extends ConsumerState<ReconciliationEditor> {
                             }
                           },
                     icon: const Icon(Icons.calendar_today_outlined),
-                    label: Text('Statement date: $_date'),
+                    label: Text(
+                      context.tr("Statement date: {date}", {'date': _date}),
+                    ),
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
@@ -458,15 +492,15 @@ class _ReconciliationEditorState extends ConsumerState<ReconciliationEditor> {
                       decimal: true,
                       signed: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: 'Balance on your statement',
+                    decoration: InputDecoration(
+                      labelText: context.tr('Balance on your statement'),
                       prefixText: '₹ ',
                     ),
                     validator: (v) {
                       try {
                         Money.parseInr(v ?? '');
                       } on AppFailure catch (e) {
-                        return e.message;
+                        return VaultStrings.of(context).failure(e);
                       }
                       return null;
                     },
@@ -478,10 +512,10 @@ class _ReconciliationEditorState extends ConsumerState<ReconciliationEditor> {
                     maxLength: 400,
                     minLines: 2,
                     maxLines: 4,
-                    decoration: const InputDecoration(
-                      labelText: 'Notes / reason',
+                    decoration: InputDecoration(
+                      labelText: context.tr('Notes / reason'),
                     ),
-                    validator: requiredText,
+                    validator: context.localizedValidator(requiredText),
                   ),
                   const SizedBox(height: 12),
                   SwitchListTile(
@@ -490,9 +524,11 @@ class _ReconciliationEditorState extends ConsumerState<ReconciliationEditor> {
                     onChanged: _busy
                         ? null
                         : (v) => setState(() => _adjust = v),
-                    title: const Text('Save a change for the difference'),
-                    subtitle: const Text(
-                      'Off by default. Adds a separate balanced entry against reconciliation equity; it never edits past transactions.',
+                    title: Text(context.tr('Save a change for the difference')),
+                    subtitle: Text(
+                      context.tr(
+                        'Off by default. Adds a separate balanced entry against reconciliation equity; it never edits past transactions.',
+                      ),
                     ),
                   ),
                   if (_error != null) ...[
@@ -503,7 +539,11 @@ class _ReconciliationEditorState extends ConsumerState<ReconciliationEditor> {
                   FilledButton.icon(
                     onPressed: _busy ? null : _save,
                     icon: const Icon(Icons.fact_check_outlined),
-                    label: Text(_busy ? 'Saving…' : 'Save reconciliation'),
+                    label: Text(
+                      _busy
+                          ? context.tr('Saving…')
+                          : context.tr('Save reconciliation'),
+                    ),
                   ),
                 ],
               ),

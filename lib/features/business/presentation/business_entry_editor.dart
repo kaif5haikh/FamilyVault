@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/finance/fixed_decimal.dart';
@@ -147,16 +148,20 @@ class _BusinessEntryEditorState extends ConsumerState<BusinessEntryEditor> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(_title)),
+    appBar: AppBar(title: Text(context.tr(_title))),
     body: BusinessView(
       builder: (data, finance) {
         final cash = finance.accounts.where(_isLiquid).toList();
         final cashIds = cash.map((a) => a.id).toSet();
         final label = _load(data, finance, cashIds);
         if (label == null) {
-          return const VaultContent(
+          return VaultContent(
             children: [
-              Text('This record is unavailable for the selected action.'),
+              Text(
+                context.tr(
+                  'This record is unavailable for the selected action.',
+                ),
+              ),
             ],
           );
         }
@@ -171,45 +176,49 @@ class _BusinessEntryEditorState extends ConsumerState<BusinessEntryEditor> {
                   Text(label, style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 16),
                   if (_correcting)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(bottom: 18),
                       child: Text(
-                        'The original stays in history. Saving adds the corrected record.',
+                        context.tr(
+                          'The original stays in history. Saving adds the corrected record.',
+                        ),
                       ),
                     ),
                   if (_stock) ...[
                     RecordChoice<StockEntryKind>(
-                      'Movement type',
+                      context.tr('Movement type'),
                       _stockKind,
                       [
                         for (final k in StockEntryKind.values)
-                          (k, stockLabel(k.code)),
+                          (k, context.tr(stockLabel(k.code))),
                       ],
                       (kind) => setState(() => _stockKind = kind),
                       enabled: !_busy,
                     ),
                     RecordField(
-                      'Quantity in pieces',
+                      context.tr('Quantity in pieces'),
                       _units,
                       required: true,
                       scale: 0,
                       enabled: !_busy,
                     ),
                     if (!_stockKind.isReceipt)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(bottom: 18),
                         child: Text(
-                          'The app uses the average cost of the pieces you have.',
+                          context.tr(
+                            'The app uses the average cost of the pieces you have.',
+                          ),
                         ),
                       ),
                   ],
                   if (!_stock || _stockKind.isReceipt)
                     RecordField(
                       _stock
-                          ? 'Total stock cost'
+                          ? context.tr('Total stock cost')
                           : _salary
-                          ? 'Amount paid'
-                          : 'Amount',
+                          ? context.tr('Amount paid')
+                          : context.tr('Amount'),
                       _amount,
                       required: true,
                       money: true,
@@ -217,16 +226,18 @@ class _BusinessEntryEditorState extends ConsumerState<BusinessEntryEditor> {
                     ),
                   if (_needsCash) ...[
                     if (cash.isEmpty)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.only(bottom: 18),
                         child: Text(
-                          'Add a cash or bank account before recording money moving.',
+                          context.tr(
+                            'Add a cash or bank account before recording money moving.',
+                          ),
                         ),
                       ),
                     RecordChoice<String>(
                       widget.mode == BusinessEntryMode.revenue
-                          ? 'Received into'
-                          : 'Paid from',
+                          ? context.tr('Received into')
+                          : context.tr('Paid from'),
                       cashIds.contains(_cashId) ? _cashId : null,
                       [for (final a in cash) (a.id, a.name)],
                       (id) => setState(() => _cashId = id),
@@ -234,21 +245,25 @@ class _BusinessEntryEditorState extends ConsumerState<BusinessEntryEditor> {
                     ),
                   ],
                   RecordDate(
-                    _stock ? 'Movement date' : 'Payment date',
+                    _stock
+                        ? context.tr('Movement date')
+                        : context.tr('Payment date'),
                     _date,
                     (value) => setState(() => _date = value),
                     enabled: !_busy,
                   ),
                   if (_salary)
                     RecordField(
-                      'Salary month (YYYY-MM)',
+                      context.tr('Salary month (YYYY-MM)'),
                       _period,
                       required: true,
                       maxLength: 7,
                       enabled: !_busy,
                     ),
                   RecordField(
-                    _stock || _salary ? 'Notes (optional)' : 'Description',
+                    _stock || _salary
+                        ? context.tr('Notes (optional)')
+                        : context.tr('Description'),
                     _notes,
                     lines: 2,
                     maxLength: _stock || _salary ? 4000 : 500,
@@ -257,7 +272,7 @@ class _BusinessEntryEditorState extends ConsumerState<BusinessEntryEditor> {
                   ),
                   if (_correcting)
                     RecordField(
-                      'Reason for correction',
+                      context.tr('Reason for correction'),
                       _reason,
                       required: true,
                       maxLength: 400,
@@ -270,10 +285,10 @@ class _BusinessEntryEditorState extends ConsumerState<BusinessEntryEditor> {
                     icon: const Icon(Icons.check),
                     label: Text(
                       _busy
-                          ? 'Saving…'
+                          ? context.tr('Saving…')
                           : _correcting
-                          ? 'Save correction'
-                          : 'Save entry',
+                          ? context.tr('Save correction')
+                          : context.tr('Save entry'),
                     ),
                   ),
                 ],

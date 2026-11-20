@@ -4,15 +4,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../core/errors/app_failure.dart';
+import '../core/localization/vault_strings.dart';
 import '../core/security/device_gate.dart';
 import '../core/security/secure_store.dart';
 import '../core/security/vault_lifecycle.dart';
 import '../features/finance/data/ledger_repository.dart';
+import 'appearance.dart';
 
 final secureStoreProvider = Provider<SecureStore>(
   (ref) => const PlatformSecureStore(),
 );
-final deviceGateProvider = Provider<DeviceGate>((ref) => PlatformDeviceGate());
+final deviceGateProvider = Provider<DeviceGate>(
+  (ref) => PlatformDeviceGate(
+    reason: () =>
+        VaultStrings(ref.read(appearanceProvider).locale)
+            .message('Unlock your private FamilyVault'),
+  ),
+);
 final vaultLifecycleProvider = Provider<VaultLifecycle>((ref) {
   final lifecycle = VaultLifecycle(
     store: ref.watch(secureStoreProvider),

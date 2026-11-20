@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/localization/vault_strings.dart';
 import '../../core/security/vault_lifecycle.dart';
 import '../../shared/widgets/vault_widgets.dart';
 import 'backup_archive.dart';
@@ -82,30 +83,50 @@ class _ScheduledBackupsPanelState extends ConsumerState<ScheduledBackupsPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeading('Automatic safe copies'),
-        const Text('Backups can run while your vault is open.'),
+        SectionHeading(context.tr('Automatic safe copies')),
+        Text(context.tr('Backups can run while your vault is open.')),
         if (state.isLoading || _working) const LinearProgressIndicator(),
         if (state.hasError) FailureNotice(state.error!),
         if (status != null) ...[
           Text(
-            '${status.cadence == BackupCadence.daily ? 'Daily' : 'Weekly'} schedule. Next backup ${date(status.dueAtUs)}.',
+            context.tr('{cadence} schedule. Next backup {date}.', {
+              'cadence': context.tr(
+                status.cadence == BackupCadence.daily ? 'Daily' : 'Weekly',
+              ),
+              'date': date(status.dueAtUs),
+            }),
           ),
           if (status.local case final local?)
             Text(
-              'Local backup verified ${date(local.createdAtUs)}.'
-              '${local.exportedAtUs == null ? '' : ' File copy verified ${date(local.exportedAtUs!)}.'}',
+              [
+                context.tr('Local backup verified {date}.', {
+                  'date': date(local.createdAtUs),
+                }),
+                if (local.exportedAtUs case final exported?)
+                  context.tr('File copy verified {date}.', {
+                    'date': date(exported),
+                  }),
+              ].join(' '),
             ),
           if (status.captureFailed)
-            const Text(
-              'The scheduled backup failed. It will retry while the vault is open.',
+            Text(
+              context.tr(
+                'The scheduled backup failed. It will retry while the vault is open.',
+              ),
             ),
           if (status.driveEnabled)
             Text(
               status.driveFailed
-                  ? 'The Drive copy failed. Check your connection and Google account.'
+                  ? context.tr(
+                      'The Drive copy failed. Check your connection and Google account.',
+                    )
                   : status.driveVerifiedAtUs == null
-                  ? 'Drive copy pending. Connect the Google account selected for this schedule.'
-                  : 'Drive copy verified ${date(status.driveVerifiedAtUs!)}.',
+                  ? context.tr(
+                      'Drive copy pending. Connect the Google account selected for this schedule.',
+                    )
+                  : context.tr("Drive copy verified {date}.", {
+                      'date': date(status.driveVerifiedAtUs!),
+                    }),
             ),
           Wrap(
             spacing: 8,
@@ -118,13 +139,13 @@ class _ScheduledBackupsPanelState extends ConsumerState<ScheduledBackupsPanel> {
                           (scheduler) => scheduler.exportLatest(identity),
                         ),
                   icon: const Icon(Icons.download_outlined),
-                  label: const Text('Save scheduled backup to Files'),
+                  label: Text(context.tr('Save scheduled backup to Files')),
                 ),
               TextButton(
                 onPressed: _working
                     ? null
                     : () => _run((scheduler) => scheduler.disable(identity)),
-                child: const Text('Turn off schedule'),
+                child: Text(context.tr('Turn off schedule')),
               ),
             ],
           ),
@@ -136,7 +157,9 @@ class _ScheduledBackupsPanelState extends ConsumerState<ScheduledBackupsPanel> {
               for (final option in BackupCadence.values)
                 ChoiceChip(
                   label: Text(
-                    option == BackupCadence.daily ? 'Daily' : 'Weekly',
+                    option == BackupCadence.daily
+                        ? context.tr('Daily')
+                        : context.tr('Weekly'),
                   ),
                   selected: _cadence == option,
                   onSelected: _working
@@ -152,13 +175,13 @@ class _ScheduledBackupsPanelState extends ConsumerState<ScheduledBackupsPanel> {
             obscureText: true,
             autocorrect: false,
             enableSuggestions: false,
-            decoration: const InputDecoration(
-              labelText: 'Schedule recovery key',
+            decoration: InputDecoration(
+              labelText: context.tr('Schedule recovery key'),
             ),
           ),
           CheckboxListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('I saved the recovery key separately'),
+            title: Text(context.tr('I saved the recovery key separately')),
             value: _savedElsewhere,
             onChanged: _working
                 ? null
@@ -167,7 +190,7 @@ class _ScheduledBackupsPanelState extends ConsumerState<ScheduledBackupsPanel> {
           if (drive != null)
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Also copy scheduled backups to Drive'),
+              title: Text(context.tr('Also copy scheduled backups to Drive')),
               subtitle: Text(drive.email),
               value: identical(_useDrive, drive),
               onChanged: _working
@@ -183,18 +206,18 @@ class _ScheduledBackupsPanelState extends ConsumerState<ScheduledBackupsPanel> {
                 onPressed: _working || !_savedElsewhere
                     ? null
                     : () => _run(_enable),
-                child: const Text('Save schedule'),
+                child: Text(context.tr('Save schedule')),
               ),
               TextButton(
                 onPressed: _working ? null : () => setState(_clearForm),
-                child: const Text('Cancel'),
+                child: Text(context.tr('Cancel')),
               ),
             ],
           ),
         ] else if (state.hasValue)
           OutlinedButton(
             onPressed: _working ? null : () => setState(() => _editing = true),
-            child: const Text('Set a backup schedule'),
+            child: Text(context.tr('Set a backup schedule')),
           ),
         if (_error != null) FailureNotice(_error!),
       ],

@@ -38,6 +38,14 @@ void main() {
         )..addFont(file.readAsBytes().then(ByteData.sublistView))).load();
       }
     }
+    final devanagari = File(
+      '/usr/share/fonts/google-noto-vf/NotoSansDevanagari[wght].ttf',
+    );
+    if (await devanagari.exists()) {
+      await (FontLoader(
+        'Noto Sans Devanagari',
+      )..addFont(devanagari.readAsBytes().then(ByteData.sublistView))).load();
+    }
   });
 
   setUp(() async {
@@ -160,15 +168,16 @@ void main() {
     await unmount(tester);
   });
 
-  testWidgets('skipping the tour remembers Marathi without making records', (
+  testWidgets('onboarding can choose Hindi and remembers it on relaunch', (
     tester,
   ) async {
     phone(tester);
     await mount(tester);
     await ready(tester, find.text('Take a short tour'));
-    await tapVisible(tester, find.byTooltip('Choose language'));
-    await tapVisible(tester, find.text('मराठी (भारत)'));
-    await ready(tester, find.text('कुटुंबाचे पैसे आणि कागदपत्रे'));
+    await tapVisible(tester, find.byKey(const ValueKey('language-en')));
+    expect(find.text('मराठी (भारत)'), findsNothing);
+    await tapVisible(tester, find.text('हिंदी (भारत)'));
+    await ready(tester, find.text('परिवार के पैसे और दस्तावेज़'));
     final strings = VaultStrings.of(tester.element(find.byType(Scaffold)));
     for (final topic in HelpTopic.values) {
       expect(
@@ -178,7 +187,14 @@ void main() {
       expect(topic.first(strings), isNotEmpty);
       expect(topic.second(strings), isNotEmpty);
     }
+    expect(
+      HelpTopic.search('दस्तावेज़', strings),
+      contains(HelpTopic.findPaper),
+    );
+    expect(HelpTopic.search('बैंक खाता', strings), contains(HelpTopic.bank));
     await tapVisible(tester, find.text(strings.text('seeGuide')));
+    await ready(tester, find.text('देखें, पैसे कहाँ जा रहे हैं'));
+    await screenshot(tester, 'hindi-tour');
     await tapVisible(
       tester,
       find.widgetWithText(TextButton, strings.text('skip')),
@@ -187,11 +203,89 @@ void main() {
     expect(lifecycle.status.hasVault, isFalse);
     await unmount(tester);
     await mount(tester);
-    await ready(tester, find.text('कुटुंबाचे पैसे आणि कागदपत्रे'));
+    await ready(tester, find.text('परिवार के पैसे और दस्तावेज़'));
     expect(find.text(strings.text('seeGuide')), findsNothing);
     expect(tester.takeException(), isNull);
     await unmount(tester);
   });
+
+  testWidgets('an older Marathi preference falls back to English', (
+    tester,
+  ) async {
+    phone(tester);
+    await store.write('ui.phone_language', 'mr');
+    await mount(tester);
+    await ready(tester, find.text('Take a short tour'));
+    expect(find.byKey(const ValueKey('language-en')), findsOneWidget);
+    expect(await store.read('ui.phone_language'), 'mr');
+    expect(
+      const VaultStrings(Locale('mr', 'IN')).text('welcomeTitle'),
+      'कुटुंबाचे पैसे आणि कागदपत्रे',
+    );
+    await unmount(tester);
+  });
+
+  testWidgets(
+    'Hindi covers live forms, validation and tabs at large text size',
+    (tester) async {
+      phone(tester, large: true);
+      await openLocalRecords(tester);
+      final ledger = lifecycle.status.session!.ledger;
+      // This name was typed by a family member and should not be translated.
+      await tester.runAsync(
+        () => ledger.createAccount(
+          name: 'Investment',
+          kind: AccountKind.asset,
+          subtype: 'cash',
+        ),
+      );
+      final container = await mount(tester);
+      final router = container.read(routerProvider);
+      await ready(tester, find.text('Money available'));
+      router.go('/settings');
+      await ready(tester, find.byKey(const ValueKey('language-en')));
+      await tapVisible(tester, find.byKey(const ValueKey('language-en')));
+      await tapVisible(tester, find.text('हिंदी (भारत)'));
+      await ready(tester, appBar('सेटिंग्स'));
+      final screens = [
+        ('/home', 'हमारे पास पैसे'),
+        ('/accounts', 'आपके खाते'),
+        ('/assets', 'चीज़ें, मकान और ज़मीन'),
+        ('/loans', 'लिए और दिए हुए कर्ज़'),
+        ('/documents', 'दस्तावेज़ जोड़ें'),
+        ('/family', 'परिवार के लोग'),
+        ('/backups', 'सुरक्षित कॉपी बनाएँ'),
+        ('/transaction/new?kind=income', 'पैसे कहाँ से मिले?'),
+      ];
+      for (final (route, label) in screens) {
+        router.go(route);
+        await ready(tester, find.text(label));
+        expect(tester.takeException(), isNull, reason: route);
+      }
+      final source = find.ancestor(
+        of: find.text('पैसे कहाँ से मिले?'),
+        matching: find.byType(DropdownButtonFormField<String>),
+      );
+      await tapVisible(tester, source);
+      await tapVisible(tester, find.text('तनख़्वाह').last);
+      expect(find.text('Investment'), findsOneWidget);
+      await tester.enterText(field('रकम'), '-0.01');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+      await tapVisible(tester, button('हिसाब सेव करें'));
+      expect(find.text('शून्य से बड़ी रकम लिखें।'), findsOneWidget);
+      expect((await databaseIO(tester, ledger.snapshot)).journals, isEmpty);
+      await tester.ensureVisible(field('रकम'));
+      await screenshot(tester, 'hindi-money-320');
+      await unmount(tester);
+      await mount(tester);
+      await ready(tester, find.text('हमारे पास पैसे'));
+      await databaseIO(tester, lifecycle.lock);
+      await ready(tester, find.text('आपके रिकॉर्ड लॉक हैं'));
+      expect(tester.takeException(), isNull);
+      await unmount(tester);
+    },
+  );
 
   testWidgets('offline help finds questions and respects locked records', (
     tester,

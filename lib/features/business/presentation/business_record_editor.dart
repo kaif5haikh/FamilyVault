@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../shared/widgets/record_fields.dart';
 import '../../../shared/widgets/vault_widgets.dart';
@@ -103,14 +104,18 @@ class _BusinessRecordEditorState extends ConsumerState<BusinessRecordEditor> {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: Text(
-        '${widget.id == null ? 'Add' : 'Edit'} ${widget.kind.label.toLowerCase()}',
+        context.tr(widget.id == null ? 'Add {kind}' : 'Edit {kind}', {
+          'kind': context.tr(widget.kind.label).toLowerCase(),
+        }),
       ),
     ),
     body: BusinessView(
       builder: (data, _) {
         if (!_load(data)) {
-          return const VaultContent(
-            children: [Text('This record is unavailable for editing.')],
+          return VaultContent(
+            children: [
+              Text(context.tr('This record is unavailable for editing.')),
+            ],
           );
         }
         return VaultContent(
@@ -122,7 +127,9 @@ class _BusinessRecordEditorState extends ConsumerState<BusinessRecordEditor> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   RecordField(
-                    '${widget.kind.label} name',
+                    context.tr("{kind} name", {
+                      'kind': context.tr(widget.kind.label),
+                    }),
                     _name,
                     required: true,
                     maxLength: widget.kind == BusinessRecordKind.business
@@ -132,22 +139,24 @@ class _BusinessRecordEditorState extends ConsumerState<BusinessRecordEditor> {
                   ),
                   if (widget.kind == BusinessRecordKind.stock)
                     RecordField(
-                      'SKU or product code (optional)',
+                      context.tr('SKU or product code (optional)'),
                       _sku,
                       maxLength: 80,
                       enabled: !_busy,
                     ),
                   if (widget.kind == BusinessRecordKind.worker)
                     RecordField(
-                      'Agreed monthly wages (optional)',
+                      context.tr('Agreed monthly wages (optional)'),
                       _salary,
                       money: true,
                       enabled: !_busy,
-                      hint: 'Record the actual amounts paid from the worker’s history.',
+                      hint: context.tr(
+                        'Record the actual amounts paid from the worker’s history.',
+                      ),
                     ),
                   if (widget.kind != BusinessRecordKind.stock)
                     RecordField(
-                      'Notes (optional)',
+                      context.tr('Notes (optional)'),
                       _notes,
                       lines: 3,
                       maxLength: 4000,
@@ -160,8 +169,12 @@ class _BusinessRecordEditorState extends ConsumerState<BusinessRecordEditor> {
                     icon: const Icon(Icons.check),
                     label: Text(
                       _busy
-                          ? 'Saving…'
-                          : 'Save ${widget.kind.label.toLowerCase()}',
+                          ? context.tr('Saving…')
+                          : context.tr("Save {kind}", {
+                              'kind': context
+                                  .tr(widget.kind.label)
+                                  .toLowerCase(),
+                            }),
                     ),
                   ),
                 ],

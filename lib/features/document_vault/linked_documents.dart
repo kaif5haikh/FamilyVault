@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/localization/vault_strings.dart';
 import '../../core/database/app_database.dart';
 import '../../shared/widgets/vault_widgets.dart';
 import 'document_inputs.dart';
@@ -41,7 +42,7 @@ class LinkedDocuments extends ConsumerWidget {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SectionHeading('Linked documents'),
+                    SectionHeading(context.tr('Linked documents')),
                     for (final document in linked)
                       ListTile(
                         leading: const Icon(Icons.description_outlined),

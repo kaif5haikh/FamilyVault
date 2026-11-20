@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/finance/fixed_decimal.dart';
 import '../../core/finance/money.dart';
+import '../../core/localization/vault_strings.dart';
 import '../../features/finance/data/ledger_repository.dart';
 import 'vault_widgets.dart';
 
@@ -56,7 +57,7 @@ class RecordField extends StatelessWidget {
       ),
       validator: (v) {
         if (v == null || v.trim().isEmpty) {
-          return required ? requiredText(v) : null;
+          return required ? context.tr(requiredText(v)!) : null;
         }
         try {
           final value = money
@@ -65,10 +66,10 @@ class RecordField extends StatelessWidget {
               ? FixedDecimal.parse(v, scale: scale!, signed: allowNegative)
               : null;
           if (value != null && !allowNegative && value < 0) {
-            return 'Enter zero or a positive amount.';
+            return context.tr('Enter zero or a positive amount.');
           }
         } on AppFailure catch (e) {
-          return e.message;
+          return VaultStrings.of(context).failure(e);
         }
         return null;
       },
@@ -146,7 +147,7 @@ class RecordChoice<T> extends StatelessWidget {
                 onChanged(v);
               }
             },
-      validator: (v) => v == null ? 'Choose an option.' : null,
+      validator: (v) => v == null ? context.tr('Choose an option.') : null,
     ),
   );
 }

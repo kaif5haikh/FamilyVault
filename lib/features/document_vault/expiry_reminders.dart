@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/appearance.dart';
 import '../../app/vault_providers.dart';
 import '../../core/errors/app_failure.dart';
 import '../../core/security/secure_store.dart';
@@ -40,7 +41,7 @@ abstract interface class DocumentReminderPlatform {
   bool get supported;
   Future<bool> request();
   Future<bool> allowed();
-  Future<void> replace(List<int> times);
+  Future<void> replace(List<int> times, {required String language});
 }
 
 final class NativeDocumentReminders implements DocumentReminderPlatform {
@@ -57,7 +58,8 @@ final class NativeDocumentReminders implements DocumentReminderPlatform {
   Future<bool> allowed() async => await _call<bool>('allowed') ?? false;
 
   @override
-  Future<void> replace(List<int> times) => _call<void>('replace', times);
+  Future<void> replace(List<int> times, {required String language}) =>
+      _call<void>('replace', {'times': times, 'language': language});
 
   Future<T?> _call<T>(String method, [Object? arguments]) async {
     if (!supported) return null;
@@ -104,10 +106,17 @@ final documentReminderMonitorProvider = Provider<void>((ref) {
     }
     return;
   }
+  final language = ref.watch(
+    appearanceProvider.select((value) => value.locale.languageCode),
+  );
   final subscription = session.documents.watch().listen(
     (rows) => unawaited(
       service
-          .refresh(session, rows.map((row) => row.expiryOn).toList())
+          .refresh(
+            session,
+            rows.map((row) => row.expiryOn).toList(),
+            language: language,
+          )
           .catchError((Object _) {}),
     ),
     onError: (Object _) {},
@@ -127,6 +136,7 @@ final class DocumentReminderService {
   final DateTime Function() _clock;
   Future<void> _updates = Future.value();
   List<int>? _applied;
+  String? _appliedLanguage;
 
   String _scope(VaultIdentity i) =>
       'familyvault.document-reminders.${i.familyId}.${i.memberId}.${i.deviceId}';
@@ -151,22 +161,28 @@ final class DocumentReminderService {
     });
   }
 
-  Future<void> refresh(VaultSession session, Iterable<String?> expiries) =>
-      _serialize(() async {
-        if (session.closed || !await enabled(session.identity)) return;
-        final allowed = await platform.allowed();
-        if (session.closed) return;
-        await _replace(
-          allowed ? documentReminderTimes(expiries, _clock()) : const [],
-        );
-      });
+  Future<void> refresh(
+    VaultSession session,
+    Iterable<String?> expiries, {
+    String language = 'en',
+  }) => _serialize(() async {
+    if (session.closed || !await enabled(session.identity)) return;
+    final allowed = await platform.allowed();
+    if (session.closed) return;
+    await _replace(
+      allowed ? documentReminderTimes(expiries, _clock()) : const [],
+      language: language,
+    );
+  });
 
   Future<void> clear() => _serialize(() => _replace(const []));
 
-  Future<void> _replace(List<int> times) async {
-    if (listEquals(_applied, times)) return;
-    await platform.replace(times);
+  Future<void> _replace(List<int> times, {String language = 'en'}) async {
+    final selected = language == 'hi' ? 'hi' : 'en';
+    if (listEquals(_applied, times) && _appliedLanguage == selected) return;
+    await platform.replace(times, language: selected);
     _applied = times;
+    _appliedLanguage = selected;
   }
 
   Future<void> _serialize(Future<void> Function() action) {

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/localization/vault_strings.dart';
 import '../../core/security/vault_identity.dart';
 import '../../shared/widgets/vault_widgets.dart';
 import 'drive_backup_api.dart';
@@ -108,20 +109,24 @@ class _DriveBackupsPanelState extends ConsumerState<DriveBackupsPanel> {
         if (configured.isLoading)
           const LinearProgressIndicator()
         else if (configured.asData?.value != true)
-          const Text('Google Drive copies aren’t set up for this app.')
+          Text(context.tr('Google Drive copies aren’t set up for this app.'))
         else if (account == null)
           OutlinedButton.icon(
             onPressed: enabled
                 ? () => _run(ref.read(driveConnectionProvider.notifier).connect)
                 : null,
             icon: const Icon(Icons.cloud_outlined),
-            label: const Text('Connect Google Drive'),
+            label: Text(context.tr('Connect Google Drive')),
           )
         else ...[
           Text(account.email),
           if (verifiedAt != null)
             Text(
-              'Drive copy verified ${formats.formatMediumDate(DateTime.fromMicrosecondsSinceEpoch(verifiedAt).toLocal())}.',
+              context.tr("Drive copy verified {date}.", {
+                'date': formats.formatMediumDate(
+                  DateTime.fromMicrosecondsSinceEpoch(verifiedAt).toLocal(),
+                ),
+              }),
             ),
           if (receipt?.hasError == true) FailureNotice(receipt!.error!),
           if (query != null)
@@ -130,8 +135,8 @@ class _DriveBackupsPanelState extends ConsumerState<DriveBackupsPanel> {
               icon: const Icon(Icons.cloud_upload_outlined),
               label: Text(
                 verifiedAt == null
-                    ? 'Save backup to Drive'
-                    : 'Check Drive copy',
+                    ? context.tr('Save backup to Drive')
+                    : context.tr('Check Drive copy'),
               ),
             ),
           Wrap(
@@ -141,8 +146,8 @@ class _DriveBackupsPanelState extends ConsumerState<DriveBackupsPanel> {
                 onPressed: enabled ? () => _run(() => _history(account)) : null,
                 child: Text(
                   _listedAccount == account
-                      ? 'Refresh backup history'
-                      : 'Show backup history',
+                      ? context.tr('Refresh backup history')
+                      : context.tr('Show backup history'),
                 ),
               ),
               TextButton(
@@ -151,20 +156,25 @@ class _DriveBackupsPanelState extends ConsumerState<DriveBackupsPanel> {
                         ref.read(driveConnectionProvider.notifier).disconnect,
                       )
                     : null,
-                child: const Text('Disconnect'),
+                child: Text(context.tr('Disconnect')),
               ),
             ],
           ),
           if (_listedAccount == account) ...[
             if (_files.isEmpty)
-              const Text('No Safe copies in Google Drive found.'),
+              Text(context.tr('No Safe copies in Google Drive found.')),
             for (final file in _files)
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.lock_outline),
                 title: Text(formats.formatMediumDate(file.created.toLocal())),
                 subtitle: Text(
-                  '${formats.formatTimeOfDay(TimeOfDay.fromDateTime(file.created.toLocal()))} · ${formats.formatDecimal(file.bytes)} bytes',
+                  context.tr("{time} · {size} bytes", {
+                    'time': formats.formatTimeOfDay(
+                      TimeOfDay.fromDateTime(file.created.toLocal()),
+                    ),
+                    'size': formats.formatDecimal(file.bytes),
+                  }),
                 ),
                 trailing: widget.onSelect == null
                     ? null
@@ -178,7 +188,7 @@ class _DriveBackupsPanelState extends ConsumerState<DriveBackupsPanel> {
                 onPressed: enabled
                     ? () => _run(() => _history(account, page: _nextPage))
                     : null,
-                child: const Text('Load older backups'),
+                child: Text(context.tr('Load older backups')),
               ),
           ],
         ],

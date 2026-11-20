@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/localization/vault_strings.dart';
 import '../../../core/finance/formatters.dart';
 import '../domain/finance_report.dart';
 
@@ -19,10 +20,12 @@ class IncomeExpenseChart extends StatelessWidget {
       }
     }
     if (max == BigInt.zero) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.all(24),
         child: Text(
-          'Your income and expense trend appears as you add records.',
+          context.tr(
+            'Your income and expense trend appears as you add records.',
+          ),
         ),
       );
     }
@@ -34,7 +37,9 @@ class IncomeExpenseChart extends StatelessWidget {
         ? -chartRatio(value.abs(), max)
         : chartRatio(value, max);
     final chart = Semantics(
-      label: 'Income and expense chart. Exact values follow in the report.',
+      label: context.tr(
+        'Income and expense chart. Exact values follow in the report.',
+      ),
       child: ExcludeSemantics(
         child: SizedBox(
           height: 240,
@@ -96,7 +101,7 @@ class IncomeExpenseChart extends StatelessWidget {
                   touchTooltipData: BarTouchTooltipData(
                     getTooltipItem: (group, groupIndex, rod, rodIndex) =>
                         BarTooltipItem(
-                          '${reports[group.x].period.label}\n${rodIndex == 0 ? 'Income' : 'Expenses'}\n${formatInr(rodIndex == 0 ? reports[group.x].income : reports[group.x].expenses)}',
+                          '${reports[group.x].period.label}\n${rodIndex == 0 ? context.tr('Income') : context.tr('Expenses')}\n${formatInr(rodIndex == 0 ? reports[group.x].income : reports[group.x].expenses)}',
                           TextStyle(color: colors.onInverseSurface),
                         ),
                   ),
@@ -144,7 +149,7 @@ class IncomeExpenseChart extends StatelessWidget {
               children: [
                 Icon(Icons.circle, size: 12, color: colors.primary),
                 const SizedBox(width: 6),
-                const Text('Income'),
+                Text(context.tr('Income')),
               ],
             ),
             Row(
@@ -152,7 +157,7 @@ class IncomeExpenseChart extends StatelessWidget {
               children: [
                 Icon(Icons.circle, size: 12, color: colors.tertiary),
                 const SizedBox(width: 6),
-                const Text('Expenses'),
+                Text(context.tr('Expenses')),
               ],
             ),
           ],
@@ -169,7 +174,7 @@ class AllocationChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (allocation.isEmpty) {
-      return const Text('Add assets to see their allocation.');
+      return Text(context.tr('Add assets to see their allocation.'));
     }
     final colors = Theme.of(context).colorScheme;
     final palette = [
@@ -219,13 +224,15 @@ class AllocationChart extends StatelessWidget {
                   color: palette[i % palette.length],
                 ),
                 Text(
-                  '${entries[i].key.replaceAll('_', ' ')} · ${formatInr(entries[i].value)} · ${formatPercentage(entries[i].value, total)}',
+                  '${context.tr(entries[i].key.replaceAll('_', ' '))} · ${formatInr(entries[i].value)} · ${formatPercentage(entries[i].value, total)}',
                 ),
               ],
             ),
           ),
-        const Text(
-          'Positive asset balances. Overdrafts remain included in net worth.',
+        Text(
+          context.tr(
+            'Positive asset balances. Overdrafts remain included in net worth.',
+          ),
         ),
       ],
     );

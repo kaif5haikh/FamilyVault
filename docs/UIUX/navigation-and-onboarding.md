@@ -20,13 +20,15 @@ Reports holds the charts and period totals. The controls stay large even
 when the screen needs to scroll at high text sizes.
 
 The first welcome page offers **Start using FamilyVault**, **Take a short
-tour** and **Show me how**. The tour has four steps for money, documents,
+tour**, **Show me how** and a language picker for English and Hindi. The
+tour has four steps for money, documents,
 family sign-in and safe copies. The person can go back, skip or finish and
 then choose how to open their records. Finishing, skipping or starting
 directly remembers that choice on the phone. Existing protected records
 continue to open through device verification. **More → Take the tour
 again** opens it manually.
 
-The tour flag and language hint use existing device-only secure settings.
+The tour flag and language choice use existing device-only secure settings.
+Use **More → Settings → Language** to switch at any time.
 These settings do not contain family records or access credentials.
 [Guided help](guided-help.md).

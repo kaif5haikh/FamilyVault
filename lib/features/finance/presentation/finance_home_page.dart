@@ -128,7 +128,13 @@ class _FinanceHomePageState extends ConsumerState<FinanceHomePage> {
                 child: ExpansionTile(
                   leading: const Icon(Icons.home_work_outlined),
                   title: Text(strings.text('familyValue')),
-                  subtitle: Text(formatInr(owned - owed, compact: true)),
+                  subtitle: Text(
+                    formatInr(
+                      owned - owed,
+                      compact: true,
+                      hindi: strings.isHindi,
+                    ),
+                  ),
                   childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                   children: [
                     Text(strings.text('familyValueHelp')),
@@ -236,7 +242,7 @@ class _MoneySummary extends StatelessWidget {
               )
             else ...[
               Text(
-                formatInr(available, compact: true),
+                formatInr(available, compact: true, hindi: strings.isHindi),
                 style: theme.textTheme.displaySmall?.copyWith(
                   color: textColor,
                   fontWeight: FontWeight.w700,
@@ -285,7 +291,11 @@ class _SummaryLine extends StatelessWidget {
       children: [
         Text(title, style: theme.textTheme.bodyMedium?.copyWith(color: color)),
         Text(
-          formatInr(amount, compact: true),
+          formatInr(
+            amount,
+            compact: true,
+            hindi: VaultStrings.of(context).isHindi,
+          ),
           style: theme.textTheme.titleMedium?.copyWith(color: color),
         ),
       ],

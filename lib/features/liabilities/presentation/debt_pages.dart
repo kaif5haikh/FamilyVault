@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/localization/vault_strings.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/finance/fixed_decimal.dart';
@@ -39,7 +40,7 @@ class DebtView extends ConsumerWidget {
             OutlinedButton.icon(
               onPressed: () => ref.invalidate(_debtsProvider),
               icon: const Icon(Icons.refresh),
-              label: const Text('Try again'),
+              label: Text(context.tr('Try again')),
             ),
           ],
         ),
@@ -89,11 +90,11 @@ class _DebtsPageState extends State<DebtsPage> {
       return VaultContent(
         children: [
           SectionHeading(
-            'Loans and money lent',
+            context.tr('Loans and money lent'),
             action: FilledButton.icon(
               onPressed: () => context.push('/loan/new'),
               icon: const Icon(Icons.add),
-              label: const Text('Add loan'),
+              label: Text(context.tr('Add loan')),
             ),
           ),
           Card.filled(
@@ -103,7 +104,7 @@ class _DebtsPageState extends State<DebtsPage> {
                 children: [
                   ListTile(
                     leading: const Icon(Icons.north_east),
-                    title: const Text('Loan amounts we still owe'),
+                    title: Text(context.tr('Loan amounts we still owe')),
                     subtitle: Text(
                       formatInr(borrowed),
                       style: Theme.of(context).textTheme.titleMedium,
@@ -111,7 +112,7 @@ class _DebtsPageState extends State<DebtsPage> {
                   ),
                   ListTile(
                     leading: const Icon(Icons.south_west),
-                    title: const Text('Loan amounts owed to us'),
+                    title: Text(context.tr('Loan amounts owed to us')),
                     subtitle: Text(
                       formatInr(lent),
                       style: Theme.of(context).textTheme.titleMedium,
@@ -127,7 +128,9 @@ class _DebtsPageState extends State<DebtsPage> {
             children: [
               for (final archived in [false, true])
                 ChoiceChip(
-                  label: Text(archived ? 'Archived' : 'Current'),
+                  label: Text(
+                    archived ? context.tr('Archived') : context.tr('Current'),
+                  ),
                   selected: _archived == archived,
                   onSelected: (_) => setState(() => _archived = archived),
                 ),
@@ -137,10 +140,16 @@ class _DebtsPageState extends State<DebtsPage> {
           if (rows.isEmpty)
             EmptyNotice(
               icon: Icons.request_quote_outlined,
-              title: _archived ? 'No archived loans' : 'No loans recorded yet',
+              title: _archived
+                  ? context.tr('No archived loans')
+                  : context.tr('No loans recorded yet'),
               message: _archived
-                  ? 'Settled loans can be archived from their details.'
-                  : 'Record a bank loan, money you borrowed or money you lent to someone.',
+                  ? context.tr(
+                      'Settled loans can be archived from their details.',
+                    )
+                  : context.tr(
+                      'Record a bank loan, money you borrowed or money you lent to someone.',
+                    ),
             ),
           for (final row in rows)
             Card.outlined(
@@ -152,7 +161,11 @@ class _DebtsPageState extends State<DebtsPage> {
                 ),
                 title: Text(row.name),
                 subtitle: Text(
-                  '${debtDirection(row.direction)} · ${row.counterparty}\n${formatInr(amount(row))} left to pay',
+                  context.tr("{kind} · {person}\n{amount} left to pay", {
+                    'kind': context.tr(debtDirection(row.direction)),
+                    'person': row.counterparty,
+                    'amount': formatInr(amount(row)),
+                  }),
                 ),
                 isThreeLine: true,
                 trailing: const Icon(Icons.chevron_right),
@@ -201,10 +214,12 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
   Future<void> _reverse(DebtContract loan, DebtRepayment repayment) async {
     final reason = await showDialog<String>(
       context: context,
-      builder: (_) => const ReasonDialog(
-        title: 'Reverse this repayment?',
-        message: 'The outstanding balance will reflect the reversal. The original repayment stays in history.',
-        confirmLabel: 'Undo payment',
+      builder: (_) => ReasonDialog(
+        title: context.tr('Reverse this repayment?'),
+        message: context.tr(
+          'The outstanding balance will reflect the reversal. The original repayment stays in history.',
+        ),
+        confirmLabel: context.tr('Undo payment'),
       ),
     );
     if (reason == null || !mounted) {
@@ -218,14 +233,16 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Loan details')),
+    appBar: AppBar(title: Text(context.tr('Loan details'))),
     body: DebtView(
       builder: (debts, finance) {
         final loan = debts.contracts
             .where((row) => row.id == widget.id)
             .firstOrNull;
         if (loan == null) {
-          return const VaultContent(children: [Text('Loan unavailable.')]);
+          return VaultContent(
+            children: [Text(context.tr('Loan unavailable.'))],
+          );
         }
         final archived = loan.deletedAtUs != null;
         final outstanding = DebtRepository.outstanding(
@@ -255,8 +272,14 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
               title: loan.name,
               value: formatInr(outstanding),
               icon: Icons.request_quote_outlined,
-              detail:
-                  '${debtDirection(loan.direction)} · ${loan.counterparty}\nLoan amount still left${archived ? ' · Archived' : ''}',
+              detail: context.tr(
+                "{kind} · {person}\nLoan amount still left{status}",
+                {
+                  'kind': context.tr(debtDirection(loan.direction)),
+                  'person': loan.counterparty,
+                  'status': archived ? context.tr(' · Archived') : '',
+                },
+              ),
               emphasis: true,
             ),
             const SizedBox(height: 20),
@@ -268,24 +291,24 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
                   FilledButton.icon(
                     onPressed: () => context.push('/loan/${loan.id}/repay'),
                     icon: const Icon(Icons.add),
-                    label: const Text('Add a payment'),
+                    label: Text(context.tr('Add a payment')),
                   ),
                   OutlinedButton.icon(
                     onPressed: () => context.push('/loan/${loan.id}/edit'),
                     icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Edit loan details'),
+                    label: Text(context.tr('Edit loan details')),
                   ),
                   OutlinedButton.icon(
                     onPressed: () => context.push('/loan/${loan.id}/principal'),
                     icon: const Icon(Icons.history),
-                    label: const Text('Correct the original amount'),
+                    label: Text(context.tr('Correct the original amount')),
                   ),
                 ],
                 if (method != InterestMethod.unrecorded)
                   OutlinedButton.icon(
                     onPressed: () => context.push('/loan/${loan.id}/estimate'),
                     icon: const Icon(Icons.calculate_outlined),
-                    label: const Text('Interest estimate'),
+                    label: Text(context.tr('Interest estimate')),
                   ),
                 if (outstanding == BigInt.zero || archived)
                   OutlinedButton.icon(
@@ -304,54 +327,94 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
                           : Icons.archive_outlined,
                     ),
                     label: Text(
-                      archived ? 'Restore loan' : 'Archive settled loan',
+                      archived
+                          ? context.tr('Restore loan')
+                          : context.tr('Archive settled loan'),
                     ),
                   ),
               ],
             ),
             if (_error != null) FailureNotice(_error!),
             const SizedBox(height: 24),
-            const SectionHeading('About this loan'),
+            SectionHeading(context.tr('About this loan')),
             Text(
-              'Original loan amount: ${formatInr(BigInt.from(loan.principalMinor))}\nStarted: ${loan.startedOn}',
+              context.tr("Original loan amount: {amount}\nStarted: {date}", {
+                'amount': formatInr(BigInt.from(loan.principalMinor)),
+                'date': loan.startedOn,
+              }),
             ),
-            Text('How interest is worked out: ${interestLabel(method)}'),
+            Text(
+              context.tr("How interest is worked out: {method}", {
+                'method': context.tr(interestLabel(method)),
+              }),
+            ),
             if (loan.annualRateBps != null)
               Text(
-                'Annual rate: ${FixedDecimal.format(loan.annualRateBps!, scale: 2)}%',
+                context.tr("Annual rate: {rate}%", {
+                  'rate': FixedDecimal.format(loan.annualRateBps!, scale: 2),
+                }),
               ),
             if (loan.termMonths != null)
-              Text('Term: ${loan.termMonths} months'),
+              Text(
+                context.tr("Term: {months} months", {
+                  'months': loan.termMonths,
+                }),
+              ),
             if (loan.emiMinor != null)
               Text(
-                'Agreed monthly payment: ${formatInr(BigInt.from(loan.emiMinor!))}',
+                context.tr("Agreed monthly payment: {amount}", {
+                  'amount': formatInr(BigInt.from(loan.emiMinor!)),
+                }),
               ),
             if (loan.firstDueOn != null)
-              Text('First instalment due: ${loan.firstDueOn}'),
-            if (loan.dueOn != null) Text('Final due date: ${loan.dueOn}'),
+              Text(
+                context.tr("First instalment due: {date}", {
+                  'date': loan.firstDueOn,
+                }),
+              ),
+            if (loan.dueOn != null)
+              Text(context.tr("Final due date: {date}", {'date': loan.dueOn})),
             if (loan.notes.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Text(loan.notes),
               ),
             const SizedBox(height: 28),
-            const SectionHeading('Payment history'),
-            Text('Paid toward the loan: ${formatInr(totalTowardLoan)}'),
+            SectionHeading(context.tr('Payment history')),
             Text(
-              'Recorded ${loan.direction == 'lent' ? 'interest received' : 'interest paid'}: ${formatInr(totalInterest)}',
+              context.tr("Paid toward the loan: {amount}", {
+                'amount': formatInr(totalTowardLoan),
+              }),
+            ),
+            Text(
+              context.tr("Recorded {interest}: {amount}", {
+                'interest': loan.direction == 'lent'
+                    ? context.tr('interest received')
+                    : context.tr('interest paid'),
+                'amount': formatInr(totalInterest),
+              }),
             ),
             const SizedBox(height: 12),
-            if (payments.isEmpty) const Text('No payments recorded yet.'),
+            if (payments.isEmpty) Text(context.tr('No payments recorded yet.')),
             for (final p in payments)
               Card.outlined(
                 child: Column(
                   children: [
                     ListTile(
                       title: Text(
-                        '${p.paidOn}${journals[p.journalId]?.deletedAtUs != null ? ' · Reversed' : ''}',
+                        '${p.paidOn}${journals[p.journalId]?.deletedAtUs != null ? context.tr(' · Reversed') : ''}',
                       ),
                       subtitle: Text(
-                        'Toward the loan ${formatInr(BigInt.from(p.principalMinor))}\nInterest ${formatInr(BigInt.from(p.interestMinor))}${p.notes.isEmpty ? '' : '\n${p.notes}'}',
+                        context.tr(
+                          "Toward the loan {principal}\nInterest {interest}{note}",
+                          {
+                            'principal': formatInr(
+                              BigInt.from(p.principalMinor),
+                            ),
+                            'interest': formatInr(BigInt.from(p.interestMinor)),
+                            'note': p.notes.isEmpty ? '' : '\n${p.notes}',
+                          },
+                        ),
                       ),
                       onTap: () => context.push('/transaction/${p.journalId}'),
                       trailing: const Icon(Icons.chevron_right),
@@ -368,11 +431,11 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
                                   : () => context.push(
                                       '/loan/${loan.id}/repay/${p.id}',
                                     ),
-                              child: const Text('Correct payment'),
+                              child: Text(context.tr('Correct payment')),
                             ),
                             TextButton(
                               onPressed: _busy ? null : () => _reverse(loan, p),
-                              child: const Text('Undo payment'),
+                              child: Text(context.tr('Undo payment')),
                             ),
                           ],
                         ),
@@ -400,17 +463,19 @@ class _DebtEstimatePageState extends State<DebtEstimatePage> {
   String? _through;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Interest estimate')),
+    appBar: AppBar(title: Text(context.tr('Interest estimate'))),
     body: DebtView(
       builder: (debts, _) {
         final loan = debts.contracts
             .where((row) => row.id == widget.id)
             .firstOrNull;
         if (loan == null || loan.annualRateBps == null) {
-          return const VaultContent(
+          return VaultContent(
             children: [
               Text(
-                'Add an annual rate and interest method to estimate interest.',
+                context.tr(
+                  'Add an annual rate and interest method to estimate interest.',
+                ),
               ),
             ],
           );
@@ -431,7 +496,7 @@ class _DebtEstimatePageState extends State<DebtEstimatePage> {
               through: DateTime.parse(through),
             );
             estimate = MetricCard(
-              title: 'Estimated interest',
+              title: context.tr('Estimated interest'),
               value: formatInr(BigInt.from(value.minor)),
               icon: Icons.calculate_outlined,
             );
@@ -440,12 +505,14 @@ class _DebtEstimatePageState extends State<DebtEstimatePage> {
           }
           return VaultContent(
             children: [
-              const Text(
-                'Estimate on the opening principal over the chosen dates. This calculation assumes the principal stayed constant.',
+              Text(
+                context.tr(
+                  'Estimate on the opening principal over the chosen dates. This calculation assumes the principal stayed constant.',
+                ),
               ),
               const SizedBox(height: 20),
               RecordDate(
-                'Estimate through',
+                context.tr('Estimate through'),
                 through,
                 (v) => setState(() => _through = v),
               ),
@@ -454,10 +521,12 @@ class _DebtEstimatePageState extends State<DebtEstimatePage> {
           );
         }
         if (loan.termMonths == null || loan.firstDueOn == null) {
-          return const VaultContent(
+          return VaultContent(
             children: [
               Text(
-                'Add the loan term and first due date to estimate monthly instalments.',
+                context.tr(
+                  'Add the loan term and first due date to estimate monthly instalments.',
+                ),
               ),
             ],
           );
@@ -482,11 +551,13 @@ class _DebtEstimatePageState extends State<DebtEstimatePage> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: MetricCard(
-                    title: 'Estimated total interest',
+                    title: context.tr('Estimated total interest'),
                     value: formatInr(interest),
                     icon: Icons.calculate_outlined,
-                    detail:
-                        '${interestLabel(method)}. Projected from opening terms. Actual payments are recorded separately.',
+                    detail: context.tr(
+                      "{method}. Projected from opening terms. Actual payments are recorded separately.",
+                      {'method': context.tr(interestLabel(method))},
+                    ),
                   ),
                 );
               }
@@ -497,7 +568,14 @@ class _DebtEstimatePageState extends State<DebtEstimatePage> {
                     '${LedgerRepository.dateOnly(row.dueOn)} · ${formatInr(BigInt.from(row.payment.minor))}',
                   ),
                   subtitle: Text(
-                    'Toward the loan ${formatInr(BigInt.from(row.principalMinor))}\nInterest ${formatInr(BigInt.from(row.interestMinor))}\nRemaining ${formatInr(BigInt.from(row.balanceMinor))}',
+                    context.tr(
+                      "Toward the loan {principal}\nInterest {interest}\nRemaining {remaining}",
+                      {
+                        'principal': formatInr(BigInt.from(row.principalMinor)),
+                        'interest': formatInr(BigInt.from(row.interestMinor)),
+                        'remaining': formatInr(BigInt.from(row.balanceMinor)),
+                      },
+                    ),
                   ),
                 ),
               );

@@ -32,6 +32,7 @@ abstract final class VaultTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colors,
+      fontFamilyFallback: const ['Noto Sans Devanagari', 'Kohinoor Devanagari'],
       scaffoldBackgroundColor: colors.surface,
       visualDensity: VisualDensity.standard,
       textTheme: const TextTheme(
@@ -46,6 +47,7 @@ abstract final class VaultTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
+        errorMaxLines: 4,
         fillColor: colors.surfaceContainerLowest,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,

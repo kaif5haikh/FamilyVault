@@ -33,9 +33,14 @@ validation require macOS with Xcode. [Physical Android validation](testing/andro
 
 Android build 4 adds the five-tab layout, a shorter Home, separate received
 and spent forms, clearer ownership and debt screens, an optional tour and
-offline Show me how. Marathi is available for guidance and common tasks.
-The host regression, local provider and signing checks passed. The signed
-build 4 handset check is pending a Moto G34 USB connection.
+offline Show me how. The exact signed APK was updated in place on the
+Moto G34. The app reopened a known synthetic transaction after an offline
+restart and remembered the selected language.
 [Family usability results](testing/android-physical-device-validation.md#2026-11-20-family-usability-update).
+
+Android build 5 uses English by default and offers conversational Hindi.
+The welcome screen and Settings have the same language picker. Hindi covers
+the tour, help, money, documents, family management and safe copies.
+[Hindi copy audit](UIUX/hindi-copy-audit.md).
 
 [Installation](installation.md). [User guide](user-guide.md). [Migration guide](migration-guide.md). [Recovery](backup-recovery.md).

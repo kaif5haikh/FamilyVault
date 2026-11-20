@@ -1,0 +1,3 @@
+"NSFaceIDUsageDescription" = "अपने FamilyVault रिकॉर्ड खोलने के लिए Face ID से पहचान की जाँच करें।";
+"NSCameraUsageDescription" = "परिवार के दस्तावेज़ में जोड़ने के लिए कैमरे से तस्वीर लें।";
+"NSPhotoLibraryUsageDescription" = "परिवार के दस्तावेज़ में जोड़ने के लिए तस्वीर चुनें।";

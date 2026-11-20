@@ -1,7 +1,7 @@
 import 'money.dart';
 
 /// Reports can exceed one posting's int64 range; never truncate them to int.
-String formatInr(BigInt paise, {bool compact = false}) {
+String formatInr(BigInt paise, {bool compact = false, bool hindi = false}) {
   final digits = paise.abs().toString().padLeft(3, '0');
   final sign = paise.isNegative ? '-' : '';
   if (compact && paise.abs() >= BigInt.from(10000000)) {
@@ -14,7 +14,8 @@ String formatInr(BigInt paise, {bool compact = false}) {
         .toString()
         .padLeft(2, '0')
         .replaceFirst(RegExp(r'0+$'), '');
-    return '$sign₹$whole${fraction.isEmpty ? '' : '.$fraction'} ${crore ? 'crore' : 'lakh'}';
+    final unit = crore ? (hindi ? 'करोड़' : 'crore') : (hindi ? 'लाख' : 'lakh');
+    return '$sign₹$whole${fraction.isEmpty ? '' : '.$fraction'} $unit';
   }
   return '$sign₹${Money.indianGrouping(digits.substring(0, digits.length - 2))}.${digits.substring(digits.length - 2)}';
 }
