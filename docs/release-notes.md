@@ -36,11 +36,12 @@ and spent forms, clearer ownership and debt screens, an optional tour and
 offline Show me how. The exact signed APK was updated in place on the
 Moto G34. The app reopened a known synthetic transaction after an offline
 restart and remembered the selected language.
-[Family usability results](testing/android-physical-device-validation.md#2026-11-20-family-usability-update).
+[Family usability results](testing/android-physical-device-validation.md#2026-11-20-usb-retest-and-language-correction).
 
 Android build 5 uses English by default and offers conversational Hindi.
 The welcome screen and Settings have the same language picker. Hindi covers
-the tour, help, money, documents, family management and safe copies.
-[Hindi copy audit](UIUX/hindi-copy-audit.md).
+the tour, help, money, documents, family management and safe copies. The
+signed files passed release checks and await the handset retest.
+[Hindi copy audit](UIUX/hindi-copy-audit.md). [Build 5 details](testing/android-physical-device-validation.md#signed-build-5-with-english-and-hindi).
 
 [Installation](installation.md). [User guide](user-guide.md). [Migration guide](migration-guide.md). [Recovery](backup-recovery.md).

@@ -5,6 +5,27 @@ Historical baseline evidence: 9 Flutter host tests,
 establish working auth, finance, sync, documents, backups or production readiness.
 Record exact command, date, outcome and material platform/provider limits below.
 
+## 2026-11-20 English and Hindi
+
+- `bash tool/check.sh` passed analysis, formatting, generation, 139 Flutter
+  tests, five Deno tests, migrations, SQL checks and the 184-package
+  advisory audit.
+- `python3 -B tool/check_supabase.py --mobile --storage` passed both opt-in
+  Flutter tests with local Auth, Data API and private Storage. The session,
+  revision, accounting and authorization assertions passed.
+- The new language checks cover English default, Hindi selection and
+  relaunch, fallback from a stored Marathi choice, Hindi search spellings,
+  translated forms and errors at 320 points and 200% text, untouched
+  family-entered labels, localized lakh/crore units and reminder language.
+- The exact build 4 APK was updated in place on the Moto G34. Device
+  UI verified the English and Hindi navigation, tour, help, and the known
+  29-paise synthetic expense after a restart with no network.
+  [Handset report](../testing/android-physical-device-validation.md#2026-11-20-usb-retest-and-language-correction).
+- `bash tool/build_android_release.sh` produced signed build 5. The APK and
+  bundle match the original signer and passed independent checks. Android
+  build 5 remains pending handset validation because the Moto G34 is absent
+  from USB and ADB. The iOS permission copy passed static resource checks.
+
 ## 2026-11-20 Family usability regression
 
 - `bash tool/check.sh` passed formatting, generation and analysis, 137

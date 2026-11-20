@@ -337,3 +337,79 @@ disposable Pods, test cluster paths and task-named system temporary paths
 were gone. The Moto G34 received no new fixture files. The original signed
 binaries, final release files and local evidence are retained.
 See `manifest.txt` and `evidence/cleanup.txt`.
+
+## 2026-11-20 USB retest and language correction
+
+ADB reported `device` for the Motorola moto g34 5G over wired USB.
+It ran Android 15, SDK 35, arm64-v8a and a 720 × 1600 display at 280 dpi.
+The phone had build 3 of `app.familyvault.familyvault` installed.
+
+The preserved build 4 APK had SHA-256
+`057eeb5764150f58c6b15449182e84afaef4726d312b2745d5ef79c5ba8c5e0c`.
+`apksigner` verified it against the existing development certificate,
+SHA-256 `1e1f07c0060bc0206c4ee8d9984646ecd08a2f8f286fdc1208acaf697973be86`.
+`adb install --streaming -r --user 0` succeeded. Android reported
+version name 0.1.0 and version code 4, and the installed base APK's digest
+matched the preserved file. `am start -W` recorded a 667 ms cold launch
+to the locked activity. The owner then approved the normal Android unlock.
+
+| Exact signed build 4 check | Moto G34 result |
+| --- | --- |
+| Navigation | Opened Home, Money, Documents, Family and More. The Money tab exposed accounts, ownership and debt. |
+| Money | Opened the received, spent and move forms. Reused the known synthetic vault. |
+| Documents | Reached the file and camera choices in Documents. |
+| Family | Opened the family members list and matched the known synthetic member. |
+| Tour | Opened the tour from More, advanced a step and skipped back. First installation was covered by the host fixture because the handset kept its existing vault. |
+| Guided help | Searched for bank and followed the topic to the preselected bank account form. |
+| Language | Started in English, selected Hindi in Settings and verified the change in navigation and Documents. Some build 4 screen labels still used English. |
+| Offline restart | Android reported airplane mode and no active default network. The app restarted cold in 1,040 ms, the owner unlocked it, and it displayed the known 29-paise synthetic expense. The selected Hindi preference also survived. The original radio settings were restored. |
+| Capture protection | Inspected the lock, money form, document choices and tour captures. Android blacked out the app area. Interface assertions came from the accessible controls. |
+
+Local receipts and private evidence are in
+`.local/qa/moto-g34-language-20261120/evidence/`. The exact build 4 APK and
+App Bundle are retained in `.local/qa/moto-g34-language-20261120/signed-0.1.0-4/`.
+The earlier handset write, camera and backup evidence remains in the build 3
+section. The build 4 retest left the existing records in place.
+
+### Signed build 5 with English and Hindi
+
+Build 5 contains the full Hindi copy and the persisted language picker on
+the welcome screen and in Settings. Host tests checked both languages,
+returning users, Hindi help search, document and money actions, and a
+320-point form at 200% text. The synthetic captures `hindi-tour.png` and
+`hindi-money-320.png` were reviewed for Hindi rendering. The handset
+captures `build4-locked.png`, `build4-form.png`, `build4-document-actions.png`
+and `build4-tour.png` show the Android capture protection. All six files
+are retained in the local evidence directory above.
+
+`bash tool/build_android_release.sh` produced the APK and App Bundle.
+`apksigner`, `zipalign`, `jarsigner` and bundletool verified both artifacts.
+The certificates match the original fingerprint above. The APK reports
+`app.familyvault.familyvault`, version `0.1.0`, code 5, minimum API 24,
+target API 36 and arm64-v8a, armeabi-v7a and x86_64 libraries. App backup,
+cleartext traffic and debugging remain disabled.
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `build/app/outputs/flutter-apk/app-release.apk` | 95,063,873 | `294465225e08fd72e2dfa863e7bb9d336e31505bb40eef770626cfc1e44bbe5b` |
+| `build/app/outputs/bundle/release/app-release.aab` | 83,917,349 | `625db6581ca42a78b2a6cdee35530e498d58cf336bcbeffc10e168ee7ce058cf` |
+
+After the offline build 4 test the Moto G34 stopped responding to ADB.
+Reconnection and an isolated host ADB instance failed to discover it. At
+16:31 IST on resumption, `lsusb -d 22b8:` and `adb devices -l` showed no
+connected Motorola. Build 4 is the last verified installed version. Its
+test language was Hindi. Installing and exercising signed build 5 on the
+Moto G34 requires the wired device to reappear. The corrected iOS copy
+passed a static resource check. iOS build and interface checks require
+Xcode and an iOS device or simulator.
+
+### Language-test cleanup
+
+Removed the recorded project scratch directory and seven byte-identical
+copies of earlier host captures. Verified that the temporary Supabase and
+vault paths, task ADB listener and task-named entries in `/tmp` and
+`/var/tmp` were absent. The existing host ADB instance and its log were
+left in place. Phone queries and screenshots streamed to the host. The
+test restored the original radio settings and kept existing app data.
+See `manifest.txt` and `evidence/cleanup.txt` beside the preserved build 4
+files.

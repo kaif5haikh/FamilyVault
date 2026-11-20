@@ -4,15 +4,16 @@ The signed Android 0.1.0 development release was physically exercised on a
 Motorola Moto G34 5G. See the device report for the build-by-build results.
 The implementation baseline was `b9a2705`.
 
-The usability update adds a five-tab workspace, a compact Home screen,
-direct received, spent and move forms, an optional remembered tour and 16
-offline help topics. Shared navigation, guidance and daily money labels
-include Marathi. Detailed screens with untranslated labels use English.
-The encrypted Drift workflows and local provider tests passed.
-The signed 0.1.0+4 APK and App Bundle verify under the original development
-certificate. The Moto G34 physical results cover build 3. Build 4 remains
-pending a USB-connected handset for physical validation.
+Five tabs give access to Home, Money, Documents, Family and More. The app
+has direct received, spent and move forms, an optional remembered tour and
+16 offline help topics. English is the default and Hindi is available in
+Devanagari. The language picker appears during first use and in Settings.
+The exact signed 0.1.0+4 APK was verified on the Moto G34, including an
+offline restart with a known synthetic record. Signed build 5 completes the
+Hindi copy and passed host tests. Its physical retest is pending because
+the phone stopped appearing in USB discovery after the offline test.
 [Usability checklist](../UIUX/implementation-checklist.md).
+[Hindi copy audit](../UIUX/hindi-copy-audit.md).
 
 | Area | Actual baseline | Current result |
 | --- | --- | --- |
@@ -22,8 +23,8 @@ pending a USB-connected handset for physical validation.
 | Auth/backend/sync | Secure storage adapters and proposal SQL | Approved devices sync ordinary finance, budgets, statement checks, holdings, loans, business cash journals, stock and wages. Local Supabase tested exact profit after cross-device corrections and worker restoration. Hosted validation requires a configured deployment. |
 | Documents | Design only | The signed Android app imported, previewed and exported a synthetic PDF. On the same handset, an isolated app verified streamed PNG and JPEG intake with zero additional picker cache copies, versions and archive restoration. Local Supabase verified encrypted delivery. Full camera capture and scheduled notification delivery remain open. |
 | Backup/Drive | Design only | Android Files export and clean application restore passed on the Moto G34 using isolated local vaults. The host Drive fixture covered transfer recovery, verified receipts and restore. Live Google consent and transfer require OAuth configuration. |
-| Tests | 9 Flutter host tests and design probes | 130 Flutter tests and five Deno gateway tests passed. Two additional Dart provider tests passed with local Auth, PostgreSQL and Storage. Physical tests used Android 15 on the Moto G34 5G. |
-| Release | Prior Android debug APK | Signed Android 0.1.0+3 APK and App Bundle verified with the original local development certificate. The handset's installed APK matched the rebuilt digest. The included iOS project needs macOS and Xcode for validation. |
+| Tests | 9 Flutter host tests and design probes | 139 Flutter and five Deno tests passed. Both additional Flutter tests passed with local Auth, PostgreSQL and Storage. Physical tests used Android 15 on the Moto G34 5G. |
+| Release | Prior Android debug APK | The Moto G34's installed APK matched signed build 4. Build 5 APK and App Bundle verify against the original local development certificate. Build 5 needs a connected Android device for its physical retest. iOS validation needs macOS and Xcode. |
 
 Hosted Supabase and Google OAuth require approved credentials and setup.
 Physical testing verified installation, device unlock, local ledger and offline

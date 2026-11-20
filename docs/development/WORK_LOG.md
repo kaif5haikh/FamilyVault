@@ -581,3 +581,42 @@ separately. Continue with the business UI and executable backend policies.
   listener. Verified there were no task-named system temporary paths.
   Next device action is an in-place install of the verified build 4 APK on
   the Moto G34 without clearing its existing app data.
+
+## 2026-11-20 English and Hindi correction
+
+- The Moto G34 reappeared over USB as an authorized device. Matched the
+  original signer and preserved both exact build 4 files before installing
+  the APK in place. Android reported version code 4 and matching base APK
+  bytes. Exercised the five tabs, finance forms, document choices, Family,
+  the repeat tour and the bank help route.
+- Changed the phone's test app to Hindi. Restarted with no Android default
+  network and reopened the earlier synthetic 29-paise expense after the
+  owner approved the normal device prompt. Reconfirmed the language and
+  restored the original radio settings. The captures showed Android's app
+  protection. The physical report records each result.
+- Changed the shipped choices to English and conversational Hindi. Verified
+  the two original Marathi catalogs byte for byte. The audit pairs 151
+  primary labels, 56 tour and help labels and 816 feature or service
+  messages with Hindi. The code applies translations at the display boundary.
+  The welcome and Settings selectors share the same persisted preference.
+- `bash tool/check.sh` passed analysis, formatting, generated code, 139
+  Flutter tests, five Deno tests, both SQL checks and the 184-package
+  advisory lookup. The joined `--mobile --storage` provider run passed
+  both extra Flutter tests. The new host fixtures verified translated forms,
+  help and reminders, and checked a 320-point layout at 200% text.
+- The signed build 5 APK and App Bundle passed independent signature,
+  bundle and APK alignment checks using the existing certificate. Rechecked
+  both preserved build 4 digests. Committed the language implementation as
+  `911a69d`. Private captures, receipts and artifacts stay outside Git.
+- The Moto G34 stopped responding to ADB after the offline restart and
+  radio-state restoration. A task-only ADB listener and a transport retry
+  did not recover it. The 16:31 IST resumption found neither the Motorola
+  USB device nor an authorized ADB transport. Next handset action is to
+  inspect `adb devices -l`, install the signed build 5 APK in place with
+  `adb install --streaming -r --user 0`, verify the installed version and
+  digest, then repeat language, navigation and restart checks. Keep existing
+  app data and use the phone's normal unlock.
+- Removed the documented scratch directory and byte-identical extra host
+  captures. Verified that task ADB, temporary provider services and the
+  task-named system temporary paths were absent. Kept both signed releases
+  and required evidence. No files were created on the handset for the test.
