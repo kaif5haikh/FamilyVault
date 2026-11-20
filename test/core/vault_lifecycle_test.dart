@@ -78,6 +78,34 @@ void main() {
     expect(lifecycle.status.phase, VaultPhase.locked);
     expect(lifecycle.status.session, isNull);
   });
+  test(
+    'locking with cancelled and active queries preserves the saved records',
+    () async {
+      await create();
+      final session = lifecycle.status.session!;
+      final cash = await session.ledger.createAccount(
+        name: 'Synthetic cash',
+        kind: AccountKind.asset,
+        subtype: 'cash',
+        openingBalance: Money.fromMinor(54321),
+      );
+      final rows = Completer<void>();
+      final watch = session.ledger.watch().listen((_) {
+        if (!rows.isCompleted) rows.complete();
+      });
+      await rows.future;
+      await session.db.select(session.db.familyMembers).watch().first;
+      await lifecycle.lock();
+      await watch.cancel();
+      expect(session.closed, isTrue);
+      expect(session.keys.destroyed, isTrue);
+      expect(lifecycle.status.phase, VaultPhase.locked);
+      expect(lifecycle.status.session, isNull);
+      await lifecycle.unlock();
+      final snapshot = await lifecycle.status.session!.ledger.snapshot();
+      expect(snapshot.balances()[cash.id], BigInt.from(54321));
+    },
+  );
   test('storage failure never falls back to unprotected keys or creates a database', () async {
     store.unavailable = true;
     await create();

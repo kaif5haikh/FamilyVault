@@ -66,7 +66,14 @@ final class VaultSession {
       try {
         await _sync?.close();
       } finally {
-        await db.close();
+        try {
+          await db.close();
+        } on ConcurrentModificationError {
+          // A pending Drift query-stream removal can run while close awaits
+          // its listeners. The session is already closed to new requests.
+          await Future<void>.delayed(Duration.zero);
+          await db.close();
+        }
       }
     } finally {
       keys.destroy();

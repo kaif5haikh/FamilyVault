@@ -529,8 +529,7 @@ final class DocumentRepository {
   Stream<List<VaultDocument>> watchLinked({
     String? journalId,
     String? assetId,
-  }) async* {
-    await _authorize();
+  }) => Stream<void>.fromFuture(_authorize()).asyncExpand((_) {
     if ((journalId == null) == (assetId == null)) throw _missing;
     final documents = _db.vaultDocuments, links = _db.vaultDocumentLinks;
     final query =
@@ -548,11 +547,11 @@ final class DocumentRepository {
                   ? links.journalId.equals(journalId)
                   : links.assetId.equals(assetId!)),
         );
-    await for (final rows in query.watch()) {
+    return query.watch().map((rows) {
       _checkOpen();
-      yield [for (final row in rows) row.readTable(documents)];
-    }
-  }
+      return [for (final row in rows) row.readTable(documents)];
+    });
+  });
 
   Future<String> link(
     String documentId, {
