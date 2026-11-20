@@ -24,3 +24,12 @@
 - Inspect indexed content, run the repository policy check and redacted Gitleaks
   before commits. Preserve the designated SSH origin and verify the owner-approved visibility.
   The owner requested public repository visibility on 2026-11-18.
+- Keep daily actions and important feedback in everyday language. Use the shared
+  locale catalog for reusable copy, test at 320 logical pixels and 200% text,
+  and preserve all existing money, data and access rules in UI changes.
+- Before creating temporary files or starting fixture services, record their
+  exact paths and owners in a project-local manifest. Prefer a unique ignored
+  directory under `.cache/tmp/`. Keep Android fixtures in an app-owned test
+  sandbox. Clean up task-owned files and processes on success and failure,
+  verify their removal, and retain requested artifacts and sanitized evidence.
+  Leave existing files, backups, Android app data and unrelated services alone.
