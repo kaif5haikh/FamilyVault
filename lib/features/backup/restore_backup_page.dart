@@ -132,13 +132,15 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
     final state = ref.watch(vaultProvider);
     final verified = _verified;
     return VaultPage(
-      title: 'Restore backup',
+      title: 'Bring back saved data',
       children: [
         if (state.hasVault && !_installing) ...[
-          const Text('A vault is already saved on this device.'),
+          const Text(
+            'This phone already has FamilyVault records. Open those records to keep using them.',
+          ),
           TextButton(
             onPressed: () => context.go('/access'),
-            child: const Text('Open your vault'),
+            child: const Text('Open your records'),
           ),
         ] else ...[
           if (verified == null) ...[
@@ -147,8 +149,8 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
               icon: const Icon(Icons.folder_open_outlined),
               label: Text(
                 _selected == null
-                    ? 'Choose a backup file'
-                    : 'Choose a different backup',
+                    ? 'Choose your safe-copy file'
+                    : 'Choose a different file',
               ),
             ),
             const SizedBox(height: 16),
@@ -157,7 +159,7 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
               const SizedBox(height: 16),
               if (_drive != null)
                 Text(
-                  'Selected Drive backup from ${MaterialLocalizations.of(context).formatMediumDate(_drive!.file.created.toLocal())}',
+                  'Selected Google Drive copy from ${MaterialLocalizations.of(context).formatMediumDate(_drive!.file.created.toLocal())}',
                 ),
               TextField(
                 controller: _key,
@@ -171,12 +173,12 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: _working ? null : _verify,
-                child: const Text('Verify backup'),
+                child: const Text('Check this copy'),
               ),
             ],
           ] else ...[
             const Text(
-              'Backup verified. Restore a local copy of the records on this device.',
+              'Your safe copy is ready. Bring the records back to this phone.',
             ),
             const SizedBox(height: 12),
             Text(
@@ -185,7 +187,7 @@ class _RestoreBackupPageState extends ConsumerState<RestoreBackupPage> {
             const SizedBox(height: 16),
             FilledButton(
               onPressed: _working ? null : _restore,
-              child: const Text('Restore vault'),
+              child: const Text('Bring back my records'),
             ),
           ],
         ],

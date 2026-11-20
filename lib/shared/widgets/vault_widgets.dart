@@ -2,13 +2,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../app/vault_providers.dart';
+import '../../app/theme.dart';
 import '../../core/errors/app_failure.dart';
+import '../../core/localization/vault_strings.dart';
 import '../../features/finance/data/ledger_repository.dart';
 
 class VaultContent extends StatelessWidget {
-  const VaultContent({required this.children, super.key, this.maxWidth = 1120});
+  const VaultContent({
+    required this.children,
+    super.key,
+    this.maxWidth = 1120,
+    this.scrollKey,
+  });
   final List<Widget> children;
   final double maxWidth;
+  final Key? scrollKey;
   @override
   Widget build(BuildContext context) => SafeArea(
     child: Align(
@@ -16,13 +24,92 @@ class VaultContent extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: SingleChildScrollView(
+          key: scrollKey,
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.all(
-            MediaQuery.sizeOf(context).width < 400 ? 16 : 24,
+            MediaQuery.sizeOf(context).width < 600 ? VaultTheme.gutter : 24,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: children,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class VaultIcon extends StatelessWidget {
+  const VaultIcon({required this.icon, this.size = 20, super.key});
+
+  final IconData icon;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colors.secondaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Icon(icon, size: size, color: colors.onSecondaryContainer),
+      ),
+    );
+  }
+}
+
+class VaultLink extends StatelessWidget {
+  const VaultLink({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+    super.key,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Card.outlined(
+      clipBehavior: Clip.antiAlias,
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                VaultIcon(icon: icon),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if (subtitle case final detail?)
+                        Text(
+                          detail,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right, size: 20),
+              ],
+            ),
           ),
         ),
       ),
@@ -52,7 +139,7 @@ class FinanceView extends ConsumerWidget {
             OutlinedButton.icon(
               onPressed: () => ref.invalidate(financeProvider),
               icon: const Icon(Icons.refresh),
-              label: const Text('Try again'),
+              label: Text(VaultStrings.of(context).text('tryAgain')),
             ),
           ],
         ),
@@ -71,7 +158,9 @@ class FailureNotice extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Text(
-          error is AppFailure ? (error as AppFailure).message : 'This action could not be completed. Try again after reopening your vault.',
+          error is AppFailure
+              ? (error as AppFailure).message
+              : VaultStrings.of(context).text('unknownError'),
           style: TextStyle(
             color: Theme.of(context).colorScheme.onErrorContainer,
           ),
@@ -95,7 +184,7 @@ class EmptyNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card.outlined(
     child: Padding(
-      padding: const EdgeInsets.all(28),
+      padding: const EdgeInsets.all(VaultTheme.space),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -117,17 +206,16 @@ class SectionHeading extends StatelessWidget {
   final Widget? action;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.only(bottom: VaultTheme.gap),
     child: Wrap(
       alignment: WrapAlignment.spaceBetween,
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: 20,
       runSpacing: 12,
       children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge
-              ?.copyWith(fontWeight: FontWeight.w600),
+        Semantics(
+          header: true,
+          child: Text(title, style: Theme.of(context).textTheme.titleLarge),
         ),
         ?action,
       ],
@@ -154,7 +242,7 @@ class MetricCard extends StatelessWidget {
     return Card.filled(
       color: emphasis ? colors.primaryContainer : colors.surfaceContainerLow,
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(VaultTheme.space),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -165,7 +253,7 @@ class MetricCard extends StatelessWidget {
                 Expanded(child: Text(title)),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: VaultTheme.gap),
             Text(
               value,
               style: Theme.of(context).textTheme.headlineMedium
@@ -209,13 +297,16 @@ class ResponsiveCards extends StatelessWidget {
   );
 }
 
-void savedNotice(BuildContext context, {bool cloud = false}) =>
+void savedNotice(BuildContext context, {bool cloud = false, String? message}) =>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          cloud
-              ? 'Saved on this device. Waiting for sync.'
-              : 'Saved on this device.',
+        content: Semantics(
+          liveRegion: true,
+          child: Text(
+            cloud
+                ? VaultStrings.of(context).text('savedWaiting')
+                : message ?? VaultStrings.of(context).text('savedLocal'),
+          ),
         ),
       ),
     );

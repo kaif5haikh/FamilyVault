@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/localization/vault_strings.dart';
 import '../features/document_vault/expiry_reminders.dart';
 import 'router.dart';
 import 'theme.dart';
@@ -21,7 +22,7 @@ class FamilyVaultApp extends ConsumerWidget {
       darkTheme: VaultTheme.dark,
       locale: appearance.locale,
       themeMode: appearance.theme,
-      supportedLocales: const [Locale('en', 'IN'), Locale('hi', 'IN')],
+      supportedLocales: VaultStrings.supported,
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       builder: (context, child) =>
           PrivacyBoundary(child: child ?? const SizedBox.shrink()),

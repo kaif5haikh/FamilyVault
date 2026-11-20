@@ -86,11 +86,11 @@ void main() {
           child: const FamilyVaultApp(),
         ),
       );
-      await ready(tester, find.text('Family access'));
-      await tapVisible(tester, find.text('Family access'));
-      await ready(tester, find.text('Restore an encrypted backup'));
-      await tapVisible(tester, find.text('Restore an encrypted backup'));
-      await tapVisible(tester, find.text('Choose a backup file'));
+      await ready(tester, find.text('Start using FamilyVault'));
+      await tapVisible(tester, find.text('Start using FamilyVault'));
+      await ready(tester, find.text('Bring back saved data'));
+      await tapVisible(tester, find.text('Bring back saved data'));
+      await tapVisible(tester, find.text('Choose your safe-copy file'));
       await ready(tester, field('Recovery key'));
       await tester.enterText(field('Recovery key'), fixture.code);
       Future<void> activate(String label) async {
@@ -103,11 +103,13 @@ void main() {
         await tester.pump();
       }
 
-      await activate('Verify backup');
+      await activate('Check this copy');
       await ready(
         tester,
         find.byWidgetPredicate(
-          (w) => w is FailureNotice || w is Text && w.data == 'Restore vault',
+          (w) =>
+              w is FailureNotice ||
+              w is Text && w.data == 'Bring back my records',
         ),
       );
       final notices = tester.widgetList<FailureNotice>(
@@ -123,9 +125,9 @@ void main() {
       );
       expect(target.status.phase, VaultPhase.setup);
       expect(gate.calls, 0);
-      await activate('Restore vault');
+      await activate('Bring back my records');
       expect(target.status.phase, VaultPhase.open);
-      await ready(tester, find.text('On this device'));
+      await ready(tester, find.text('On this phone'));
       expect(target.status.session!.identity.familyId, fixture.family);
       expect(gate.calls, 1);
     },

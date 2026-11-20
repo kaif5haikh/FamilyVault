@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../app/appearance.dart';
 import '../../app/vault_providers.dart';
 import '../../core/errors/app_failure.dart';
+import '../../core/localization/vault_strings.dart';
 import '../../core/security/vault_lifecycle.dart';
 import '../../core/sync/live_sync.dart';
 import '../../shared/widgets/vault_widgets.dart';
@@ -16,87 +17,43 @@ import '../document_vault/reminder_settings.dart';
 
 class MorePage extends StatelessWidget {
   const MorePage({super.key});
+
   @override
-  Widget build(BuildContext context) => VaultContent(
-    children: [
-      const SectionHeading('More for your family'),
-      for (final entry in <(String, String, IconData, String)>[
-        (
-          'Documents',
-          'Files, scans and expiry dates',
-          Icons.folder_outlined,
-          '/documents',
-        ),
-        (
-          'Assets',
-          'Property, metals, investments and valuations',
-          Icons.diamond_outlined,
-          '/assets',
-        ),
-        (
-          'Loans & lending',
-          'Principal, interest and repayment history',
-          Icons.request_quote_outlined,
-          '/loans',
-        ),
-        (
-          'Business',
-          'Revenue, expenses, stock and worker payments',
-          Icons.storefront_outlined,
-          '/businesses',
-        ),
-        (
-          'Budgets & planning',
-          'Plan monthly spending by category',
-          Icons.savings_outlined,
-          '/planning',
-        ),
-        (
-          'Reports',
-          'Monthly and yearly financial perspectives',
-          Icons.insights_outlined,
-          '/reports',
-        ),
-        (
-          'Settings',
-          'Appearance, privacy and your workspace',
-          Icons.tune,
-          '/settings',
-        ),
-        (
-          'About FamilyVault',
-          'Application details and licences',
-          Icons.info_outline,
-          '/about',
-        ),
-      ])
-        Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: Card.outlined(
-            child: ListTile(
-              leading: Icon(entry.$3),
-              title: Text(entry.$1),
-              subtitle: Text(entry.$2),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => context.go(entry.$4),
-            ),
+  Widget build(BuildContext context) {
+    final strings = VaultStrings.of(context);
+    return VaultContent(
+      maxWidth: 680,
+      children: [
+        for (final (label, path, icon) in const [
+          ('business', '/businesses', Icons.storefront_outlined),
+          ('backup', '/backups', Icons.cloud_upload_outlined),
+          ('settings', '/settings', Icons.tune),
+          ('help', '/help', Icons.help_outline),
+          ('showTourAgain', '/welcome-tour', Icons.signpost_outlined),
+          ('about', '/about', Icons.info_outline),
+        ])
+          VaultLink(
+            icon: icon,
+            title: strings.text(label),
+            onTap: () => context.push(path),
           ),
-        ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final strings = VaultStrings.of(context);
     final appearance = ref.watch(appearanceProvider),
         controller = ref.read(appearanceProvider.notifier);
     final session = ref.watch(vaultProvider).session;
     return VaultContent(
       maxWidth: 800,
       children: [
-        const SectionHeading('Make yourself at home'),
+        const SectionHeading('Look and language'),
         Card.outlined(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -128,15 +85,13 @@ class SettingsPage extends ConsumerWidget {
                 DropdownButtonFormField<String>(
                   initialValue: appearance.locale.languageCode,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Navigation language',
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'en',
-                      child: Text('English (India)'),
-                    ),
-                    DropdownMenuItem(value: 'hi', child: Text('हिन्दी (भारत)')),
+                  decoration: const InputDecoration(labelText: 'Language'),
+                  items: [
+                    for (final (locale, name) in languageChoices)
+                      DropdownMenuItem(
+                        value: locale.languageCode,
+                        child: Text(name),
+                      ),
                   ],
                   onChanged: (v) => controller.change(locale: Locale(v!, 'IN')),
                 ),
@@ -144,7 +99,7 @@ class SettingsPage extends ConsumerWidget {
                   const Padding(
                     padding: EdgeInsets.only(top: 16),
                     child: Text(
-                      'Appearance changed for this session. Reopen the vault to retry saving preferences.',
+                      'This change is showing now. To keep it, open your records again and try saving.',
                     ),
                   ),
               ],
@@ -152,7 +107,7 @@ class SettingsPage extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 24),
-        const SectionHeading('Privacy & workspace'),
+        const SectionHeading('Privacy'),
         Card.outlined(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -161,25 +116,25 @@ class SettingsPage extends ConsumerWidget {
               children: [
                 Text(
                   session?.identity.isCloud == true
-                      ? 'Connected family workspace'
-                      : 'Local workspace',
+                      ? strings.text('sharedFamily')
+                      : strings.text('localOnly'),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   session?.identity.isCloud == true
-                      ? 'Your individual account is used for family access.'
-                      : 'Your records stay in this encrypted vault on this device. Family cloud access requires separate enrollment.',
+                      ? strings.text('sharedFamilyHelp')
+                      : strings.text('localFamilyHelp'),
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Device verification on unlock. Automatic lock in the background or after five idle minutes.',
+                  'FamilyVault locks when you leave the app or after five idle minutes. Use your phone’s screen lock to open it again.',
                 ),
                 const SizedBox(height: 20),
                 OutlinedButton.icon(
                   onPressed: ref.read(vaultProvider.notifier).lock,
                   icon: const Icon(Icons.lock_outline),
-                  label: const Text('Lock vault'),
+                  label: Text(strings.text('lock')),
                 ),
               ],
             ),
@@ -194,7 +149,7 @@ class SettingsPage extends ConsumerWidget {
         ListTile(
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.backup_outlined),
-          title: const Text('Encrypted backups'),
+          title: Text(strings.text('backup')),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/backups'),
         ),
@@ -239,7 +194,7 @@ class _SyncSection extends ConsumerWidget {
       await controller.lock(
         reason: const AppFailure(
           FailureCode.storage,
-          'Secure sign-out needs another check.',
+          'We couldn’t finish signing out. Please try again.',
         ),
       );
     } finally {
@@ -260,7 +215,7 @@ class _SyncSection extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Family sync',
+                'Family updates',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 10),
@@ -268,8 +223,8 @@ class _SyncSection extends ConsumerWidget {
               if (value.pending case final pending?)
                 Text(
                   pending == 0
-                      ? 'No local changes are waiting for a receipt.'
-                      : '$pending local ${pending == 1 ? 'change is' : 'changes are'} waiting for a receipt.',
+                      ? 'Your changes are up to date.'
+                      : '$pending ${pending == 1 ? 'change is' : 'changes are'} waiting to update the family.',
                 ),
               if (value.failure case final failure?) FailureNotice(failure),
               const SizedBox(height: 14),
@@ -280,12 +235,12 @@ class _SyncSection extends ConsumerWidget {
                   OutlinedButton.icon(
                     onPressed: value.checking ? null : sync.check,
                     icon: const Icon(Icons.sync),
-                    label: const Text('Check sync'),
+                    label: const Text('Check for updates'),
                   ),
                   TextButton.icon(
                     onPressed: () => context.push('/family-recovery'),
                     icon: const Icon(Icons.history),
-                    label: const Text('Saved device changes'),
+                    label: const Text('Changes saved on this phone'),
                   ),
                   TextButton.icon(
                     onPressed: () => _signOut(ref),

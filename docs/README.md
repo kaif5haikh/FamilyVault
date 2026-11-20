@@ -16,6 +16,9 @@
 | [Backup/recovery](backup-recovery.md) | Encrypted backup, restore, export and deletion |
 | [Dependency review](dependencies.md) | Upstream evidence and compatibility/security evaluation |
 | [Development setup](development.md) | Reproducible commands and platform constraints |
+| [Design system](UIUX/design-system.md) | Visual components, typography, accessibility and interaction rules |
+| [Finding your way around](UIUX/navigation-and-onboarding.md) | The five tabs, first tour and remembered settings |
+| [Show me how](UIUX/guided-help.md) | Offline guidance and the actions it opens |
 | [Review gate](review-gate.md) | Required architecture/database decisions before financial features |
 | [Decisions](decisions/0001-foundation.md) | Engineering decisions and alternatives |
 | [Operations](operations/2026-11-13-initialization.md) | Command/result record and verified milestones |

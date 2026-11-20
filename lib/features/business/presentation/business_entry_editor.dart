@@ -51,8 +51,8 @@ class _BusinessEntryEditorState extends ConsumerState<BusinessEntryEditor> {
       _correcting ? 'Correct stock movement' : 'Record stock movement',
     BusinessEntryMode.salary =>
       _correcting ? 'Correct salary payment' : 'Record salary payment',
-    BusinessEntryMode.revenue => 'Record revenue',
-    BusinessEntryMode.expense => 'Record operating expense',
+    BusinessEntryMode.revenue => 'Add money from sales',
+    BusinessEntryMode.expense => 'Add a business cost',
   };
 
   @override
@@ -174,7 +174,7 @@ class _BusinessEntryEditorState extends ConsumerState<BusinessEntryEditor> {
                     const Padding(
                       padding: EdgeInsets.only(bottom: 18),
                       child: Text(
-                        'The original entry will stay in the history with its reversal and replacement.',
+                        'The original stays in history. Saving adds the corrected record.',
                       ),
                     ),
                   if (_stock) ...[
@@ -199,7 +199,7 @@ class _BusinessEntryEditorState extends ConsumerState<BusinessEntryEditor> {
                       const Padding(
                         padding: EdgeInsets.only(bottom: 18),
                         child: Text(
-                          'Stock issued uses the weighted cost of the pieces on hand.',
+                          'The app uses the average cost of the pieces you have.',
                         ),
                       ),
                   ],

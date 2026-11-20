@@ -532,10 +532,10 @@ void main() {
           child: const FamilyVaultApp(),
         ),
       );
-      await ready(tester, find.text('Family access'));
-      await tapVisible(tester, find.text('Family access'));
-      await ready(tester, find.text('Restore an encrypted backup'));
-      await tapVisible(tester, find.text('Restore an encrypted backup'));
+      await ready(tester, find.text('Start using FamilyVault'));
+      await tapVisible(tester, find.text('Start using FamilyVault'));
+      await ready(tester, find.text('Bring back saved data'));
+      await tapVisible(tester, find.text('Bring back saved data'));
       expect(consent.connects, 0);
       await tapVisible(tester, find.text('Connect Google Drive'));
       await ready(tester, find.text('drive-fixture@example.invalid'));
@@ -560,22 +560,22 @@ void main() {
       await press(
         tester
             .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'Verify backup'),
+              find.widgetWithText(FilledButton, 'Check this copy'),
             )
             .onPressed,
       );
       expect(drive.mediaReads, 2);
-      await ready(tester, find.text('Restore vault'));
+      await ready(tester, find.text('Bring back my records'));
       expect(target.status.phase, VaultPhase.setup);
       expect(gate.calls, 0);
       await press(
         tester
             .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'Restore vault'),
+              find.widgetWithText(FilledButton, 'Bring back my records'),
             )
             .onPressed,
       );
-      await ready(tester, find.text('On this device'));
+      await ready(tester, find.text('On this phone'));
       expect(target.status.session!.identity.familyId, seeded.family);
       expect(gate.calls, 1);
     },

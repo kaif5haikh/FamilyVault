@@ -51,7 +51,7 @@ class BusinessesPage extends StatelessWidget {
     builder: (data, finance) => VaultContent(
       children: [
         SectionHeading(
-          'Business accounts',
+          'Your businesses',
           action: FilledButton.icon(
             onPressed: () => context.push('/business/new'),
             icon: const Icon(Icons.add),
@@ -61,8 +61,8 @@ class BusinessesPage extends StatelessWidget {
         if (data.businesses.isEmpty)
           const EmptyNotice(
             icon: Icons.storefront_outlined,
-            title: 'Keep a record of your business',
-            message: 'Track daily revenue, purchases, operating expenses, stock and salaries in a separate set of business accounts.',
+            title: 'No businesses recorded yet',
+            message: 'Add a business to keep its sales, bills, stock and wages together.',
           ),
         for (final row in data.businesses)
           Card.outlined(
@@ -70,7 +70,7 @@ class BusinessesPage extends StatelessWidget {
               leading: const Icon(Icons.storefront_outlined),
               title: Text(row.name),
               subtitle: Text(
-                row.notes.isEmpty ? 'Accounts and inventory' : row.notes,
+                row.notes.isEmpty ? 'Money, stock and wages' : row.notes,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -144,48 +144,6 @@ class _BusinessPageState extends State<BusinessPage> {
                 padding: const EdgeInsets.only(bottom: 18),
                 child: Text(business.notes),
               ),
-            RecordDate(
-              'Report month',
-              _date,
-              (value) => setState(() => _date = value),
-            ),
-            ResponsiveCards(
-              children: [
-                MetricCard(
-                  title: 'Recorded profit',
-                  value: formatInr(profit.net),
-                  icon: Icons.insights_outlined,
-                  detail: period.label,
-                  emphasis: true,
-                ),
-                MetricCard(
-                  title: 'Revenue',
-                  value: formatInr(profit.revenue),
-                  icon: Icons.trending_up,
-                ),
-                MetricCard(
-                  title: 'Inventory on hand',
-                  value: formatInr(
-                    finance.balances()[business.inventoryAccountId] ??
-                        BigInt.zero,
-                  ),
-                  icon: Icons.inventory_2_outlined,
-                  detail: 'Weighted purchase cost of remaining stock',
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Card.outlined(
-              child: Column(
-                children: [
-                  _ProfitLine('Cost of stock issued', profit.costOfGoods),
-                  _ProfitLine('Gross profit', profit.gross),
-                  _ProfitLine('Wages paid', profit.salaries),
-                  _ProfitLine('Operating expenses', profit.operatingExpenses),
-                ],
-              ),
-            ),
-            const SizedBox(height: 18),
             Wrap(
               spacing: 10,
               runSpacing: 10,
@@ -194,15 +152,58 @@ class _BusinessPageState extends State<BusinessPage> {
                   onPressed: () =>
                       context.push('/business/${business.id}/revenue'),
                   icon: const Icon(Icons.add),
-                  label: const Text('Record revenue'),
+                  label: const Text('Add money from sales'),
                 ),
                 OutlinedButton.icon(
                   onPressed: () =>
                       context.push('/business/${business.id}/expense'),
                   icon: const Icon(Icons.payments_outlined),
-                  label: const Text('Record operating expense'),
+                  label: const Text('Add a business cost'),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            RecordDate(
+              'Report month',
+              _date,
+              (value) => setState(() => _date = value),
+            ),
+            ResponsiveCards(
+              children: [
+                MetricCard(
+                  title: 'Business profit',
+                  value: formatInr(profit.net),
+                  icon: Icons.insights_outlined,
+                  detail: period.label,
+                  emphasis: true,
+                ),
+                MetricCard(
+                  title: 'Money from sales',
+                  value: formatInr(profit.revenue),
+                  icon: Icons.trending_up,
+                ),
+                MetricCard(
+                  title: 'Value of stock left',
+                  value: formatInr(
+                    finance.balances()[business.inventoryAccountId] ??
+                        BigInt.zero,
+                  ),
+                  icon: Icons.inventory_2_outlined,
+                  detail: 'Based on what you paid for it',
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Card.outlined(
+              child: ExpansionTile(
+                title: const Text('How profit is worked out'),
+                children: [
+                  _ProfitLine('Cost of stock used', profit.costOfGoods),
+                  _ProfitLine('Sales minus stock costs', profit.gross),
+                  _ProfitLine('Wages paid', profit.salaries),
+                  _ProfitLine('Business costs', profit.operatingExpenses),
+                ],
+              ),
             ),
             const SizedBox(height: 26),
             SwitchListTile.adaptive(
@@ -266,7 +267,7 @@ class _BusinessPageState extends State<BusinessPage> {
                 ),
               ),
             const SizedBox(height: 24),
-            SectionHeading('Accounting history · ${period.label}'),
+            SectionHeading('Money activity · ${period.label}'),
             if (entries.isEmpty)
               const Text('No business entries in this month.'),
             for (final row in entries)
@@ -327,10 +328,10 @@ class BusinessOverview extends ConsumerWidget {
       child: Card.filled(
         child: ListTile(
           leading: const Icon(Icons.storefront_outlined),
-          title: const Text('Business profit this month'),
+          title: const Text('Business profit for this period'),
           subtitle: Text(formatInr(amount)),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.go('/businesses'),
+          onTap: () => context.push('/businesses'),
         ),
       ),
     );

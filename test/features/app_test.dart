@@ -8,16 +8,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../support/security_fakes.dart';
+import '../support/widget_io.dart';
 
 void main() {
   late Directory scratch;
   late VaultLifecycle lifecycle;
+  late MemorySecureStore store;
   setUp(() async {
     final parent = await Directory('.cache/test-vaults')
         .create(recursive: true);
     scratch = await parent.createTemp('app-');
+    store = MemorySecureStore();
     lifecycle = VaultLifecycle(
-      store: MemorySecureStore(),
+      store: store,
       gate: FakeDeviceGate(),
       root: () async => scratch,
     );
@@ -29,7 +32,10 @@ void main() {
   });
   Future<void> app(WidgetTester tester) => tester.pumpWidget(
     ProviderScope(
-      overrides: [vaultLifecycleProvider.overrideWithValue(lifecycle)],
+      overrides: [
+        vaultLifecycleProvider.overrideWithValue(lifecycle),
+        secureStoreProvider.overrideWithValue(store),
+      ],
       child: const FamilyVaultApp(),
     ),
   );
@@ -46,11 +52,11 @@ void main() {
       await app(tester);
       await tester.pumpAndSettle();
       // Returning vaults show the opaque lock screen immediately.
-      expect(find.text('Your vault is locked'), findsOneWidget);
-      expect(find.text('Unlock vault'), findsOneWidget);
+      expect(find.text('Your records are locked'), findsOneWidget);
+      expect(find.text('Unlock records'), findsOneWidget);
       expect(find.byType(TextField), findsNothing);
       expect(find.byType(TextFormField), findsNothing);
-      expect(find.text('Net worth'), findsNothing);
+      expect(find.text('Money available'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },
@@ -66,13 +72,12 @@ void main() {
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       await app(tester);
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Family access'));
-      await tester.tap(find.text('Family access'));
-      await tester.pumpAndSettle();
-      expect(find.text('Create your private vault'), findsOneWidget);
+      await tapVisible(tester, find.text('Start using FamilyVault'));
+      await ready(tester, find.text('Set up your family records'));
+      expect(find.text('Set up your family records'), findsOneWidget);
       expect(find.byType(TextFormField), findsNothing);
-      await tester.ensureVisible(find.text('Create a local vault'));
-      await tester.tap(find.text('Create a local vault'));
+      await tester.ensureVisible(find.text('Set up on this phone'));
+      await tester.tap(find.text('Set up on this phone'));
       await tester.pumpAndSettle();
       expect(find.byType(TextFormField), findsNWidgets(2));
       expect(tester.takeException(), isNull);
@@ -90,7 +95,7 @@ void main() {
       );
       await app(tester);
       await tester.pump();
-      expect(find.widgetWithText(AppBar, 'Overview'), findsOneWidget);
+      expect(find.widgetWithText(AppBar, 'Home'), findsOneWidget);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       await tester.pump();
       expect(find.byIcon(Icons.shield_outlined), findsOneWidget);
@@ -101,8 +106,8 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
       expect(lifecycle.status.phase, VaultPhase.locked);
-      expect(find.text('Your vault is locked'), findsOneWidget);
-      expect(find.text('Net worth'), findsNothing);
+      expect(find.text('Your records are locked'), findsOneWidget);
+      expect(find.text('Money available'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },

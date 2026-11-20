@@ -47,7 +47,7 @@ String assetLabel(String kind) => switch (kind) {
   'vehicle' => 'Vehicle',
   'deposit' => 'Bank deposit',
   'investment' => 'Investment',
-  _ => 'Other asset',
+  _ => 'Something else',
 };
 IconData assetIcon(String kind) => switch (kind) {
   'property' || 'land' => Icons.home_work_outlined,

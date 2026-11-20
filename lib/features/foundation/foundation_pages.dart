@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,115 +7,87 @@ import 'package:go_router/go_router.dart';
 import '../../app/theme.dart';
 import '../../app/vault_providers.dart';
 import '../../core/security/vault_lifecycle.dart';
+import '../../core/localization/vault_strings.dart';
+import '../../shared/widgets/vault_widgets.dart';
+import '../../app/appearance.dart';
+import '../guidance/welcome_tour.dart';
 import '../auth/cloud_access_panel.dart';
 import '../auth/cloud_providers.dart';
 
-class WelcomePage extends ConsumerWidget {
+class WelcomePage extends ConsumerStatefulWidget {
   const WelcomePage({super.key});
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).colorScheme,
-        text = Theme.of(context).textTheme;
-    final status = ref.watch(vaultProvider);
+  ConsumerState<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends ConsumerState<WelcomePage> {
+  bool _starting = false;
+
+  Future<void> _start() async {
+    if (_starting) return;
+    setState(() => _starting = true);
+    await finishIntro(ref);
+    if (!mounted) return;
+    ref.invalidate(introSeenProvider);
+    setState(() => _starting = false);
+    unawaited(context.push<void>('/access'));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = VaultStrings.of(context);
+    final text = Theme.of(context).textTheme;
+    final seen = ref.watch(introSeenProvider).asData?.value ?? false;
     return VaultPage(
       title: 'FamilyVault',
-      children: [
-        const SizedBox(height: 24),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.primaryContainer,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(22),
-              child: Icon(
-                Icons.shield_outlined,
-                size: 44,
-                color: colors.primary,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 32),
-        Text(
-          'Your family.\nYour shared future.',
-          style: text.headlineLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            height: 1.15,
-          ),
-        ),
-        const SizedBox(height: 18),
-        Text(
-          'A private home for your finances and important documents.',
-          style: text.bodyLarge?.copyWith(color: colors.onSurfaceVariant),
-        ),
-        const SizedBox(height: 32),
-        Card.filled(
-          child: Padding(
-            padding: const EdgeInsets.all(VaultTheme.space),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.lock_outline),
-                const SizedBox(height: 16),
-                Text(
-                  status.hasVault
-                      ? 'Your vault is ready'
-                      : 'A private space, on your terms',
-                  style: text.titleLarge,
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Start on this device. Your vault is encrypted, and works without an internet connection.',
-                ),
-                const SizedBox(height: 20),
-                FilledButton.icon(
-                  onPressed: () => context.push('/access'),
-                  icon: const Icon(Icons.arrow_forward),
-                  label: const Text('Family access'),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        const Wrap(
-          spacing: 20,
-          runSpacing: 12,
-          children: [
-            _TrustItem(Icons.currency_rupee, 'Made for India'),
-            _TrustItem(Icons.wifi_off_outlined, 'Works offline'),
-            _TrustItem(Icons.key_outlined, 'Device protected'),
+      actions: [
+        PopupMenuButton<Locale>(
+          tooltip: strings.text('language'),
+          icon: const Icon(Icons.language_outlined),
+          onSelected: (locale) =>
+              ref.read(appearanceProvider.notifier).change(locale: locale),
+          itemBuilder: (_) => [
+            for (final (locale, name) in languageChoices)
+              PopupMenuItem(value: locale, child: Text(name)),
           ],
         ),
-        const SizedBox(height: 28),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.info_outline),
-          title: const Text('About FamilyVault'),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push('/about'),
+      ],
+      children: [
+        const SizedBox(height: 20),
+        const Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: VaultIcon(icon: Icons.shield_outlined, size: 36),
+        ),
+        const SizedBox(height: 18),
+        Text(strings.text('welcomeTitle'), style: text.headlineMedium),
+        const SizedBox(height: 10),
+        Text(strings.text('welcomeBody'), style: text.bodyLarge),
+        const SizedBox(height: 22),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: _starting ? null : _start,
+            child: Text(strings.text('start')),
+          ),
+        ),
+        if (!seen)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => context.push('/welcome-tour'),
+              child: Text(strings.text('seeGuide')),
+            ),
+          ),
+        const SizedBox(height: 18),
+        VaultLink(
+          icon: Icons.help_outline,
+          title: strings.text('help'),
+          onTap: () => context.push('/help'),
         ),
       ],
     );
   }
-}
-
-class _TrustItem extends StatelessWidget {
-  const _TrustItem(this.icon, this.label);
-  final IconData icon;
-  final String label;
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(icon, size: 18, color: Theme.of(context).colorScheme.primary),
-      const SizedBox(width: 6),
-      Flexible(child: Text(label)),
-    ],
-  );
 }
 
 class AccessPage extends ConsumerStatefulWidget {
@@ -137,6 +111,7 @@ class _AccessPageState extends ConsumerState<AccessPage> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = VaultStrings.of(context);
     final status = ref.watch(vaultProvider),
         controller = ref.read(vaultProvider.notifier);
     final busy =
@@ -145,12 +120,12 @@ class _AccessPageState extends ConsumerState<AccessPage> {
     final configured = ref.watch(cloudConfigProvider).cloudConfigured;
     if (_cloud && configured) {
       return VaultPage(
-        title: 'Family access',
+        title: strings.text('family'),
         children: [
           TextButton.icon(
             onPressed: () => setState(() => _cloud = false),
             icon: const Icon(Icons.arrow_back),
-            label: const Text('Local vault'),
+            label: Text(strings.text('localOnly')),
           ),
           const SizedBox(height: 16),
           const CloudAccessPanel(),
@@ -158,7 +133,7 @@ class _AccessPageState extends ConsumerState<AccessPage> {
       );
     }
     return VaultPage(
-      title: 'Family access',
+      title: strings.text('family'),
       children: [
         Icon(
           status.hasVault
@@ -169,17 +144,11 @@ class _AccessPageState extends ConsumerState<AccessPage> {
         ),
         const SizedBox(height: 24),
         Text(
-          status.hasVault
-              ? 'Your vault is locked'
-              : 'Create your private vault',
+          strings.text(status.hasVault ? 'unlockTitle' : 'createTitle'),
           style: Theme.of(context).textTheme.headlineSmall,
         ),
         const SizedBox(height: 12),
-        Text(
-          status.hasVault
-              ? 'Verify with your device passcode or biometrics to continue.'
-              : 'Your name identifies your edits. This local vault belongs to this device; family cloud enrollment is a separate step.',
-        ),
+        Text(strings.text(status.hasVault ? 'unlockHelp' : 'setupHelp')),
         const SizedBox(height: 24),
         if (status.failure != null) ...[
           Semantics(
@@ -202,13 +171,13 @@ class _AccessPageState extends ConsumerState<AccessPage> {
           OutlinedButton.icon(
             onPressed: controller.retry,
             icon: const Icon(Icons.refresh),
-            label: const Text('Try secure storage again'),
+            label: const Text('Try again'),
           ),
         if (!busy && status.hasVault)
           FilledButton.icon(
             onPressed: controller.unlock,
             icon: const Icon(Icons.fingerprint),
-            label: const Text('Unlock vault'),
+            label: Text(strings.text('unlock')),
           ),
         if (!busy &&
             !status.hasVault &&
@@ -217,13 +186,13 @@ class _AccessPageState extends ConsumerState<AccessPage> {
           FilledButton.icon(
             onPressed: () => setState(() => _creating = true),
             icon: const Icon(Icons.add),
-            label: const Text('Create a local vault'),
+            label: Text(strings.text('create')),
           ),
         if (status.phase == VaultPhase.setup && !_creating)
           TextButton.icon(
             onPressed: () => context.push('/restore'),
             icon: const Icon(Icons.restore),
-            label: const Text('Restore an encrypted backup'),
+            label: Text(strings.text('restore')),
           ),
         if (!status.hasVault && _creating)
           Form(
@@ -236,9 +205,8 @@ class _AccessPageState extends ConsumerState<AccessPage> {
                   enabled: !busy,
                   maxLength: 80,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Vault name',
-                    hintText: 'Choose a name',
+                  decoration: InputDecoration(
+                    labelText: strings.text('familyName'),
                   ),
                   validator: _required,
                 ),
@@ -248,7 +216,9 @@ class _AccessPageState extends ConsumerState<AccessPage> {
                   enabled: !busy,
                   maxLength: 80,
                   textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(labelText: 'Your name'),
+                  decoration: InputDecoration(
+                    labelText: strings.text('yourName'),
+                  ),
                   validator: _required,
                 ),
                 const SizedBox(height: 20),
@@ -261,7 +231,7 @@ class _AccessPageState extends ConsumerState<AccessPage> {
                           }
                         },
                   icon: const Icon(Icons.lock_outline),
-                  label: const Text('Verify device & create'),
+                  label: Text(strings.text('verifyCreate')),
                 ),
               ],
             ),
@@ -271,12 +241,12 @@ class _AccessPageState extends ConsumerState<AccessPage> {
           OutlinedButton.icon(
             onPressed: () => setState(() => _cloud = true),
             icon: const Icon(Icons.group_outlined),
-            label: const Text('Open family access'),
+            label: Text(strings.text('joinFamily')),
           ),
           const SizedBox(height: 16),
         ],
         Text(
-          'Each family member uses an independent account when connected. Keep an encrypted backup and its recovery key separately.',
+          strings.text('privacyHelp'),
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],
@@ -302,7 +272,7 @@ class AboutPage extends StatelessWidget {
       ),
       const SizedBox(height: 16),
       const Text(
-        'Offline vaults stay on this device. Cloud services require a configured family connection. No shared sign-in credentials.',
+        'Records you start on this phone stay here. Shared families use an invitation and a separate sign-in for each person.',
       ),
       const SizedBox(height: 24),
       const LicensePageButton(),

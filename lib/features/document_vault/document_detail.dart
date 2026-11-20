@@ -104,7 +104,7 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
               if (choices.isEmpty)
                 Padding(
                   padding: EdgeInsets.all(24),
-                  child: Text('Add an asset or transaction first.'),
+                  child: Text('Add an item or money record first.'),
                 ),
               for (final choice in choices)
                 SimpleDialogOption(
@@ -153,8 +153,19 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                 ),
                 if (expiryLabel(context, doc.expiryOn) case final expiry?)
                   Text(expiry),
+                if (archived) const Text('Archived'),
                 if (_error != null) FailureNotice(_error!),
                 const SizedBox(height: 12),
+                if (record.versions.firstOrNull case final latest?) ...[
+                  FilledButton.icon(
+                    onPressed: () => context.push(
+                      '/document/${doc.id}/version/${latest.id}',
+                    ),
+                    icon: const Icon(Icons.visibility_outlined),
+                    label: const Text('Open document'),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 if (!repository.session.identity.isCloud ||
                     repository.sharingAvailable)
                   Wrap(
@@ -179,7 +190,7 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                                   versionOf: doc,
                                 ),
                           icon: const Icon(Icons.add),
-                          label: const Text('Add version'),
+                          label: const Text('Add a new version'),
                         ),
                         OutlinedButton.icon(
                           onPressed: _busy
@@ -189,7 +200,7 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                                   () => _link(repository, doc.id),
                                 ),
                           icon: const Icon(Icons.link),
-                          label: const Text('Link record'),
+                          label: const Text('Link to an item or money record'),
                         ),
                       ],
                       TextButton.icon(
@@ -209,7 +220,9 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                               : Icons.archive_outlined,
                         ),
                         label: Text(
-                          archived ? 'Restore document' : 'Archive document',
+                          archived
+                              ? 'Put back in Documents'
+                              : 'Move to Archived',
                         ),
                       ),
                     ],
@@ -236,7 +249,7 @@ class _DocumentDetailPageState extends ConsumerState<DocumentDetailPage> {
                     ListTile(
                       leading: const Icon(Icons.link),
                       title: Text(
-                        link.assetId == null ? 'Transaction' : 'Asset',
+                        link.assetId == null ? 'Money record' : 'Item we own',
                       ),
                       onTap: () => context.push(
                         link.assetId == null
@@ -342,7 +355,7 @@ class _DocumentPreviewPageState extends ConsumerState<DocumentPreviewPage> {
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Add version'),
+              child: const Text('Add a new version'),
             ),
           ],
         ),

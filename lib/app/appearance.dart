@@ -7,6 +7,12 @@ import '../core/database/app_database.dart';
 import '../core/security/vault_lifecycle.dart';
 import 'vault_providers.dart';
 
+const languageChoices = [
+  (Locale('en', 'IN'), 'English (India)'),
+  (Locale('hi', 'IN'), 'हिन्दी (भारत)'),
+  (Locale('mr', 'IN'), 'मराठी (भारत)'),
+];
+
 final class AppAppearance {
   const AppAppearance({
     this.theme = ThemeMode.system,
@@ -24,6 +30,7 @@ final appearanceProvider =
     );
 
 class AppearanceController extends Notifier<AppAppearance> {
+  static const _phoneLanguage = 'ui.phone_language';
   int _epoch = 0;
   @override
   AppAppearance build() {
@@ -35,25 +42,50 @@ class AppearanceController extends Notifier<AppAppearance> {
     final session = ref.read(vaultProvider).session;
     if (session != null) {
       unawaited(Future<void>.microtask(() => _load(session)));
+    } else {
+      unawaited(Future<void>.microtask(_loadPhoneLanguage));
     }
     return const AppAppearance();
+  }
+
+  Locale? _locale(String? code) => languageChoices
+      .map((choice) => choice.$1)
+      .where((locale) => locale.languageCode == code)
+      .firstOrNull;
+
+  Future<Locale?> _preferredLanguage() async {
+    try {
+      return _locale(await ref.read(secureStoreProvider).read(_phoneLanguage));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _loadPhoneLanguage() async {
+    final epoch = _epoch;
+    final locale = await _preferredLanguage();
+    if (locale != null && ref.mounted && epoch == _epoch) {
+      state = AppAppearance(theme: state.theme, locale: locale);
+    }
   }
 
   Future<void> _load(VaultSession session) async {
     final epoch = ++_epoch;
     try {
       final rows = await session.db.select(session.db.vaultPreferences).get();
+      final values = {for (final row in rows) row.key: row.value};
+      final locale =
+          _locale(values['ui.language']) ?? await _preferredLanguage();
       if (!ref.mounted || epoch != _epoch || session.closed) {
         return;
       }
-      final values = {for (final row in rows) row.key: row.value};
       state = AppAppearance(
         theme:
             ThemeMode.values
                 .where((t) => t.name == values['ui.theme'])
                 .firstOrNull ??
             ThemeMode.system,
-        locale: Locale(values['ui.language'] == 'hi' ? 'hi' : 'en', 'IN'),
+        locale: locale ?? state.locale,
       );
     } catch (_) {
       /* Presentation preferences are optional; no data/key fallback. */
@@ -67,6 +99,16 @@ class AppearanceController extends Notifier<AppAppearance> {
       locale: locale ?? state.locale,
     );
     state = next;
+    if (locale != null) {
+      try {
+        await ref
+            .read(secureStoreProvider)
+            .write(_phoneLanguage, next.locale.languageCode);
+      } catch (_) {
+        // An open vault can still save the preference.
+      }
+    }
+    if (!ref.mounted || !identical(state, next)) return;
     final session = ref.read(vaultProvider).session;
     if (session == null || session.closed) {
       return;

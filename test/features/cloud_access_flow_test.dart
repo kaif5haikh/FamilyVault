@@ -137,12 +137,12 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      expect(find.text('Your vault is locked'), findsOneWidget);
-      await tap('Open family access');
+      expect(find.text('Your records are locked'), findsOneWidget);
+      await tap('Sign in to a family');
       await tap('Synthetic shared family');
       expect(find.text('Device approved'), findsOneWidget);
-      expect(find.text('Net worth'), findsNothing);
-      await tap('Verify administrator access');
+      expect(find.text('Money available'), findsNothing);
+      await tap('Confirm you manage the family');
       await tap('Continue');
       final code = find.byWidgetPredicate(
         (w) =>
@@ -150,7 +150,7 @@ void main() {
       );
       await tester.enterText(code, '123456');
       await tap('Verify code');
-      expect(find.text('Add invitation'), findsOneWidget);
+      expect(find.text('Invite a family member'), findsOneWidget);
       expect(find.text('Synthetic admin'), findsOneWidget);
       expect(lifecycle.status.phase, VaultPhase.locked);
       expect(tester.takeException(), isNull);

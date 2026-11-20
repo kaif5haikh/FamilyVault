@@ -36,12 +36,12 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
   bool get _quote => _value || _ownership;
   bool get _rent => widget.action == 'rent';
   String get _title => _value
-      ? 'Record valuation'
+      ? 'Update estimated value'
       : _rent
-      ? 'Record rental income'
+      ? 'Add rent received'
       : _ownership
       ? 'Change family share'
-      : 'Close holding';
+      : 'Close this item';
   bool get _needsAccount {
     if (_rent) {
       return true;
@@ -74,7 +74,7 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
           final a = assets.assets.where((a) => a.id == widget.id).firstOrNull;
           if (a == null || (a.closedOn != null && !_value)) {
             return const VaultContent(
-              children: [Text('Holding unavailable for this action.')],
+              children: [Text('We couldn’t open that item.')],
             );
           }
           final metal = assets.metals
@@ -197,7 +197,7 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
                       ),
                     RecordField(
                       _quote
-                          ? 'Whole-holding value'
+                          ? 'Value of the whole item'
                           : _rent
                           ? 'Rent received'
                           : 'Family proceeds',
@@ -239,7 +239,7 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
                       _ownership
                           ? 'Reason for share change'
                           : _value
-                          ? 'Valuation source or reason'
+                          ? 'Where did the estimate come from?'
                           : _rent
                           ? 'Description'
                           : 'Closure reason',
@@ -254,7 +254,17 @@ class _AssetActionEditorState extends ConsumerState<AssetActionEditor> {
                     FilledButton.icon(
                       onPressed: _busy ? null : _save,
                       icon: const Icon(Icons.check),
-                      label: Text(_busy ? 'Saving…' : _title),
+                      label: Text(
+                        _busy
+                            ? 'Saving…'
+                            : _value
+                            ? 'Save estimate'
+                            : _rent
+                            ? 'Save rent'
+                            : _ownership
+                            ? 'Save family share'
+                            : 'Close this item',
+                      ),
                     ),
                   ],
                 ),

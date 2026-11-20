@@ -117,7 +117,7 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
       builder: (context) => AlertDialog(
         title: Text('Revoke this $kind?'),
         content: const Text(
-          'This blocks future access through the selected record. Copies already downloaded may still be on that device.',
+          'This removes future family access. Files already saved to a phone can stay there.',
         ),
         actions: [
           TextButton(
@@ -126,7 +126,7 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Revoke access'),
+            child: const Text('Remove access'),
           ),
         ],
       ),
@@ -145,7 +145,7 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
       OutlinedButton.icon(
         onPressed: _busy ? null : _verifyAdministrator,
         icon: const Icon(Icons.admin_panel_settings_outlined),
-        label: const Text('Verify administrator access'),
+        label: const Text('Confirm you manage the family'),
       ),
       if (_busy) const LinearProgressIndicator(),
       if (_error != null) FailureNotice(_error!),
@@ -156,7 +156,7 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
           action: FilledButton.icon(
             onPressed: _busy ? null : _newInvite,
             icon: const Icon(Icons.person_add_alt_outlined),
-            label: const Text('Add invitation'),
+            label: const Text('Invite a family member'),
           ),
         ),
         for (final row in _members)
@@ -164,11 +164,15 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
             contentPadding: EdgeInsets.zero,
             title: Text(cloudText(row, 'display_name')),
             subtitle: Text(
-              row['active'] == true ? cloudText(row, 'role') : 'Revoked',
+              row['active'] != true
+                  ? 'Access removed'
+                  : row['role'] == 'administrator'
+                  ? 'Family administrator'
+                  : 'Family member',
             ),
             trailing: row['active'] == true && row['role'] == 'member'
                 ? IconButton(
-                    tooltip: 'Revoke membership',
+                    tooltip: 'Remove family access',
                     icon: const Icon(Icons.person_remove_outlined),
                     onPressed: _busy ? null : () => _revoke('member', row),
                   )
@@ -181,12 +185,12 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
             title: Text(cloudText(row, 'display_name')),
             subtitle: Text(cloudText(row, 'email')),
             trailing: IconButton(
-              tooltip: 'Revoke invitation',
+              tooltip: 'Cancel invitation',
               icon: const Icon(Icons.cancel_outlined),
               onPressed: _busy ? null : () => _revoke('invitation', row),
             ),
           ),
-        const SectionHeading('Family devices'),
+        const SectionHeading('Family phones'),
         for (final row in _devices)
           Card.outlined(
             child: Padding(
@@ -198,7 +202,12 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
                     cloudText(row, 'name'),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  Text(cloudText(row, 'state')),
+                  Text(switch (row['state']) {
+                    'pending' => 'Waiting for approval',
+                    'approved' => 'Approved',
+                    'revoked' => 'Access removed',
+                    _ => 'Check phone access',
+                  }),
                   if (row['state'] != 'revoked')
                     Wrap(
                       spacing: 12,
@@ -207,13 +216,13 @@ class _FamilyAdminPanelState extends ConsumerState<FamilyAdminPanel> {
                         if (row['state'] == 'pending')
                           TextButton(
                             onPressed: _busy ? null : () => _approve(row),
-                            child: const Text('Approve device'),
+                            child: const Text('Approve phone'),
                           ),
                         TextButton(
                           onPressed: _busy
                               ? null
                               : () => _revoke('device', row),
-                          child: const Text('Revoke device'),
+                          child: const Text('Remove phone access'),
                         ),
                       ],
                     ),
@@ -298,7 +307,7 @@ class _AdministratorVerificationState
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Administrator verification'),
+    title: const Text('Confirm family access'),
     content: SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -414,7 +423,7 @@ class _InviteDialogState extends State<_InviteDialog> {
             ));
           }
         },
-        child: const Text('Add invitation'),
+        child: const Text('Invite a family member'),
       ),
     ],
   );

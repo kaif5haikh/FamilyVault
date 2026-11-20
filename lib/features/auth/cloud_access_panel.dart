@@ -223,7 +223,7 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
             !_busy &&
             _error == null)
           const Text(
-            'No family invitation was found for this account. Ask your administrator to add this email address.',
+            'We found no invitation for this email. Ask the person who manages your family access to invite you.',
           ),
         for (final invite in _invitations)
           Card.outlined(
@@ -259,12 +259,15 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
           if (enrollment.state == 'pending') ...[
             const SectionHeading('Waiting for device approval'),
             const Text(
-              'Compare this fingerprint with your administrator before they approve the phone.',
+              'Show this phone code to your family administrator. They should check that it matches before approving your phone.',
             ),
             const SizedBox(height: 10),
             SelectableText(groupedFingerprint(enrollment.fingerprint)),
             const SizedBox(height: 8),
-            SelectableText('Device ID ${enrollment.deviceId}'),
+            ExpansionTile(
+              title: const Text('Phone details'),
+              children: [SelectableText('Phone ID ${enrollment.deviceId}')],
+            ),
             OutlinedButton.icon(
               onPressed: _busy ? null : () => _register(_selected!),
               icon: const Icon(Icons.refresh),
@@ -272,7 +275,7 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
             ),
           ] else if (enrollment.state == 'revoked')
             const Text(
-              'This device was revoked. Contact the family administrator about access.',
+              'This phone no longer has access. Ask your family administrator for help.',
             )
           else ...[
             const SectionHeading('Device approved'),
@@ -285,7 +288,7 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
                         cloudText(selection, 'member_id'),
                       ),
                 icon: const Icon(Icons.folder_open_outlined),
-                label: const Text('Open family vault'),
+                label: const Text('Open family records'),
               ),
             if (_selected != null &&
                 enrollment.workspace?['role'] == 'administrator')
@@ -311,12 +314,12 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
                         deviceId: recent.deviceId,
                       ),
                 icon: const Icon(Icons.history),
-                label: const Text('Open last family vault'),
+                label: const Text('Open the last family’s records'),
               ),
             TextButton.icon(
               onPressed: _busy ? null : () => _run(_refresh),
               icon: const Icon(Icons.refresh),
-              label: const Text('Refresh family access'),
+              label: const Text('Check for family updates'),
             ),
             TextButton.icon(
               onPressed: _busy ? null : _signOut,

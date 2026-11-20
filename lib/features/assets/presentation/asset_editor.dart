@@ -14,8 +14,13 @@ import '../domain/metal_calculator.dart';
 import 'asset_providers.dart';
 
 class AssetEditor extends ConsumerStatefulWidget {
-  const AssetEditor({super.key, this.id});
+  const AssetEditor({
+    super.key,
+    this.id,
+    this.initialKind = AssetKind.property,
+  });
   final String? id;
+  final AssetKind initialKind;
   @override
   ConsumerState<AssetEditor> createState() => _AssetEditorState();
 }
@@ -36,6 +41,8 @@ class _OwnerFields {
 
 class _AssetEditorState extends ConsumerState<AssetEditor> {
   final _form = GlobalKey<FormState>();
+  final _purchasePanel = ExpansibleController();
+  final _peoplePanel = ExpansibleController();
   final _name = TextEditingController(),
       _share = TextEditingController(text: '100'),
       _purchase = TextEditingController(),
@@ -54,7 +61,7 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
       _symbol = TextEditingController(),
       _units = TextEditingController();
   final _owners = <_OwnerFields>[];
-  AssetKind _kind = AssetKind.property;
+  late AssetKind _kind;
   String _metal = 'gold', _purity = 'unrecorded';
   String? _funding, _operation;
   bool _pay = false, _knownDate = false, _busy = false, _prepared = false;
@@ -68,7 +75,16 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
   bool get _isMetal =>
       [AssetKind.gold, AssetKind.silver, AssetKind.jewellery].contains(_kind);
   @override
+  void initState() {
+    super.initState();
+    _kind = widget.initialKind;
+    _metal = _kind == AssetKind.silver ? 'silver' : 'gold';
+  }
+
+  @override
   void dispose() {
+    _purchasePanel.dispose();
+    _peoplePanel.dispose();
     for (final c in [
       _name,
       _share,
@@ -165,7 +181,7 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(_editing ? 'Edit holding details' : 'Add a holding'),
+      title: Text(_editing ? 'Edit item details' : 'Add something we own'),
     ),
     body: AssetView(
       builder: (assets) => FinanceView(
@@ -177,7 +193,7 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                     (a) => a.id == widget.id && a.closedOn != null,
                   ))) {
             return const VaultContent(
-              children: [Text('This holding is unavailable for editing.')],
+              children: [Text('We couldn’t open that item for changes.')],
             );
           }
           final liquid = finance.accounts
@@ -200,20 +216,18 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      _editing
-                          ? 'Shared details keep their previous values in the change audit.'
-                          : 'Record the whole holding. Only your family’s ownership share enters recorded net worth.',
+                      _editing ? 'Earlier details stay in the item’s history.' : 'Enter details for the whole item. Your family summary counts just the share you own.',
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 24),
                     RecordField(
-                      'Holding name',
+                      'Item name',
                       _name,
                       required: true,
                       enabled: !_busy,
                     ),
                     RecordChoice<AssetKind>(
-                      'Holding type',
+                      'Kind of item',
                       _kind,
                       [
                         for (final k in AssetKind.values)
@@ -227,12 +241,12 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                       enabled: !_busy && !_editing,
                     ),
                     RecordField(
-                      'Family ownership (%)',
+                      'Family share (%)',
                       _share,
                       required: true,
                       scale: 2,
                       enabled: !_busy && !_editing,
-                      hint: 'Percentage of the whole holding owned by the family (up to 100%).',
+                      hint: 'Use 100% if your family owns the whole item.',
                     ),
                     if (_isProperty) ...[
                       const SectionHeading('Property & location'),
@@ -398,134 +412,158 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
                         enabled: !_busy,
                       ),
                     ],
-                    const SectionHeading('Purchase & valuation'),
-                    RecordField(
-                      'Purchase price of whole holding (optional)',
-                      _purchase,
-                      money: true,
-                      enabled: !_busy && !_editing,
-                      hint: _editing
-                          ? 'Acquisition entries retain their posted history.'
-                          : 'Leave blank when unknown. Enter zero only for a known zero price.',
-                    ),
                     if (!_editing) ...[
-                      SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Record known purchase date'),
-                        value: _knownDate,
-                        onChanged: _busy
-                            ? null
-                            : (v) => setState(() => _knownDate = v),
-                      ),
-                      RecordDate(
-                        'Purchase date',
-                        _purchasedOn,
-                        (v) => setState(() {
-                          _purchasedOn = v;
-                          _knownDate = true;
-                        }),
-                        enabled: !_busy,
-                      ),
-                      SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        title: const Text('Record payment from cash or bank'),
-                        subtitle: const Text(
-                          'For a new purchase. Leave off for an already owned opening holding.',
-                        ),
-                        value: _pay,
-                        onChanged: _busy
-                            ? null
-                            : (v) => setState(() => _pay = v),
-                      ),
-                      if (_pay)
-                        RecordChoice<String>(
-                          'Payment account',
-                          _funding,
-                          [for (final a in liquid) (a.id, a.name)],
-                          (v) => setState(() => _funding = v),
-                          enabled: !_busy,
-                        ),
                       RecordField(
-                        'Current whole-holding value (optional)',
+                        'Estimated value of the whole item (optional)',
                         _value,
                         money: true,
                         enabled: !_busy,
-                        hint: 'A dated estimate. Price changes are separate from household income.',
+                        hint: 'Use the most recent amount you know.',
                       ),
                       RecordDate(
-                        'Valuation date',
+                        'Date of estimate',
                         _valuedOn,
                         (v) => setState(() => _valuedOn = v),
                         enabled: !_busy,
                       ),
                     ],
-                    const SizedBox(height: 12),
-                    const SectionHeading('Individual ownership (optional)'),
-                    const Text(
-                      'Each allocation is a percentage of the whole holding. Together they must fit within the family share.',
-                    ),
-                    const SizedBox(height: 16),
-                    for (var index = 0; index < _owners.length; index++)
-                      Card.outlined(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              RecordField(
-                                'Owner ${index + 1} name',
-                                _owners[index].name,
-                                required: true,
-                                enabled: !_busy,
-                              ),
-                              RecordField(
-                                'Owner ${index + 1} share (%)',
-                                _owners[index].share,
-                                required: true,
-                                scale: 2,
-                                enabled: !_busy,
-                              ),
-                              Align(
-                                alignment: Alignment.centerRight,
-                                child: TextButton.icon(
-                                  onPressed: _busy
-                                      ? null
-                                      : () => setState(() {
-                                          final o = _owners.removeAt(index);
-                                          WidgetsBinding.instance
-                                              .addPostFrameCallback(
-                                                (_) => o.dispose(),
-                                              );
-                                        }),
-                                  icon: const Icon(Icons.remove_circle_outline),
-                                  label: const Text('Remove allocation'),
-                                ),
-                              ),
-                            ],
-                          ),
+                    ExpansionTile(
+                      controller: _purchasePanel,
+                      maintainState: true,
+                      tilePadding: EdgeInsets.zero,
+                      title: const Text('Purchase and payment details'),
+                      children: [
+                        RecordField(
+                          'Price paid for the whole item (optional)',
+                          _purchase,
+                          money: true,
+                          enabled: !_busy && !_editing,
+                          hint: _editing
+                              ? 'Acquisition entries retain their posted history.'
+                              : 'Leave blank when unknown. Enter zero only for a known zero price.',
                         ),
-                      ),
-                    OutlinedButton.icon(
-                      onPressed: _busy
-                          ? null
-                          : () => setState(() => _owners.add(_OwnerFields())),
-                      icon: const Icon(Icons.person_add_alt_outlined),
-                      label: const Text('Add owner allocation'),
+                        if (!_editing) ...[
+                          SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Record known purchase date'),
+                            value: _knownDate,
+                            onChanged: _busy
+                                ? null
+                                : (v) => setState(() => _knownDate = v),
+                          ),
+                          RecordDate(
+                            'Purchase date',
+                            _purchasedOn,
+                            (v) => setState(() {
+                              _purchasedOn = v;
+                              _knownDate = true;
+                            }),
+                            enabled: !_busy,
+                          ),
+                          SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text(
+                              'Record payment from cash or bank',
+                            ),
+                            subtitle: const Text(
+                              'For a new purchase. Leave off for an already owned opening holding.',
+                            ),
+                            value: _pay,
+                            onChanged: _busy
+                                ? null
+                                : (v) => setState(() => _pay = v),
+                          ),
+                          if (_pay)
+                            RecordChoice<String>(
+                              'Payment account',
+                              _funding,
+                              [for (final a in liquid) (a.id, a.name)],
+                              (v) => setState(() => _funding = v),
+                              enabled: !_busy,
+                            ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    RecordField(
-                      'Notes (optional)',
-                      _notes,
-                      lines: 3,
-                      maxLength: 4000,
-                      enabled: !_busy,
+                    ExpansionTile(
+                      controller: _peoplePanel,
+                      maintainState: true,
+                      tilePadding: EdgeInsets.zero,
+                      title: const Text(
+                        'Individual shares and notes (optional)',
+                      ),
+                      children: [
+                        const Text(
+                          'Enter each person’s share of the whole item. Together these shares must fit within the family share.',
+                        ),
+                        const SizedBox(height: 16),
+                        for (var index = 0; index < _owners.length; index++)
+                          Card.outlined(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  RecordField(
+                                    'Owner ${index + 1} name',
+                                    _owners[index].name,
+                                    required: true,
+                                    enabled: !_busy,
+                                  ),
+                                  RecordField(
+                                    'Owner ${index + 1} share (%)',
+                                    _owners[index].share,
+                                    required: true,
+                                    scale: 2,
+                                    enabled: !_busy,
+                                  ),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton.icon(
+                                      onPressed: _busy
+                                          ? null
+                                          : () => setState(() {
+                                              final o = _owners.removeAt(index);
+                                              WidgetsBinding.instance
+                                                  .addPostFrameCallback(
+                                                    (_) => o.dispose(),
+                                                  );
+                                            }),
+                                      icon: const Icon(
+                                        Icons.remove_circle_outline,
+                                      ),
+                                      label: const Text(
+                                        'Remove person’s share',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        OutlinedButton.icon(
+                          onPressed: _busy
+                              ? null
+                              : () =>
+                                    setState(() => _owners.add(_OwnerFields())),
+                          icon: const Icon(Icons.person_add_alt_outlined),
+                          label: const Text('Add a person’s share'),
+                        ),
+                        const SizedBox(height: 20),
+                        RecordField(
+                          'Notes (optional)',
+                          _notes,
+                          lines: 3,
+                          maxLength: 4000,
+                          enabled: !_busy,
+                        ),
+                      ],
                     ),
                     if (_error != null) FailureNotice(_error!),
                     const SizedBox(height: 20),
                     FilledButton.icon(
                       onPressed: _busy ? null : _save,
                       icon: const Icon(Icons.check),
-                      label: Text(_busy ? 'Saving…' : 'Save holding'),
+                      label: Text(_busy ? 'Saving…' : 'Save item'),
                     ),
                   ],
                 ),
@@ -538,7 +576,9 @@ class _AssetEditorState extends ConsumerState<AssetEditor> {
   );
 
   Future<void> _save() async {
-    if (!_form.currentState!.validate()) {
+    if (_busy || !_form.currentState!.validate()) {
+      if (_purchase.text.isNotEmpty || _pay) _purchasePanel.expand();
+      if (_owners.isNotEmpty) _peoplePanel.expand();
       return;
     }
     setState(() {

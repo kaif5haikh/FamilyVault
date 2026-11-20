@@ -108,7 +108,7 @@ class _DriveBackupsPanelState extends ConsumerState<DriveBackupsPanel> {
         if (configured.isLoading)
           const LinearProgressIndicator()
         else if (configured.asData?.value != true)
-          const Text('Drive backup is unavailable in this build.')
+          const Text('Google Drive copies aren’t set up for this app.')
         else if (account == null)
           OutlinedButton.icon(
             onPressed: enabled
@@ -156,7 +156,8 @@ class _DriveBackupsPanelState extends ConsumerState<DriveBackupsPanel> {
             ],
           ),
           if (_listedAccount == account) ...[
-            if (_files.isEmpty) const Text('No Drive backups found.'),
+            if (_files.isEmpty)
+              const Text('No Safe copies in Google Drive found.'),
             for (final file in _files)
               ListTile(
                 contentPadding: EdgeInsets.zero,

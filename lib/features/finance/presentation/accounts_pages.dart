@@ -10,6 +10,24 @@ import '../../../core/finance/money.dart';
 import '../../../shared/widgets/vault_widgets.dart';
 import '../data/ledger_repository.dart';
 
+String _accountLabel(LedgerAccount account) => switch (account.kind) {
+  'income' => 'Money received',
+  'expense' => 'Money spent',
+  'liability' => 'Money owed',
+  _ => _subtypeLabel(account.subtype),
+};
+
+String _subtypeLabel(String subtype) => switch (subtype) {
+  'cash' => 'Cash',
+  'bank' => 'Bank account',
+  'deposit' => 'Bank deposit',
+  'investment' => 'Investment',
+  'loan' => 'Loan',
+  'borrowed' => 'Borrowed money',
+  'category' => 'Category',
+  _ => 'Other account',
+};
+
 class AccountsPage extends StatefulWidget {
   const AccountsPage({super.key});
   @override
@@ -35,7 +53,7 @@ class _AccountsPageState extends State<AccountsPage> {
       return VaultContent(
         children: [
           SectionHeading(
-            'Accounts & categories',
+            'Your accounts',
             action: FilledButton.icon(
               onPressed: () => context.push('/account/new'),
               icon: const Icon(Icons.add),
@@ -60,10 +78,10 @@ class _AccountsPageState extends State<AccountsPage> {
               icon: Icons.account_balance_outlined,
               title: _group == 'Archived'
                   ? 'No archived accounts'
-                  : 'Your accounts start here',
+                  : 'No accounts here yet',
               message: _group == 'Archived'
                   ? 'Archived accounts keep their complete history.'
-                  : 'Add a cash or bank account. Opening balances are optional and recorded in your ledger.',
+                  : 'Add the cash or bank account you use. Starting with zero is fine.',
             ),
           for (final a in accounts)
             Padding(
@@ -79,7 +97,7 @@ class _AccountsPageState extends State<AccountsPage> {
                   ),
                   title: Text(a.name),
                   subtitle: Text(
-                    '${a.kind} · ${a.subtype.replaceAll('_', ' ')}\n${formatInr(a.kind == 'liability' || a.kind == 'income' ? -(balances[a.id] ?? BigInt.zero) : balances[a.id] ?? BigInt.zero)}',
+                    '${_accountLabel(a)}\n${formatInr(a.kind == 'liability' || a.kind == 'income' ? -(balances[a.id] ?? BigInt.zero) : balances[a.id] ?? BigInt.zero)}',
                   ),
                   isThreeLine: true,
                   trailing: const Icon(Icons.chevron_right),
@@ -94,9 +112,14 @@ class _AccountsPageState extends State<AccountsPage> {
 }
 
 class AccountEditor extends ConsumerStatefulWidget {
-  const AccountEditor({super.key, this.initialKind = 'asset', this.accountId});
+  const AccountEditor({
+    super.key,
+    this.initialKind = 'asset',
+    this.accountId,
+    this.initialSubtype,
+  });
   final String initialKind;
-  final String? accountId;
+  final String? accountId, initialSubtype;
   @override
   ConsumerState<AccountEditor> createState() => _AccountEditorState();
 }
@@ -120,7 +143,11 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
             )
             .firstOrNull ??
         AccountKind.asset;
-    _subtype = _subtypes(_kind).first;
+    final available = _subtypes(_kind);
+    final requested = widget.initialSubtype;
+    _subtype = requested != null && available.contains(requested)
+        ? requested
+        : available.first;
   }
 
   @override
@@ -184,7 +211,7 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
                       initialValue: _kind,
                       isExpanded: true,
                       decoration: const InputDecoration(
-                        labelText: 'Account type',
+                        labelText: 'Kind of account',
                       ),
                       items: [
                         for (final kind in AccountKind.values.where(
@@ -193,10 +220,10 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
                           DropdownMenuItem(
                             value: kind,
                             child: Text(switch (kind) {
-                              AccountKind.asset => 'Asset',
-                              AccountKind.liability => 'Liability',
-                              AccountKind.income => 'Income category',
-                              _ => 'Expense category',
+                              AccountKind.asset => 'Cash, bank or property',
+                              AccountKind.liability => 'Money owed',
+                              AccountKind.income => 'Kind of money received',
+                              _ => 'Kind of spending',
                             }),
                           ),
                       ],
@@ -216,9 +243,7 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
                         for (final subtype in _subtypes(_kind))
                           DropdownMenuItem(
                             value: subtype,
-                            child: Text(
-                              subtype[0].toUpperCase() + subtype.substring(1),
-                            ),
+                            child: Text(_subtypeLabel(subtype)),
                           ),
                       ],
                       onChanged: _busy
@@ -237,9 +262,9 @@ class _AccountEditorState extends ConsumerState<AccountEditor> {
                           signed: true,
                         ),
                         decoration: const InputDecoration(
-                          labelText: 'Opening balance (optional)',
+                          labelText: 'Starting amount (optional)',
                           prefixText: '₹ ',
-                          helperText: 'Creates a dated opening entry. Leave empty to start at zero.',
+                          helperText: 'Enter what was there when you started your records. Leave empty to start at zero.',
                         ),
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
@@ -379,7 +404,7 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
               ),
               icon: Icons.account_balance_outlined,
               detail:
-                  '${a.kind} · ${a.subtype} · INR${a.deletedAtUs != null ? ' · Archived' : ''}',
+                  '${_accountLabel(a)}${a.deletedAtUs != null ? ' · Archived' : ''}',
               emphasis: true,
             ),
             const SizedBox(height: 20),
@@ -399,7 +424,7 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
                   OutlinedButton.icon(
                     onPressed: () => context.push('/account/${a.id}/reconcile'),
                     icon: const Icon(Icons.fact_check_outlined),
-                    label: const Text('Reconcile'),
+                    label: const Text('Check the amount'),
                   ),
                 if (!managed && !a.systemAccount)
                   OutlinedButton.icon(
@@ -417,7 +442,7 @@ class _AccountDetailPageState extends ConsumerState<AccountDetailPage> {
             ),
             if (managed)
               const Text(
-                'This account is maintained by its holding, loan or business record.',
+                'To change this amount, open the related item, loan or business.',
               ),
             if (_error != null) ...[
               const SizedBox(height: 16),

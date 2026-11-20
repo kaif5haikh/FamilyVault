@@ -41,11 +41,11 @@ class _PlanningPageState extends State<PlanningPage> {
       return VaultContent(
         children: [
           SectionHeading(
-            'Make room for what matters',
+            'Plan for this month',
             action: FilledButton.icon(
               onPressed: () => context.push('/budget/new?month=$month'),
               icon: const Icon(Icons.add),
-              label: const Text('Set budget'),
+              label: const Text('Plan spending'),
             ),
           ),
           Row(
@@ -81,12 +81,12 @@ class _PlanningPageState extends State<PlanningPage> {
           ResponsiveCards(
             children: [
               MetricCard(
-                title: 'Monthly budget',
+                title: 'Planned spending',
                 value: formatInr(target),
                 icon: Icons.savings_outlined,
               ),
               MetricCard(
-                title: 'All expenses this month',
+                title: 'Money spent this month',
                 value: formatInr(expenses),
                 icon: Icons.receipt_long_outlined,
               ),
@@ -96,8 +96,8 @@ class _PlanningPageState extends State<PlanningPage> {
           if (budgets.isEmpty)
             const EmptyNotice(
               icon: Icons.savings_outlined,
-              title: 'Give every category a plan',
-              message: 'Set a monthly limit for an expense category, then track actual spending against it.',
+              title: 'No spending plans yet',
+              message: 'Choose what you’re planning to spend on and set an amount for this month.',
             ),
           for (final budget in budgets)
             Padding(
@@ -190,7 +190,9 @@ class _BudgetEditorState extends ConsumerState<BudgetEditor> {
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
-      title: Text(widget.id == null ? 'Set a monthly budget' : 'Edit budget'),
+      title: Text(
+        widget.id == null ? 'Plan monthly spending' : 'Edit spending plan',
+      ),
     ),
     body: FinanceView(
       builder: (data) {
@@ -289,7 +291,7 @@ class _BudgetEditorState extends ConsumerState<BudgetEditor> {
                   FilledButton.icon(
                     onPressed: _busy ? null : _save,
                     icon: const Icon(Icons.check),
-                    label: Text(_busy ? 'Saving…' : 'Save budget'),
+                    label: Text(_busy ? 'Saving…' : 'Save spending plan'),
                   ),
                   if (widget.id != null) ...[
                     const SizedBox(height: 16),
@@ -406,7 +408,7 @@ class _ReconciliationEditorState extends ConsumerState<ReconciliationEditor> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Reconcile account')),
+    appBar: AppBar(title: const Text('Check that the amounts match')),
     body: FinanceView(
       builder: (data) {
         final a = data.accounts
@@ -421,7 +423,7 @@ class _ReconciliationEditorState extends ConsumerState<ReconciliationEditor> {
           children: [
             Text(a.name, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 12),
-            Text('Ledger balance on $_date: ${formatInr(balance)}'),
+            Text('Amount in FamilyVault on $_date: ${formatInr(balance)}'),
             const SizedBox(height: 24),
             Form(
               key: _form,
@@ -488,7 +490,7 @@ class _ReconciliationEditorState extends ConsumerState<ReconciliationEditor> {
                     onChanged: _busy
                         ? null
                         : (v) => setState(() => _adjust = v),
-                    title: const Text('Post an adjustment for the difference'),
+                    title: const Text('Save a change for the difference'),
                     subtitle: const Text(
                       'Off by default. Adds a separate balanced entry against reconciliation equity; it never edits past transactions.',
                     ),

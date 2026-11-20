@@ -1,36 +1,62 @@
 import 'package:material_ui/material_ui.dart';
 
 abstract final class VaultTheme {
-  static const _seed = Color(0xFF145E56);
+  static const _seed = Color(0xFF126653);
   static const contentWidth = 680.0;
-  static const space = 24.0;
+  static const gutter = 16.0;
+  static const space = 20.0;
+  static const gap = 12.0;
+  static const radius = 16.0;
+  static const target = 48.0;
 
   static ThemeData get light => _create(Brightness.light);
   static ThemeData get dark => _create(Brightness.dark);
 
   static ThemeData _create(Brightness brightness) {
-    final colors = ColorScheme.fromSeed(
+    final scheme = ColorScheme.fromSeed(
       seedColor: _seed,
       brightness: brightness,
+    );
+    final colors = brightness == Brightness.light
+        ? scheme.copyWith(
+            surface: const Color(0xFFF7F8F4),
+            surfaceContainerLowest: Colors.white,
+            surfaceContainerLow: const Color(0xFFEEF2EC),
+            primaryContainer: const Color(0xFFD5EDE4),
+          )
+        : scheme;
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(radius),
     );
     return ThemeData(
       useMaterial3: true,
       colorScheme: colors,
       scaffoldBackgroundColor: colors.surface,
+      visualDensity: VisualDensity.standard,
+      textTheme: const TextTheme(
+        headlineLarge: TextStyle(fontWeight: FontWeight.w700),
+        headlineMedium: TextStyle(fontWeight: FontWeight.w700),
+        headlineSmall: TextStyle(fontWeight: FontWeight.w700),
+        titleLarge: TextStyle(fontWeight: FontWeight.w700),
+        titleMedium: TextStyle(fontWeight: FontWeight.w600),
+        bodyMedium: TextStyle(fontSize: 15, height: 1.4),
+        bodyLarge: TextStyle(fontSize: 16, height: 1.4),
+        labelLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colors.surfaceContainerLowest,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 18,
-          vertical: 18,
+          horizontal: 14,
+          vertical: 15,
         ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(radius)),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(radius),
           borderSide: BorderSide(color: colors.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(radius),
           borderSide: BorderSide(color: colors.primary, width: 2),
         ),
       ),
@@ -42,15 +68,33 @@ abstract final class VaultTheme {
       cardTheme: CardThemeData(
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: shape,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(48, 52),
-          padding: const EdgeInsets.symmetric(horizontal: space, vertical: 16),
+          minimumSize: const Size(target, target),
+          padding: const EdgeInsets.symmetric(horizontal: gutter, vertical: 12),
+          shape: shape,
         ),
       ),
-      listTileTheme: const ListTileThemeData(minVerticalPadding: 16),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(target, target),
+          padding: const EdgeInsets.symmetric(horizontal: gutter, vertical: 12),
+          shape: shape,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(minimumSize: const Size(target, target)),
+      ),
+      listTileTheme: const ListTileThemeData(minVerticalPadding: 10),
+      navigationBarTheme: NavigationBarThemeData(
+        height: 66,
+        backgroundColor: colors.surfaceContainerLowest,
+        labelTextStyle: const WidgetStatePropertyAll(
+          TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+      ),
     );
   }
 }

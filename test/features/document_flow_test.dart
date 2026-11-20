@@ -107,8 +107,8 @@ void main() {
       );
       await tester.pump();
       container.read(routerProvider).go('/documents');
-      await ready(tester, find.text('Add'));
-      await tapVisible(tester, find.text('Add'));
+      await ready(tester, find.byKey(const ValueKey('documents-add')));
+      await tapVisible(tester, find.byKey(const ValueKey('documents-add')));
       await tapVisible(tester, find.text('Choose a file'));
       expect(io.mode, DocumentPicker.files);
 
@@ -135,8 +135,8 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pump();
-      await tapVisible(tester, find.text('Unlock vault'));
-      await ready(tester, field('Document title'));
+      await tapVisible(tester, find.text('Unlock records'));
+      await ready(tester, field('Document name'));
       expect(gate.calls, greaterThanOrEqualTo(2));
       await tapVisible(tester, find.text('Save document'));
       final saved = find.widgetWithText(ListTile, 'Synthetic scan');
@@ -145,7 +145,7 @@ void main() {
 
       await tapVisible(tester, saved);
       await ready(tester, find.text('Version 1'));
-      await tapVisible(tester, find.text('Version 1'));
+      await tapVisible(tester, find.text('Open document'));
       await ready(tester, find.byType(InteractiveViewer));
       expect(find.text('This image could not be opened.'), findsNothing);
       await tapVisible(tester, find.byTooltip('Save a copy'));

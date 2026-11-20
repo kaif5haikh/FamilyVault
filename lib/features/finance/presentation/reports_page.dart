@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/finance/formatters.dart';
 import '../../../shared/widgets/vault_widgets.dart';
 import '../domain/finance_report.dart';
+import '../../business/presentation/business_pages.dart';
 import 'finance_charts.dart';
 
 class ReportsPage extends StatefulWidget {
@@ -36,7 +37,7 @@ class _ReportsPageState extends State<ReportsPage> {
       return VaultContent(
         children: [
           SectionHeading(
-            'Your family, in perspective',
+            'Your money over time',
             action: OutlinedButton.icon(
               onPressed: _chooseDate,
               icon: const Icon(Icons.calendar_today_outlined),
@@ -62,24 +63,24 @@ class _ReportsPageState extends State<ReportsPage> {
           ResponsiveCards(
             children: [
               MetricCard(
-                title: 'Income',
+                title: 'Money received',
                 value: formatInr(report.income),
                 icon: Icons.south_west,
               ),
               MetricCard(
-                title: 'Expenses',
+                title: 'Money spent',
                 value: formatInr(report.expenses),
                 icon: Icons.north_east,
               ),
               MetricCard(
-                title: 'Savings',
+                title: 'Money left this period',
                 value: formatInr(report.savings),
                 icon: Icons.savings_outlined,
                 detail:
-                    'Savings rate ${formatPercentage(report.savings, report.income)}',
+                    'Share left ${formatPercentage(report.savings, report.income)}',
               ),
               MetricCard(
-                title: 'Closing net worth',
+                title: 'Estimated family value',
                 value: formatInr(report.netWorth),
                 icon: Icons.account_balance_outlined,
                 detail: 'As of ${report.period.end}',
@@ -87,7 +88,7 @@ class _ReportsPageState extends State<ReportsPage> {
             ],
           ),
           const SizedBox(height: 32),
-          const SectionHeading('Income & expense trend'),
+          const SectionHeading('Money in and out'),
           Card.outlined(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -100,14 +101,16 @@ class _ReportsPageState extends State<ReportsPage> {
               contentPadding: EdgeInsets.zero,
               title: Text(month.period.label),
               subtitle: Text(
-                'Income ${formatInr(month.income)} · Expenses ${formatInr(month.expenses)}',
+                'Received ${formatInr(month.income)} · Spent ${formatInr(month.expenses)}',
               ),
             ),
           const SizedBox(height: 24),
           const SectionHeading('Category breakdown'),
           for (final kind in ['income', 'expense']) ...[
             Text(
-              kind == 'income' ? 'Income sources' : 'Expense categories',
+              kind == 'income'
+                  ? 'Where money came from'
+                  : 'What money was spent on',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 12),
@@ -126,7 +129,13 @@ class _ReportsPageState extends State<ReportsPage> {
               ),
           ],
           const SizedBox(height: 24),
-          const SectionHeading('Asset allocation'),
+          BusinessOverview(
+            finance: data,
+            from: report.period.start,
+            through: report.period.end,
+          ),
+          const SizedBox(height: 18),
+          const SectionHeading('What makes up what we own'),
           Card.outlined(
             child: Padding(
               padding: const EdgeInsets.all(24),

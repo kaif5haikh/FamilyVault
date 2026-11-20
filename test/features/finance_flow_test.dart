@@ -102,7 +102,7 @@ void main() {
       await tapVisible(tester, find.text('Add your first account'));
       await ready(tester, field('Name'));
       await tester.enterText(field('Name'), 'Synthetic cash');
-      await tester.enterText(field('Opening balance (optional)'), '1000.00');
+      await tester.enterText(field('Starting amount (optional)'), '1000.00');
       await tapVisible(tester, find.text('Save account'));
       await ready(tester, find.widgetWithText(AppBar, 'Account details'));
       var snapshot = (await databaseIO(
@@ -115,29 +115,29 @@ void main() {
       expect(snapshot.balances()[cash.id], BigInt.from(100000));
       // Saving replaces only the form, preserving the navigation back to overview.
       await tester.pageBack();
-      await ready(tester, find.text('Add transaction'));
-      await tapVisible(tester, find.text('Add transaction'));
+      await ready(tester, find.byKey(const ValueKey('action-addExpense')));
+      await tapVisible(tester, find.byKey(const ValueKey('action-addExpense')));
       await ready(tester, field('Amount'));
       await tester.enterText(field('Amount'), '123.45');
-      await selectValue(tester, 'Paid from', 'Synthetic cash');
-      await selectValue(tester, 'Category', 'Groceries');
-      await tester.enterText(field('Description'), 'Synthetic groceries');
-      await tapVisible(tester, find.text('Save transaction'));
-      await ready(tester, find.widgetWithText(AppBar, 'Transaction details'));
+      await selectValue(tester, 'Which account did you use?', 'Synthetic cash');
+      await selectValue(tester, 'What was it spent on?', 'Groceries');
+      await tester.enterText(field('Note (optional)'), 'Synthetic groceries');
+      await tapVisible(tester, find.text('Save money record'));
+      await ready(tester, find.widgetWithText(AppBar, 'Money record'));
       snapshot = (await databaseIO(
         tester,
         () => lifecycle.status.session!.ledger.snapshot(),
       ))!;
       expect(snapshot.total(AccountKind.expense), BigInt.from(12345));
-      await tapVisible(tester, find.text('Correct entry'));
+      await tapVisible(tester, find.text('Correct this record'));
       await ready(tester, field('Amount'));
       await tester.enterText(field('Amount'), '23.45');
       await tester.enterText(
-        field('Reason for correction'),
+        field('Why are you correcting this?'),
         'Synthetic amount correction',
       );
       await tapVisible(tester, find.text('Save correction'));
-      await ready(tester, find.widgetWithText(AppBar, 'Transaction details'));
+      await ready(tester, find.widgetWithText(AppBar, 'Money record'));
       snapshot = (await databaseIO(
         tester,
         () => lifecycle.status.session!.ledger.snapshot(),
@@ -146,12 +146,12 @@ void main() {
       expect(snapshot.journals.length, 4);
       expect(snapshot.journals.where((j) => j.deletedAtUs != null).length, 1);
       container.read(routerProvider).go('/planning');
-      await ready(tester, find.text('Set budget'));
-      await tapVisible(tester, find.text('Set budget'));
+      await ready(tester, find.text('Plan spending'));
+      await tapVisible(tester, find.text('Plan spending'));
       await ready(tester, field('Monthly limit'));
       await selectValue(tester, 'Expense category', 'Groceries');
       await tester.enterText(field('Monthly limit'), '100.00');
-      await tapVisible(tester, find.text('Save budget'));
+      await tapVisible(tester, find.text('Save spending plan'));
       await ready(tester, find.text('₹76.55 remaining'));
       snapshot = (await databaseIO(
         tester,
@@ -174,21 +174,21 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       final container = await app(tester);
-      await ready(tester, find.text('Net worth'));
-      await tapVisible(tester, find.text('More'));
-      await tapVisible(tester, find.text('Assets'));
-      await ready(tester, find.text('Add holding'));
-      await tapVisible(tester, find.text('Add holding'));
-      await ready(tester, field('Holding name'));
-      await tester.enterText(field('Holding name'), 'Synthetic property');
-      await tester.enterText(field('Family ownership (%)'), '50');
+      await ready(tester, find.text('Money available'));
+      await tapVisible(tester, find.byKey(const ValueKey('area-money')));
+      await tapVisible(tester, find.text('What we own'));
+      await ready(tester, find.text('Add an item'));
+      await tapVisible(tester, find.text('Add an item'));
+      await ready(tester, field('Item name'));
+      await tester.enterText(field('Item name'), 'Synthetic property');
+      await tester.enterText(field('Family share (%)'), '50');
       await tapVisible(tester, find.text('Mumbai'));
       await tester.enterText(
-        field('Current whole-holding value (optional)'),
+        field('Estimated value of the whole item (optional)'),
         '12345.67',
       );
-      await tapVisible(tester, find.text('Save holding'));
-      await ready(tester, find.widgetWithText(AppBar, 'Holding details'));
+      await tapVisible(tester, find.text('Save item'));
+      await ready(tester, find.widgetWithText(AppBar, 'Item details'));
       final session = lifecycle.status.session!,
           repo = AssetRepository(session.ledger);
       final asset = (await databaseIO(tester, repo.snapshot)).assets.single;
@@ -204,16 +204,16 @@ void main() {
         )).valuations.single.familyValueMinor,
         617284,
       );
-      await tapVisible(tester, find.text('Record valuation'));
-      await ready(tester, field('Whole-holding value'));
-      await tester.enterText(field('Whole-holding value'), '15000');
+      await tapVisible(tester, find.text('Update estimated value'));
+      await ready(tester, field('Value of the whole item'));
+      await tester.enterText(field('Value of the whole item'), '15000');
       await tester.enterText(
-        field('Valuation source or reason'),
+        field('Where did the estimate come from?'),
         'Synthetic appraisal',
       );
       await tapVisible(
         tester,
-        find.widgetWithText(FilledButton, 'Record valuation'),
+        find.widgetWithText(FilledButton, 'Save estimate'),
       );
       await ready(tester, find.text('₹7,500.00'));
       final snapshot = await databaseIO(tester, session.ledger.snapshot);
@@ -226,9 +226,9 @@ void main() {
         (j) => j.relatedEntityId == asset.id,
       );
       container.read(routerProvider).go('/transaction/${managed.id}');
-      await ready(tester, find.text('View related holding'));
-      expect(find.text('Reverse entry'), findsNothing);
-      await tapVisible(tester, find.text('View related holding'));
+      await ready(tester, find.text('Open the related item'));
+      expect(find.text('Undo this record'), findsNothing);
+      await tapVisible(tester, find.text('Open the related item'));
       await ready(tester, find.text('Change audit'));
       await tapVisible(tester, find.text('Change audit'));
       expect(find.text('Synthetic owner · create'), findsOneWidget);
@@ -237,14 +237,14 @@ void main() {
         tester.view.physicalSize = size;
         tester.platformDispatcher.textScaleFactorTestValue = 2;
         for (final (path, title) in [
-          ('/assets', 'Add holding'),
-          ('/asset/new', 'Add a holding'),
-          ('/asset/${asset.id}', 'Holding details'),
-          ('/asset/${asset.id}/edit', 'Edit holding details'),
-          ('/asset/${asset.id}/value', 'Record valuation'),
+          ('/assets', 'Add an item'),
+          ('/asset/new', 'Add something we own'),
+          ('/asset/${asset.id}', 'Item details'),
+          ('/asset/${asset.id}/edit', 'Edit item details'),
+          ('/asset/${asset.id}/value', 'Update estimated value'),
           ('/asset/${asset.id}/ownership', 'Change family share'),
-          ('/asset/${asset.id}/close', 'Close holding'),
-          ('/asset/${asset.id}/rent', 'Record rental income'),
+          ('/asset/${asset.id}/close', 'Close this item'),
+          ('/asset/${asset.id}/rent', 'Add rent received'),
         ]) {
           container.read(routerProvider).go(path);
           await ready(tester, find.text(title));
@@ -269,7 +269,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       final container = await app(tester);
-      await ready(tester, find.text('Net worth'));
+      await ready(tester, find.text('Money available'));
       final session = lifecycle.status.session!;
       final cash = await databaseIO(
         tester,
@@ -287,19 +287,19 @@ void main() {
       await ready(tester, field('Loan name'));
       await tester.enterText(field('Loan name'), 'Synthetic loan');
       await tester.enterText(field('Lender'), 'Synthetic lender');
-      await tester.enterText(field('Opening principal'), '1000');
+      await tester.enterText(field('Original loan amount'), '1000');
       FocusManager.instance.primaryFocus?.unfocus();
       await tester.pump(const Duration(milliseconds: 350));
       await tapVisible(tester, find.widgetWithText(FilledButton, 'Save loan'));
       final repaymentButton = find.widgetWithText(
         FilledButton,
-        'Record repayment',
+        'Add a payment',
       );
       await ready(tester, repaymentButton);
       await tapVisible(tester, repaymentButton);
-      await ready(tester, field('Principal amount'));
-      await tester.enterText(field('Principal amount'), '250.01');
-      await tester.enterText(field('Interest amount'), '4.99');
+      await ready(tester, field('Amount paid toward the loan'));
+      await tester.enterText(field('Amount paid toward the loan'), '250.01');
+      await tester.enterText(field('Interest paid'), '4.99');
       await selectValue(tester, 'Paid from', 'Synthetic loan cash');
       await tapVisible(
         tester,
@@ -309,10 +309,10 @@ void main() {
       // A save notice can still cover the bottom of the next long form.
       await tester.pump(const Duration(seconds: 5));
       await tester.pump(const Duration(milliseconds: 350));
-      await tapVisible(tester, find.text('Correct repayment'));
+      await tapVisible(tester, find.text('Correct payment'));
       await ready(tester, field('Reason for correction'));
-      await tester.enterText(field('Principal amount'), '200');
-      await tester.enterText(field('Interest amount'), '2.01');
+      await tester.enterText(field('Amount paid toward the loan'), '200');
+      await tester.enterText(field('Interest paid'), '2.01');
       await tester.enterText(
         field('Reason for correction'),
         'Synthetic corrected repayment',
@@ -351,7 +351,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       final container = await app(tester);
-      await ready(tester, find.text('Net worth'));
+      await ready(tester, find.text('Money available'));
       final session = lifecycle.status.session!;
       final repo = BusinessRepository(session.ledger);
       await databaseIO(
@@ -372,14 +372,17 @@ void main() {
         tester,
         find.widgetWithText(FilledButton, 'Save business'),
       );
-      await ready(tester, find.widgetWithText(FilledButton, 'Record revenue'));
+      await ready(
+        tester,
+        find.widgetWithText(FilledButton, 'Add money from sales'),
+      );
       final business = (await databaseIO(
         tester,
         repo.snapshot,
       )).businesses.single;
       await tapVisible(
         tester,
-        find.widgetWithText(FilledButton, 'Record revenue'),
+        find.widgetWithText(FilledButton, 'Add money from sales'),
       );
       await ready(tester, field('Amount'));
       await tester.enterText(field('Amount'), '100');
@@ -487,26 +490,31 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       final container = await app(tester);
-      await ready(tester, find.text('Net worth'));
+      await ready(tester, find.text('Money available'));
       expect(
         find.descendant(
-          of: find.widgetWithText(MetricCard, 'Income'),
+          of: find.widgetWithText(Card, 'Money available'),
           matching: find.text('₹1.25 lakh'),
         ),
         findsOneWidget,
       );
-      await tester.runAsync(() async {
-        final boundary =
-            capture.currentContext!.findRenderObject()!
-                as RenderRepaintBoundary;
-        final image = await boundary.toImage(pixelRatio: 1),
-            bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-        final directory = await Directory('.cache/screenshots')
-            .create(recursive: true);
-        await File('${directory.path}/m04-overview-synthetic.png')
-            .writeAsBytes(bytes!.buffer.asUint8List());
-        image.dispose();
-      });
+      if (Platform.environment['FAMILYVAULT_UX_EVIDENCE'] case final output?) {
+        await tester.runAsync(() async {
+          final boundary =
+              capture.currentContext!.findRenderObject()!
+                  as RenderRepaintBoundary;
+          final image = await boundary.toImage(pixelRatio: 1);
+          try {
+            final bytes = await image.toByteData(
+              format: ui.ImageByteFormat.png,
+            );
+            await File('$output/home-synthetic.png')
+                .writeAsBytes(bytes!.buffer.asUint8List());
+          } finally {
+            image.dispose();
+          }
+        });
+      }
       for (final size in [const Size(320, 568), const Size(1200, 900)]) {
         tester.view.physicalSize = size;
         tester.platformDispatcher.textScaleFactorTestValue = 2;
@@ -554,8 +562,8 @@ void main() {
       await tester.pumpAndSettle();
       container.read(routerProvider).go('/reports');
       await tester.pumpAndSettle();
-      expect(find.text('Your vault is locked'), findsOneWidget);
-      expect(find.text('Closing net worth'), findsNothing);
+      expect(find.text('Your records are locked'), findsOneWidget);
+      expect(find.text('Estimated family value'), findsNothing);
       expect(tester.takeException(), isNull);
       await databaseIO(tester, lifecycle.lock);
       await tester.pumpWidget(const SizedBox.shrink());

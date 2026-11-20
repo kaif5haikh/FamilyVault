@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/errors/app_failure.dart';
+import '../../core/localization/vault_strings.dart';
 import '../../core/sync/live_sync.dart';
 import '../../shared/widgets/vault_widgets.dart';
 import '../finance/data/ledger_repository.dart';
@@ -45,6 +46,7 @@ Future<void> chooseDocument(
   DocumentRepository repository, {
   VaultDocument? versionOf,
 }) async {
+  final strings = VaultStrings.of(context);
   final picker = await showModalBottomSheet<DocumentPicker>(
     context: context,
     builder: (context) => SafeArea(
@@ -53,13 +55,13 @@ Future<void> chooseDocument(
         children: [
           ListTile(
             leading: const Icon(Icons.folder_open_outlined),
-            title: const Text('Choose a file'),
+            title: Text(strings.text('choosePaperFile')),
             subtitle: const Text('PDF, JPG or PNG'),
             onTap: () => Navigator.of(context).pop(DocumentPicker.files),
           ),
           ListTile(
             leading: const Icon(Icons.document_scanner_outlined),
-            title: const Text('Scan with camera'),
+            title: Text(strings.text('scanPaper')),
             onTap: () => Navigator.of(context).pop(DocumentPicker.camera),
           ),
         ],
@@ -87,8 +89,12 @@ Future<void> chooseDocument(
   }
 }
 
+enum DocumentGuide { add, find }
+
 class DocumentsPage extends ConsumerStatefulWidget {
-  const DocumentsPage({super.key});
+  const DocumentsPage({this.guide, super.key});
+
+  final DocumentGuide? guide;
   @override
   ConsumerState<DocumentsPage> createState() => _DocumentsPageState();
 }
@@ -100,150 +106,45 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = VaultStrings.of(context);
     final repository = ref.watch(documentRepositoryProvider);
     final selection = ref.watch(documentIntakeProvider);
     if (repository == null) return const SizedBox.shrink();
     if (repository.session.identity.isCloud && !repository.sharingAvailable) {
       return const VaultContent(
-        children: [
-          Text('Shared document storage is unavailable for this account.'),
-        ],
+        children: [Text('Shared papers are unavailable for this account.')],
       );
     }
     return VaultContent(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Document vault',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-            ),
-            FilledButton.icon(
-              onPressed: () => chooseDocument(context, ref, repository),
-              icon: const Icon(Icons.add),
-              label: const Text('Add'),
-            ),
-          ],
-        ),
-        if (repository.sharingAvailable ||
-            repository.session.identity.sharedChart) ...[
-          if (repository.session.sync case final sync?)
-            StreamBuilder<SyncFeedback>(
-              stream: sync.changes,
-              initialData: sync.status,
-              builder: (context, snapshot) {
-                final feedback = snapshot.data;
-                final failure =
-                    feedback?.documentFailure ??
-                    (feedback?.failure?.code == FailureCode.network
-                        ? feedback?.failure
-                        : null);
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextButton.icon(
-                      onPressed: feedback?.checking == true ? null : sync.check,
-                      icon: const Icon(Icons.sync),
-                      label: const Text('Check for shared documents'),
-                    ),
-                    if (failure != null) FailureNotice(failure),
-                  ],
-                );
-              },
-            ),
-          StreamBuilder<List<VaultDocumentUpload>>(
-            stream: repository.watchUploads(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) return FailureNotice(snapshot.error!);
-              final uploads = snapshot.data;
-              if (uploads == null || uploads.isEmpty) {
-                return const SizedBox.shrink();
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SectionHeading('Files saved on this device'),
-                  for (final job in uploads)
-                    Card.outlined(
-                      child: ListTile(
-                        leading: const Icon(Icons.cloud_upload_outlined),
-                        title: Text(job.title),
-                        subtitle: Text(
-                          !repository.sharingAvailable
-                              ? 'Saved in this recovered vault.'
-                              : switch (job.state) {
-                                  'acknowledged' => 'Shared. Waiting for the family list to refresh.',
-                                  'conflicted' => 'The family document changed. Your copy is here.',
-                                  'rejected' => 'Could not share this version. Your copy is here.',
-                                  _ => 'Waiting for the family service to confirm this file.',
-                                },
-                        ),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push(
-                          '/document/${job.documentId}/version/${job.id}',
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-          if (repository.sharingAvailable)
-            StreamBuilder<List<DocumentEditStatus>>(
-              stream: repository.watchDocumentEdits(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) return FailureNotice(snapshot.error!);
-                final edits = snapshot.data;
-                if (edits == null || edits.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-                return Column(
-                  children: [
-                    for (final edit in edits)
-                      Card.outlined(
-                        child: ListTile(
-                          leading: const Icon(Icons.edit_outlined),
-                          title: Text(edit.title),
-                          subtitle: Text(switch (edit.state) {
-                            'conflicted' =>
-                              'The family document changed. Open it to review.',
-                            'rejected' => 'Could not share this edit.',
-                            'acknowledged' =>
-                              'Shared. Waiting for the family list to refresh.',
-                            _ => switch (edit.action) {
-                              'archive' => 'Waiting to confirm the archive.',
-                              'restore' => 'Waiting to confirm the restore.',
-                              'link' =>
-                                'Waiting to confirm the transaction link.',
-                              'unlink' => 'Waiting to confirm removal of the transaction link.',
-                              _ => 'Waiting to confirm the edited details.',
-                            },
-                          }),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () =>
-                              context.push('/document/${edit.documentId}'),
-                        ),
-                      ),
-                  ],
-                );
-              },
-            ),
+        if (widget.guide == DocumentGuide.add) ...[
+          Text(strings.text('help.addPaper.first')),
+          const SizedBox(height: 8),
         ],
+        FilledButton.icon(
+          key: const ValueKey('documents-add'),
+          onPressed: () => chooseDocument(context, ref, repository),
+          icon: const Icon(Icons.note_add_outlined),
+          label: Text(strings.text('addDocument')),
+        ),
         if (selection?.belongsTo(repository.session.identity) == true)
           ListTile(
             leading: const Icon(Icons.description_outlined),
-            title: const Text('Finish adding your selected file'),
+            title: Text(strings.text('finishPaper')),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/document/import'),
           ),
         const SizedBox(height: 16),
         TextField(
+          key: const ValueKey('papers-search'),
           onChanged: (value) => setState(() => _search = value),
-          decoration: const InputDecoration(
-            labelText: 'Search by title',
-            prefixIcon: Icon(Icons.search),
+          decoration: InputDecoration(
+            labelText: strings.text('paperSearch'),
+            prefixIcon: const Icon(Icons.search),
+            helperText: widget.guide == DocumentGuide.find
+                ? strings.text('help.findPaper.first')
+                : null,
+            helperMaxLines: 4,
           ),
         ),
         const SizedBox(height: 12),
@@ -252,29 +153,168 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
           runSpacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            DropdownButton<DocumentCategory?>(
-              value: _category,
-              onChanged: (value) => setState(() => _category = value),
-              items: [
-                const DropdownMenuItem(
-                  value: null,
-                  child: Text('All categories'),
+            PopupMenuButton<String>(
+              tooltip: strings.text('paperCategory'),
+              onSelected: (value) => setState(() {
+                _category = value == 'all'
+                    ? null
+                    : DocumentCategory.values.byName(value);
+              }),
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'all',
+                  child: Text(strings.text('allCategories')),
                 ),
                 for (final category in DocumentCategory.values)
-                  DropdownMenuItem(
-                    value: category,
+                  PopupMenuItem(
+                    value: category.name,
                     child: Text(categoryLabel(category)),
                   ),
               ],
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.filter_list, size: 20),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        _category == null
+                            ? strings.text('allCategories')
+                            : categoryLabel(_category!),
+                      ),
+                    ),
+                    const Icon(Icons.arrow_drop_down),
+                  ],
+                ),
+              ),
             ),
             FilterChip(
-              label: const Text('Archived'),
+              label: Text(strings.text('archivedPapers')),
               selected: _archive,
               onSelected: (value) => setState(() => _archive = value),
             ),
           ],
         ),
         const SizedBox(height: 12),
+        if (repository.sharingAvailable ||
+            repository.session.identity.sharedChart)
+          ExpansionTile(
+            title: Text(strings.text('documentUpdates')),
+            leading: const Icon(Icons.cloud_outlined),
+            tilePadding: EdgeInsets.zero,
+            maintainState: true,
+            children: [
+              if (repository.session.sync case final sync?)
+                StreamBuilder<SyncFeedback>(
+                  stream: sync.changes,
+                  initialData: sync.status,
+                  builder: (context, snapshot) {
+                    final feedback = snapshot.data;
+                    final failure =
+                        feedback?.documentFailure ??
+                        (feedback?.failure?.code == FailureCode.network
+                            ? feedback?.failure
+                            : null);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextButton.icon(
+                          onPressed: feedback?.checking == true
+                              ? null
+                              : sync.check,
+                          icon: const Icon(Icons.sync),
+                          label: const Text('Check for shared documents'),
+                        ),
+                        if (failure != null) FailureNotice(failure),
+                      ],
+                    );
+                  },
+                ),
+              StreamBuilder<List<VaultDocumentUpload>>(
+                stream: repository.watchUploads(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) return FailureNotice(snapshot.error!);
+                  final uploads = snapshot.data;
+                  if (uploads == null || uploads.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SectionHeading('Papers saved on this phone'),
+                      for (final job in uploads)
+                        Card.outlined(
+                          child: ListTile(
+                            leading: const Icon(Icons.cloud_upload_outlined),
+                            title: Text(job.title),
+                            subtitle: Text(
+                              !repository.sharingAvailable
+                                  ? 'Brought back and saved on this phone.'
+                                  : switch (job.state) {
+                                      'acknowledged' =>
+                                        'Shared. The family list is updating.',
+                                      'conflicted' => 'The family document changed. Your copy is here.',
+                                      'rejected' => 'Could not share this version. Your copy is here.',
+                                      _ => 'Saved here. Waiting to share with the family.',
+                                    },
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => context.push(
+                              '/document/${job.documentId}/version/${job.id}',
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              if (repository.sharingAvailable)
+                StreamBuilder<List<DocumentEditStatus>>(
+                  stream: repository.watchDocumentEdits(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return FailureNotice(snapshot.error!);
+                    }
+                    final edits = snapshot.data;
+                    if (edits == null || edits.isEmpty) {
+                      return const SizedBox.shrink();
+                    }
+                    return Column(
+                      children: [
+                        for (final edit in edits)
+                          Card.outlined(
+                            child: ListTile(
+                              leading: const Icon(Icons.edit_outlined),
+                              title: Text(edit.title),
+                              subtitle: Text(switch (edit.state) {
+                                'conflicted' => 'The family document changed. Open it to review.',
+                                'rejected' => 'Could not share this edit.',
+                                'acknowledged' =>
+                                  'Shared. The family list is updating.',
+                                _ => switch (edit.action) {
+                                  'archive' =>
+                                    'Waiting to confirm the archive.',
+                                  'restore' =>
+                                    'Waiting to confirm the restore.',
+                                  'link' =>
+                                    'Waiting to confirm the transaction link.',
+                                  'unlink' => 'Waiting to confirm removal of the transaction link.',
+                                  _ => 'Waiting to confirm the edited details.',
+                                },
+                              }),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () =>
+                                  context.push('/document/${edit.documentId}'),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+            ],
+          ),
         StreamBuilder<List<VaultDocument>>(
           stream: repository.watch(
             query: _search,
@@ -334,7 +374,9 @@ class DocumentEditorPage extends ConsumerWidget {
     final selection = ref.watch(documentIntakeProvider);
     final edit = documentId;
     return VaultPage(
-      title: edit == null ? 'Add document' : 'Edit document',
+      title: edit == null
+          ? VaultStrings.of(context).text('addDocument')
+          : 'Edit document',
       children: [
         if (repository == null ||
             edit == null &&
@@ -452,7 +494,15 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
           );
         }
       }
-      if (mounted) context.go('/documents');
+      if (mounted) {
+        savedNotice(
+          context,
+          cloud: repository.session.identity.isCloud,
+          message: VaultStrings.of(context)
+              .text(widget.document == null ? 'paperAdded' : 'paperEdited'),
+        );
+        context.go('/documents');
+      }
       if (selected != null) await intake.clear();
       unawaited(repository.session.sync?.check());
     } catch (error) {
@@ -477,6 +527,7 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
   @override
   Widget build(BuildContext context) {
     final version = widget.selection?.documentId != null;
+    final strings = VaultStrings.of(context);
     return Form(
       key: _form,
       child: Column(
@@ -489,7 +540,7 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
               controller: _title,
               maxLength: 120,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(labelText: 'Document title'),
+              decoration: InputDecoration(labelText: strings.text('paperName')),
               validator: (value) => value == null || value.trim().isEmpty
                   ? 'Enter a title'
                   : null,
@@ -514,7 +565,13 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
             DropdownButtonFormField<String>(
               initialValue: _owner,
               isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Document owner'),
+              decoration: InputDecoration(
+                labelText: strings.text('whosePaper'),
+                helperText: widget.repository.session.identity.isCloud
+                    ? strings.text('sharedPaperOwnerHelp')
+                    : null,
+                helperMaxLines: 4,
+              ),
               items: [
                 for (final member in widget.members)
                   DropdownMenuItem(
@@ -559,8 +616,8 @@ class _DocumentFormState extends ConsumerState<_DocumentForm> {
               _busy
                   ? 'Saving…'
                   : version
-                  ? 'Save version'
-                  : 'Save document',
+                  ? strings.text('savePaperVersion')
+                  : strings.text('savePaper'),
             ),
           ),
           if (widget.selection != null)

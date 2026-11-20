@@ -49,25 +49,25 @@ class _AssetsPageState extends State<AssetsPage> {
         return VaultContent(
           children: [
             SectionHeading(
-              'Your family’s wealth',
+              'Items and property',
               action: FilledButton.icon(
                 onPressed: () => context.push('/asset/new'),
                 icon: const Icon(Icons.add),
-                label: const Text('Add holding'),
+                label: const Text('Add an item'),
               ),
             ),
             MetricCard(
-              title: 'Recorded holding values',
+              title: 'Estimated value of our items',
               value: formatInr(total),
               icon: Icons.diamond_outlined,
               detail:
-                  '${active.length} active holdings · Family ownership counted once${unknown > 0 ? '\n$unknown holding${unknown == 1 ? '' : 's'} awaiting a value' : ''}',
+                  'Only your family’s share is counted${unknown > 0 ? '\n$unknown item${unknown == 1 ? '' : 's'} without an estimate' : ''}',
               emphasis: true,
             ),
             const SizedBox(height: 24),
             TextField(
               decoration: const InputDecoration(
-                labelText: 'Search holdings or location',
+                labelText: 'Search name or place',
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: (v) => setState(() => _search = v),
@@ -88,10 +88,10 @@ class _AssetsPageState extends State<AssetsPage> {
             if (rows.isEmpty)
               EmptyNotice(
                 icon: Icons.home_work_outlined,
-                title: 'A home for your holdings',
+                title: 'Nothing recorded yet',
                 message: _search.isEmpty
-                    ? 'Record property, precious metals, investments and other assets. Unknown values stay unrecorded until you add them.'
-                    : 'No holdings match this search.',
+                    ? 'Add a home, land, gold, a vehicle or an investment. You can add an estimate later.'
+                    : 'No items match that search.',
               ),
             for (final a in rows)
               Card.outlined(
@@ -100,7 +100,7 @@ class _AssetsPageState extends State<AssetsPage> {
                   title: Text(a.name),
                   subtitle: Text(
                     '${assetLabel(a.kind)} · ${FixedDecimal.format(a.familyOwnershipBps, scale: 2)}% family share\n${a.valuationState == 'unrecorded'
-                        ? 'Value unrecorded'
+                        ? 'No value added yet'
                         : a.valuationState == 'closed'
                         ? 'Closed ${a.closedOn}'
                         : formatInr(balances[a.accountId] ?? BigInt.zero)}',
@@ -129,13 +129,15 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
   bool _busy = false;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Holding details')),
+    appBar: AppBar(title: const Text('Item details')),
     body: AssetView(
       builder: (assets) => FinanceView(
         builder: (finance) {
           final a = assets.assets.where((a) => a.id == widget.id).firstOrNull;
           if (a == null) {
-            return const VaultContent(children: [Text('Holding unavailable.')]);
+            return const VaultContent(
+              children: [Text('We couldn’t find that item.')],
+            );
           }
           final property = assets.properties
               .where((p) => p.assetId == a.id)
@@ -162,7 +164,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
               MetricCard(
                 title: a.name,
                 value: a.valuationState == 'unrecorded'
-                    ? 'Value unrecorded'
+                    ? 'No value added yet'
                     : formatInr(current),
                 icon: assetIcon(a.kind),
                 detail:
@@ -178,7 +180,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                     FilledButton.icon(
                       onPressed: () => context.push('/asset/${a.id}/value'),
                       icon: const Icon(Icons.trending_up),
-                      label: const Text('Record valuation'),
+                      label: const Text('Update estimated value'),
                     ),
                     OutlinedButton.icon(
                       onPressed: () => context.push('/asset/${a.id}/edit'),
@@ -194,18 +196,18 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                       OutlinedButton.icon(
                         onPressed: () => context.push('/asset/${a.id}/rent'),
                         icon: const Icon(Icons.payments_outlined),
-                        label: const Text('Record rent'),
+                        label: const Text('Add rent received'),
                       ),
                     OutlinedButton.icon(
                       onPressed: () => context.push('/asset/${a.id}/close'),
                       icon: const Icon(Icons.archive_outlined),
-                      label: const Text('Close holding'),
+                      label: const Text('Close this item'),
                     ),
                   ] else ...[
                     OutlinedButton.icon(
                       onPressed: () => context.push('/asset/${a.id}/value'),
                       icon: const Icon(Icons.history),
-                      label: const Text('Record historical value'),
+                      label: const Text('Add an older estimate'),
                     ),
                     OutlinedButton.icon(
                       onPressed: _busy
@@ -215,7 +217,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                                 context: context,
                                 builder: (_) => const ReasonDialog(
                                   title: 'Undo this closure?',
-                                  message: 'This reverses the closing entries and restores the holding. Use a new holding for an actual repurchase.',
+                                  message: 'This puts the item back in your list and keeps the earlier change in history. If you bought it again, add it as a new item.',
                                   confirmLabel: 'Undo closure',
                                 ),
                               );
@@ -248,9 +250,9 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
               ),
               if (_error != null) FailureNotice(_error!),
               const SizedBox(height: 28),
-              const SectionHeading('About this holding'),
+              const SectionHeading('About this item'),
               Text(
-                'Purchase price (whole holding): ${a.purchaseTotalMinor == null ? 'Unrecorded' : formatInr(BigInt.from(a.purchaseTotalMinor!))}\nPurchase date: ${a.purchasedOn ?? 'Unrecorded'}',
+                'Price paid for the whole item: ${a.purchaseTotalMinor == null ? 'Unrecorded' : formatInr(BigInt.from(a.purchaseTotalMinor!))}\nPurchase date: ${a.purchasedOn ?? 'Unrecorded'}',
               ),
               if (property != null) ...[
                 const SizedBox(height: 12),
@@ -286,10 +288,10 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                 Text(a.notes),
               ],
               const SizedBox(height: 24),
-              const SectionHeading('Ownership metadata'),
+              const SectionHeading('Who owns it'),
               if (owners.isEmpty)
                 const Text(
-                  'No individual allocation recorded. All authorized family members can access this holding.',
+                  'Individual shares haven’t been added. Everyone approved for this family can see this item.',
                 ),
               for (final o in owners)
                 ListTile(
@@ -301,7 +303,7 @@ class _AssetDetailPageState extends ConsumerState<AssetDetailPage> {
                   ),
                 ),
               const SizedBox(height: 24),
-              const SectionHeading('Valuation history'),
+              const SectionHeading('Value over time'),
               if (history.isEmpty)
                 const Text(
                   'No valuation recorded. A missing value is excluded from recorded net worth.',

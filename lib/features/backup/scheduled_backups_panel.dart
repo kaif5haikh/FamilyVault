@@ -82,7 +82,7 @@ class _ScheduledBackupsPanelState extends ConsumerState<ScheduledBackupsPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeading('Scheduled backups'),
+        const SectionHeading('Automatic safe copies'),
         const Text('Backups can run while your vault is open.'),
         if (state.isLoading || _working) const LinearProgressIndicator(),
         if (state.hasError) FailureNotice(state.error!),

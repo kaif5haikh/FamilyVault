@@ -56,9 +56,9 @@ String debtDirection(String direction) => switch (direction) {
 
 String interestLabel(InterestMethod method) => switch (method) {
   InterestMethod.unrecorded => 'Unrecorded',
-  InterestMethod.simpleActual365 => 'Simple interest (actual days / 365)',
+  InterestMethod.simpleActual365 => 'Simple interest based on days',
   InterestMethod.flatMonthly => 'Flat monthly interest',
-  InterestMethod.reducingMonthly => 'Reducing monthly balance',
+  InterestMethod.reducingMonthly => 'Interest on the amount left',
 };
 
 class DebtsPage extends StatefulWidget {
@@ -89,27 +89,37 @@ class _DebtsPageState extends State<DebtsPage> {
       return VaultContent(
         children: [
           SectionHeading(
-            'Loans & lending',
+            'Loans and money lent',
             action: FilledButton.icon(
               onPressed: () => context.push('/loan/new'),
               icon: const Icon(Icons.add),
               label: const Text('Add loan'),
             ),
           ),
-          ResponsiveCards(
-            children: [
-              MetricCard(
-                title: 'Principal to repay',
-                value: formatInr(borrowed),
-                icon: Icons.account_balance_outlined,
-                emphasis: true,
+          Card.filled(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.north_east),
+                    title: const Text('Loan amounts we still owe'),
+                    subtitle: Text(
+                      formatInr(borrowed),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.south_west),
+                    title: const Text('Loan amounts owed to us'),
+                    subtitle: Text(
+                      formatInr(lent),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ],
               ),
-              MetricCard(
-                title: 'Principal to collect',
-                value: formatInr(lent),
-                icon: Icons.payments_outlined,
-              ),
-            ],
+            ),
           ),
           const SizedBox(height: 20),
           Wrap(
@@ -127,12 +137,10 @@ class _DebtsPageState extends State<DebtsPage> {
           if (rows.isEmpty)
             EmptyNotice(
               icon: Icons.request_quote_outlined,
-              title: _archived
-                  ? 'No archived loans'
-                  : 'Keep track of borrowing and lending',
+              title: _archived ? 'No archived loans' : 'No loans recorded yet',
               message: _archived
                   ? 'Settled loans can be archived from their details.'
-                  : 'Add a bank loan, borrowed money or money lent. Repayments separate principal and interest.',
+                  : 'Record a bank loan, money you borrowed or money you lent to someone.',
             ),
           for (final row in rows)
             Card.outlined(
@@ -144,7 +152,7 @@ class _DebtsPageState extends State<DebtsPage> {
                 ),
                 title: Text(row.name),
                 subtitle: Text(
-                  '${debtDirection(row.direction)} · ${row.counterparty}\n${formatInr(amount(row))} outstanding',
+                  '${debtDirection(row.direction)} · ${row.counterparty}\n${formatInr(amount(row))} left to pay',
                 ),
                 isThreeLine: true,
                 trailing: const Icon(Icons.chevron_right),
@@ -196,7 +204,7 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
       builder: (_) => const ReasonDialog(
         title: 'Reverse this repayment?',
         message: 'The outstanding balance will reflect the reversal. The original repayment stays in history.',
-        confirmLabel: 'Reverse repayment',
+        confirmLabel: 'Undo payment',
       ),
     );
     if (reason == null || !mounted) {
@@ -231,6 +239,10 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
         final active = payments.where(
           (p) => journals[p.journalId]?.deletedAtUs == null,
         );
+        final totalTowardLoan = active.fold(
+          BigInt.zero,
+          (sum, payment) => sum + BigInt.from(payment.principalMinor),
+        );
         final totalInterest = active.fold(
           BigInt.zero,
           (sum, p) => sum + BigInt.from(p.interestMinor),
@@ -244,7 +256,7 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
               value: formatInr(outstanding),
               icon: Icons.request_quote_outlined,
               detail:
-                  '${debtDirection(loan.direction)} · ${loan.counterparty}\nOutstanding principal${archived ? ' · Archived' : ''}',
+                  '${debtDirection(loan.direction)} · ${loan.counterparty}\nLoan amount still left${archived ? ' · Archived' : ''}',
               emphasis: true,
             ),
             const SizedBox(height: 20),
@@ -256,17 +268,17 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
                   FilledButton.icon(
                     onPressed: () => context.push('/loan/${loan.id}/repay'),
                     icon: const Icon(Icons.add),
-                    label: const Text('Record repayment'),
+                    label: const Text('Add a payment'),
                   ),
                   OutlinedButton.icon(
                     onPressed: () => context.push('/loan/${loan.id}/edit'),
                     icon: const Icon(Icons.edit_outlined),
-                    label: const Text('Edit terms'),
+                    label: const Text('Edit loan details'),
                   ),
                   OutlinedButton.icon(
                     onPressed: () => context.push('/loan/${loan.id}/principal'),
                     icon: const Icon(Icons.history),
-                    label: const Text('Correct opening principal'),
+                    label: const Text('Correct the original amount'),
                   ),
                 ],
                 if (method != InterestMethod.unrecorded)
@@ -299,11 +311,11 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
             ),
             if (_error != null) FailureNotice(_error!),
             const SizedBox(height: 24),
-            const SectionHeading('Recorded terms'),
+            const SectionHeading('About this loan'),
             Text(
-              'Opening principal: ${formatInr(BigInt.from(loan.principalMinor))}\nStarted: ${loan.startedOn}',
+              'Original loan amount: ${formatInr(BigInt.from(loan.principalMinor))}\nStarted: ${loan.startedOn}',
             ),
-            Text('Interest method: ${interestLabel(method)}'),
+            Text('How interest is worked out: ${interestLabel(method)}'),
             if (loan.annualRateBps != null)
               Text(
                 'Annual rate: ${FixedDecimal.format(loan.annualRateBps!, scale: 2)}%',
@@ -311,7 +323,9 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
             if (loan.termMonths != null)
               Text('Term: ${loan.termMonths} months'),
             if (loan.emiMinor != null)
-              Text('Agreed EMI: ${formatInr(BigInt.from(loan.emiMinor!))}'),
+              Text(
+                'Agreed monthly payment: ${formatInr(BigInt.from(loan.emiMinor!))}',
+              ),
             if (loan.firstDueOn != null)
               Text('First instalment due: ${loan.firstDueOn}'),
             if (loan.dueOn != null) Text('Final due date: ${loan.dueOn}'),
@@ -321,12 +335,13 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
                 child: Text(loan.notes),
               ),
             const SizedBox(height: 28),
-            const SectionHeading('Repayment history'),
+            const SectionHeading('Payment history'),
+            Text('Paid toward the loan: ${formatInr(totalTowardLoan)}'),
             Text(
               'Recorded ${loan.direction == 'lent' ? 'interest received' : 'interest paid'}: ${formatInr(totalInterest)}',
             ),
             const SizedBox(height: 12),
-            if (payments.isEmpty) const Text('No repayments recorded.'),
+            if (payments.isEmpty) const Text('No payments recorded yet.'),
             for (final p in payments)
               Card.outlined(
                 child: Column(
@@ -336,7 +351,7 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
                         '${p.paidOn}${journals[p.journalId]?.deletedAtUs != null ? ' · Reversed' : ''}',
                       ),
                       subtitle: Text(
-                        'Principal ${formatInr(BigInt.from(p.principalMinor))}\nInterest ${formatInr(BigInt.from(p.interestMinor))}${p.notes.isEmpty ? '' : '\n${p.notes}'}',
+                        'Toward the loan ${formatInr(BigInt.from(p.principalMinor))}\nInterest ${formatInr(BigInt.from(p.interestMinor))}${p.notes.isEmpty ? '' : '\n${p.notes}'}',
                       ),
                       onTap: () => context.push('/transaction/${p.journalId}'),
                       trailing: const Icon(Icons.chevron_right),
@@ -353,11 +368,11 @@ class _DebtDetailPageState extends ConsumerState<DebtDetailPage> {
                                   : () => context.push(
                                       '/loan/${loan.id}/repay/${p.id}',
                                     ),
-                              child: const Text('Correct repayment'),
+                              child: const Text('Correct payment'),
                             ),
                             TextButton(
                               onPressed: _busy ? null : () => _reverse(loan, p),
-                              child: const Text('Reverse repayment'),
+                              child: const Text('Undo payment'),
                             ),
                           ],
                         ),
@@ -482,7 +497,7 @@ class _DebtEstimatePageState extends State<DebtEstimatePage> {
                     '${LedgerRepository.dateOnly(row.dueOn)} · ${formatInr(BigInt.from(row.payment.minor))}',
                   ),
                   subtitle: Text(
-                    'Principal ${formatInr(BigInt.from(row.principalMinor))}\nInterest ${formatInr(BigInt.from(row.interestMinor))}\nRemaining ${formatInr(BigInt.from(row.balanceMinor))}',
+                    'Toward the loan ${formatInr(BigInt.from(row.principalMinor))}\nInterest ${formatInr(BigInt.from(row.interestMinor))}\nRemaining ${formatInr(BigInt.from(row.balanceMinor))}',
                   ),
                 ),
               );

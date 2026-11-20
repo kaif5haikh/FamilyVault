@@ -66,9 +66,9 @@ class _SyncRecoveryPageState extends ConsumerState<SyncRecoveryPage> {
     final replace = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Use family records?'),
+        title: const Text('Keep the family’s version?'),
         content: const Text(
-          'FamilyVault will fetch the accepted family records. Changes waiting on this device will stay encrypted in Saved device changes.',
+          'FamilyVault will fetch the accepted family records. Changes waiting on this device will stay encrypted in Changes saved on this phone.',
         ),
         actions: [
           TextButton(
@@ -110,7 +110,7 @@ class _SyncRecoveryPageState extends ConsumerState<SyncRecoveryPage> {
   Widget build(BuildContext context) {
     final session = ref.watch(vaultProvider).session;
     return VaultPage(
-      title: 'Saved device changes',
+      title: 'Changes saved on this phone',
       children: [
         FutureBuilder<
           ({List<_SavedChange> blocked, List<_SavedChange> retained})
@@ -175,7 +175,7 @@ class _SavedChangeTile extends StatelessWidget {
         title: Text(
           label is String ? label : row.local.entityType.replaceAll('_', ' '),
         ),
-        subtitle: const Text('Saved on this device'),
+        subtitle: const Text('Saved on this phone'),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [

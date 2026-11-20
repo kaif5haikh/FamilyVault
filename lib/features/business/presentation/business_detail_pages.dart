@@ -194,7 +194,7 @@ class _WorkRecordPageState extends ConsumerState<WorkRecordPage> {
                                     reason,
                                   ),
                                 ),
-                          child: const Text('Reverse movement'),
+                          child: const Text('Undo stock change'),
                         ),
                       ],
                     ),

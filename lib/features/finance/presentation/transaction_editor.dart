@@ -6,12 +6,20 @@ import 'package:uuid/uuid.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/errors/app_failure.dart';
 import '../../../core/finance/money.dart';
+import '../../../core/localization/vault_strings.dart';
 import '../../../shared/widgets/vault_widgets.dart';
 import '../data/ledger_repository.dart';
 
 class TransactionEditor extends ConsumerStatefulWidget {
-  const TransactionEditor({super.key, this.journalId});
+  const TransactionEditor({
+    super.key,
+    this.journalId,
+    this.initialKind,
+    this.guided = false,
+  });
   final String? journalId;
+  final EntryKind? initialKind;
+  final bool guided;
   @override
   ConsumerState<TransactionEditor> createState() => _TransactionEditorState();
 }
@@ -22,11 +30,17 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
       _description = TextEditingController(),
       _reason = TextEditingController();
   final _operation = const Uuid().v4();
-  EntryKind _kind = EntryKind.expense;
+  late EntryKind _kind;
   String? _account, _counter;
   String _date = LedgerRepository.dateOnly(DateTime.now());
   bool _busy = false, _prepared = false;
   Object? _error;
+  @override
+  void initState() {
+    super.initState();
+    _kind = widget.initialKind ?? EntryKind.expense;
+  }
+
   @override
   void dispose() {
     _amount.dispose();
@@ -74,261 +88,331 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: Text(
-        widget.journalId == null ? 'Add transaction' : 'Correct transaction',
+  Widget build(BuildContext context) {
+    final strings = VaultStrings.of(context);
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          strings.text(
+            widget.journalId == null
+                ? _label(_kind, action: true)
+                : 'editRecord',
+          ),
+        ),
       ),
-    ),
-    body: FinanceView(
-      builder: (data) {
-        _prepare(data);
-        final originals = data.journals.where((j) => j.id == widget.journalId);
-        if (widget.journalId != null &&
-            (originals.isEmpty ||
-                data.journalLinks.containsKey(widget.journalId) ||
-                originals.single.deletedAtUs != null ||
-                ![
-                  'income',
-                  'expense',
-                  'transfer',
-                ].contains(originals.single.kind))) {
-          return const VaultContent(
-            children: [
-              EmptyNotice(
-                icon: Icons.history,
-                title: 'Entry unavailable for correction',
-                message:
-                    'Open the current transaction or use its audit history.',
-              ),
-            ],
+      body: FinanceView(
+        builder: (data) {
+          _prepare(data);
+          final originals = data.journals.where(
+            (j) => j.id == widget.journalId,
           );
-        }
-        final assets = data.accounts
-            .where(
-              (a) =>
-                  a.kind == 'asset' &&
-                  a.deletedAtUs == null &&
-                  !data.managedAccountIds.contains(a.id),
-            )
-            .toList();
-        final counterKind = _kind == EntryKind.income
-            ? 'income'
-            : _kind == EntryKind.expense
-            ? 'expense'
-            : 'asset';
-        final counters = data.accounts
-            .where(
-              (a) =>
-                  a.kind == counterKind &&
-                  a.deletedAtUs == null &&
-                  !data.managedAccountIds.contains(a.id) &&
-                  a.id != _account,
-            )
-            .toList();
-        if (!assets.any((a) => a.id == _account)) {
-          _account = null;
-        }
-        if (!counters.any((a) => a.id == _counter)) {
-          _counter = null;
-        }
-        if (assets.isEmpty) {
+          if (widget.journalId != null &&
+              (originals.isEmpty ||
+                  data.journalLinks.containsKey(widget.journalId) ||
+                  originals.single.deletedAtUs != null ||
+                  ![
+                    'income',
+                    'expense',
+                    'transfer',
+                  ].contains(originals.single.kind))) {
+            return const VaultContent(
+              children: [
+                EmptyNotice(
+                  icon: Icons.history,
+                  title: 'This record can’t be corrected here',
+                  message: 'Open the latest record or see the earlier changes.',
+                ),
+              ],
+            );
+          }
+          final assets = data.accounts
+              .where(
+                (a) =>
+                    a.kind == 'asset' &&
+                    a.deletedAtUs == null &&
+                    !data.managedAccountIds.contains(a.id),
+              )
+              .toList();
+          final counterKind = _kind == EntryKind.income
+              ? 'income'
+              : _kind == EntryKind.expense
+              ? 'expense'
+              : 'asset';
+          if (!assets.any((a) => a.id == _account)) {
+            _account = assets.length == 1 ? assets.single.id : null;
+          }
+          final counters = data.accounts
+              .where(
+                (a) =>
+                    a.kind == counterKind &&
+                    a.deletedAtUs == null &&
+                    !data.managedAccountIds.contains(a.id) &&
+                    a.id != _account,
+              )
+              .toList();
+          if (!counters.any((a) => a.id == _counter)) {
+            _counter = null;
+          }
+          final needsAccount =
+              assets.isEmpty ||
+              (_kind == EntryKind.transfer && assets.length < 2);
+          if (needsAccount) {
+            return VaultContent(
+              children: [
+                EmptyNotice(
+                  icon: Icons.account_balance_outlined,
+                  title: assets.isEmpty
+                      ? strings.text('noAccount')
+                      : strings.text('twoAccounts'),
+                  message: assets.isEmpty
+                      ? strings.text('firstAccountHelp')
+                      : strings.text('moveExplain'),
+                  action: FilledButton(
+                    onPressed: () => context.push('/account/new'),
+                    child: Text(strings.text('addAccount')),
+                  ),
+                ),
+              ],
+            );
+          }
           return VaultContent(
+            maxWidth: 680,
             children: [
-              EmptyNotice(
-                icon: Icons.account_balance_outlined,
-                title: 'Add your first account',
-                message: 'Choose a cash or bank account before recording income and expenses.',
-                action: FilledButton(
-                  onPressed: () => context.push('/account/new'),
-                  child: const Text('Add account'),
+              Form(
+                key: _form,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (widget.journalId != null) ...[
+                      Text(strings.text('correctionExplain')),
+                      const SizedBox(height: 12),
+                    ],
+                    if (widget.guided || _kind == EntryKind.transfer) ...[
+                      Card.filled(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            strings.text(switch (_kind) {
+                              EntryKind.income => 'moneyHelpIn',
+                              EntryKind.expense => 'moneyHelpOut',
+                              _ => 'moveExplain',
+                            }),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    if (widget.initialKind == null)
+                      DropdownButtonFormField<EntryKind>(
+                        initialValue: _kind,
+                        isExpanded: true,
+                        decoration: InputDecoration(
+                          labelText: strings.text('recordType'),
+                        ),
+                        items: [
+                          for (final type in [
+                            EntryKind.income,
+                            EntryKind.expense,
+                            EntryKind.transfer,
+                          ])
+                            DropdownMenuItem(
+                              value: type,
+                              child: Text(strings.text(_label(type))),
+                            ),
+                        ],
+                        onChanged: _busy
+                            ? null
+                            : (value) => setState(() {
+                                _kind = value!;
+                                _counter = null;
+                              }),
+                      ),
+                    if (widget.initialKind == null) const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _amount,
+                      enabled: !_busy,
+                      maxLength: 32,
+                      buildCounter: (
+                        _, {
+                        required currentLength,
+                        required isFocused,
+                        required maxLength,
+                      }) => null,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      style: Theme.of(context).textTheme.headlineMedium,
+                      decoration: InputDecoration(
+                        labelText: strings.text('recordAmount'),
+                        prefixText: '₹ ',
+                        hintText: '0.00',
+                      ),
+                      validator: positiveAmount,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      key: ValueKey('source-$_account'),
+                      initialValue: _account,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: strings.text(switch (_kind) {
+                          EntryKind.income => 'receivedInto',
+                          EntryKind.transfer => 'moveFrom',
+                          _ => 'paidFrom',
+                        }),
+                      ),
+                      items: [
+                        for (final a in assets)
+                          DropdownMenuItem(
+                            value: a.id,
+                            child: Text(
+                              a.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: _busy
+                          ? null
+                          : (value) => setState(() {
+                              _account = value;
+                              if (_counter == value) {
+                                _counter = null;
+                              }
+                            }),
+                      validator: (v) =>
+                          v == null ? strings.text('chooseAccount') : null,
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      key: ValueKey('counter-${_kind.name}-$_counter'),
+                      initialValue: _counter,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: strings.text(switch (_kind) {
+                          EntryKind.transfer => 'moveTo',
+                          EntryKind.income => 'receivedReason',
+                          _ => 'spentReason',
+                        }),
+                      ),
+                      items: [
+                        for (final a in counters)
+                          DropdownMenuItem(
+                            value: a.id,
+                            child: Text(
+                              a.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                      onChanged: _busy
+                          ? null
+                          : (value) => setState(() => _counter = value),
+                      validator: (v) => v == null
+                          ? strings.text(
+                              _kind == EntryKind.transfer
+                                  ? 'chooseAnother'
+                                  : 'chooseCategory',
+                            )
+                          : null,
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _busy
+                            ? null
+                            : () => context.push(
+                                '/account/new?kind=$counterKind',
+                              ),
+                        child: Text(
+                          strings.text(
+                            _kind == EntryKind.transfer
+                                ? 'addAccount'
+                                : 'addCategory',
+                          ),
+                        ),
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : _chooseDate,
+                      icon: const Icon(Icons.calendar_today_outlined),
+                      label: Text(
+                        '${strings.text('recordDate')} · ${MaterialLocalizations.of(context).formatMediumDate(DateTime.parse(_date))}',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _description,
+                      enabled: !_busy,
+                      maxLength: 500,
+                      maxLines: 2,
+                      buildCounter: (
+                        _, {
+                        required currentLength,
+                        required isFocused,
+                        required maxLength,
+                      }) => null,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: InputDecoration(
+                        labelText: strings.text('optionalNote'),
+                      ),
+                    ),
+                    if (widget.journalId != null) ...[
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _reason,
+                        enabled: !_busy,
+                        maxLength: 400,
+                        decoration: InputDecoration(
+                          labelText: strings.text('correctedReason'),
+                        ),
+                        validator: requiredText,
+                      ),
+                    ],
+                    if (_error != null) ...[
+                      const SizedBox(height: 16),
+                      FailureNotice(_error!),
+                    ],
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      onPressed: _busy
+                          ? null
+                          : () => _save(
+                              counters
+                                  .where((account) => account.id == _counter)
+                                  .firstOrNull
+                                  ?.name,
+                            ),
+                      icon: _busy
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.check),
+                      label: Text(
+                        _busy
+                            ? strings.text('saving')
+                            : strings.text(
+                                widget.journalId == null
+                                    ? 'saveRecord'
+                                    : 'saveCorrection',
+                              ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           );
-        }
-        return VaultContent(
-          maxWidth: 680,
-          children: [
-            Form(
-              key: _form,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (widget.journalId != null) ...[
-                    const Text(
-                      'Your original entry is preserved. Saving appends a reversal and the corrected entry.',
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  DropdownButtonFormField<EntryKind>(
-                    initialValue: _kind,
-                    decoration: const InputDecoration(labelText: 'Type'),
-                    items: [
-                      for (final type in [
-                        EntryKind.income,
-                        EntryKind.expense,
-                        EntryKind.transfer,
-                      ])
-                        DropdownMenuItem(
-                          value: type,
-                          child: Text(_label(type)),
-                        ),
-                    ],
-                    onChanged: _busy
-                        ? null
-                        : (value) => setState(() {
-                            _kind = value!;
-                            _counter = null;
-                          }),
-                  ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _amount,
-                    enabled: !_busy,
-                    maxLength: 32,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    style: Theme.of(context).textTheme.headlineMedium,
-                    decoration: const InputDecoration(
-                      labelText: 'Amount',
-                      prefixText: '₹ ',
-                      hintText: '0.00',
-                    ),
-                    validator: positiveAmount,
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    key: ValueKey('source-$_account'),
-                    initialValue: _account,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: _kind == EntryKind.income
-                          ? 'Received into'
-                          : 'Paid from',
-                    ),
-                    items: [
-                      for (final a in assets)
-                        DropdownMenuItem(
-                          value: a.id,
-                          child: Text(a.name, overflow: TextOverflow.ellipsis),
-                        ),
-                    ],
-                    onChanged: _busy
-                        ? null
-                        : (value) => setState(() {
-                            _account = value;
-                            if (_counter == value) {
-                              _counter = null;
-                            }
-                          }),
-                    validator: (v) => v == null ? 'Choose an account.' : null,
-                  ),
-                  const SizedBox(height: 20),
-                  DropdownButtonFormField<String>(
-                    key: ValueKey('counter-${_kind.name}-$_counter'),
-                    initialValue: _counter,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: _kind == EntryKind.transfer
-                          ? 'Transferred to'
-                          : 'Category',
-                    ),
-                    items: [
-                      for (final a in counters)
-                        DropdownMenuItem(
-                          value: a.id,
-                          child: Text(a.name, overflow: TextOverflow.ellipsis),
-                        ),
-                    ],
-                    onChanged: _busy
-                        ? null
-                        : (value) => setState(() => _counter = value),
-                    validator: (v) => v == null
-                        ? 'Choose ${_kind == EntryKind.transfer ? 'another account' : 'a category'}.'
-                        : null,
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _busy
-                          ? null
-                          : () =>
-                                context.push('/account/new?kind=$counterKind'),
-                      child: Text(
-                        _kind == EntryKind.transfer
-                            ? 'Add another account'
-                            : 'Add a category',
-                      ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _busy ? null : _chooseDate,
-                    icon: const Icon(Icons.calendar_today_outlined),
-                    label: Text('Date: $_date'),
-                  ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _description,
-                    enabled: !_busy,
-                    maxLength: 500,
-                    minLines: 2,
-                    maxLines: 4,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                    validator: requiredText,
-                  ),
-                  if (widget.journalId != null) ...[
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _reason,
-                      enabled: !_busy,
-                      maxLength: 400,
-                      decoration: const InputDecoration(
-                        labelText: 'Reason for correction',
-                      ),
-                      validator: requiredText,
-                    ),
-                  ],
-                  if (_error != null) ...[
-                    const SizedBox(height: 16),
-                    FailureNotice(_error!),
-                  ],
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: _busy ? null : _save,
-                    icon: _busy
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.check),
-                    label: Text(
-                      _busy
-                          ? 'Saving…'
-                          : widget.journalId == null
-                          ? 'Save transaction'
-                          : 'Save correction',
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Recorded in INR, with an immutable history of who created or corrected it.',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        );
-      },
-    ),
-  );
-  static String _label(EntryKind kind) => switch (kind) {
-    EntryKind.income => 'Income',
-    EntryKind.expense => 'Expense',
-    _ => 'Transfer',
+        },
+      ),
+    );
+  }
+
+  static String _label(EntryKind kind, {bool action = false}) => switch (kind) {
+    EntryKind.income => action ? 'addIncome' : 'income',
+    EntryKind.expense => action ? 'addExpense' : 'expense',
+    _ => 'transfer',
   };
   Future<void> _chooseDate() async {
     final date = await showDatePicker(
@@ -342,8 +426,8 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
     }
   }
 
-  Future<void> _save() async {
-    if (!_form.currentState!.validate()) {
+  Future<void> _save(String? selectedName) async {
+    if (_busy || !_form.currentState!.validate()) {
       return;
     }
     setState(() {
@@ -358,6 +442,12 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
           'Unlock your vault to continue.',
         );
       }
+      final note = _description.text.trim();
+      final description = note.isNotEmpty
+          ? note
+          : _kind == EntryKind.transfer
+          ? VaultStrings.of(context).text('transfer')
+          : selectedName!;
       final String id;
       if (widget.journalId == null) {
         id = await session.ledger.recordTransaction(
@@ -366,7 +456,7 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
           counterAccountId: _counter!,
           amount: Money.parseInr(_amount.text),
           occurredOn: _date,
-          description: _description.text,
+          description: description,
           operationId: _operation,
         );
       } else {
@@ -377,13 +467,17 @@ class _TransactionEditorState extends ConsumerState<TransactionEditor> {
           counterAccountId: _counter!,
           amount: Money.parseInr(_amount.text),
           occurredOn: _date,
-          description: _description.text,
+          description: description,
           reason: _reason.text,
           operationId: _operation,
         );
       }
       if (mounted) {
-        savedNotice(context, cloud: session.identity.isCloud);
+        savedNotice(
+          context,
+          cloud: session.identity.isCloud,
+          message: VaultStrings.of(context).text('recordSaved'),
+        );
         context.pushReplacement('/transaction/$id');
       }
     } catch (error) {

@@ -8,9 +8,9 @@ import 'package:material_ui/material_ui.dart';
 import '../../../app/vault_providers.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/finance/formatters.dart';
+import '../../../core/localization/vault_strings.dart';
 import '../../../shared/widgets/vault_widgets.dart';
 import '../../document_vault/linked_documents.dart';
-import '../data/ledger_repository.dart';
 
 final _membersProvider = StreamProvider.autoDispose<Map<String, String>>((ref) {
   final session = ref.watch(vaultProvider).session;
@@ -45,104 +45,204 @@ class TransactionsPage extends StatefulWidget {
 }
 
 class _TransactionsPageState extends State<TransactionsPage> {
-  String _query = '', _kind = 'All';
+  String _query = '', _kind = 'all';
   bool _history = false;
+
   @override
   Widget build(BuildContext context) => FinanceView(
     builder: (data) {
+      final strings = VaultStrings.of(context);
+      final localizations = MaterialLocalizations.of(context);
       final query = _query.trim().toLowerCase();
-      final journals = data.journals
-          .where(
-            (j) =>
-                j.status == 'posted' &&
-                (_history || (j.deletedAtUs == null && j.kind != 'reversal')) &&
-                (_kind == 'All' || j.kind == _kind.toLowerCase()) &&
-                (query.isEmpty ||
-                    '${j.description} ${j.occurredOn}'.toLowerCase().contains(
-                      query,
-                    )),
-          )
-          .toList();
-      return VaultContent(
-        children: [
-          SectionHeading(
-            'Your financial activity',
-            action: FilledButton.icon(
-              onPressed: () => context.push('/transaction/new'),
-              icon: const Icon(Icons.add),
-              label: const Text('Add transaction'),
-            ),
-          ),
-          TextField(
-            decoration: const InputDecoration(
-              labelText: 'Search description or date',
-              prefixIcon: Icon(Icons.search),
-            ),
-            onChanged: (value) => setState(() => _query = value),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final kind in ['All', 'Income', 'Expense', 'Transfer'])
-                ChoiceChip(
-                  label: Text(kind),
-                  selected: kind == _kind,
-                  onSelected: (_) => setState(() => _kind = kind),
+      final accounts = {
+        for (final account in data.accounts) account.id: account,
+      };
+      final postings = <String, List<LedgerPosting>>{};
+      for (final posting in data.postings) {
+        (postings[posting.journalId] ??= []).add(posting);
+      }
+
+      final journals = data.journals.where((entry) {
+        if (entry.status != 'posted' ||
+            (!_history &&
+                (entry.deletedAtUs != null || entry.kind == 'reversal')) ||
+            (_kind != 'all' && entry.kind != _kind)) {
+          return false;
+        }
+        if (query.isEmpty) return true;
+        final names = (postings[entry.id] ?? [])
+            .map((posting) => accounts[posting.accountId]?.name ?? '')
+            .join(' ');
+        final date = localizations.formatMediumDate(
+          DateTime.parse(entry.occurredOn),
+        );
+        return '${entry.description} ${entry.occurredOn} $date $names'
+            .toLowerCase()
+            .contains(query);
+      }).toList();
+
+      return SafeArea(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: CustomScrollView(
+              key: const PageStorageKey('money-activity-scroll'),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        FilledButton.icon(
+                          onPressed: () => context.push('/transaction/new'),
+                          icon: const Icon(Icons.add),
+                          label: Text(strings.text('addMoneyRecord')),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          key: const ValueKey('money-search'),
+                          decoration: InputDecoration(
+                            labelText: strings.text('moneySearch'),
+                            prefixIcon: const Icon(Icons.search),
+                          ),
+                          onChanged: (value) => setState(() => _query = value),
+                        ),
+                        ExpansionTile(
+                          tilePadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.filter_list),
+                          title: Text(strings.text('filters')),
+                          subtitle: _kind == 'all'
+                              ? null
+                              : Text(strings.text(_kind)),
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              children: [
+                                for (final kind in [
+                                  'all',
+                                  'income',
+                                  'expense',
+                                  'transfer',
+                                ])
+                                  ChoiceChip(
+                                    label: Text(strings.text(kind)),
+                                    selected: kind == _kind,
+                                    onSelected: (_) =>
+                                        setState(() => _kind = kind),
+                                  ),
+                              ],
+                            ),
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(strings.text('showCorrections')),
+                              value: _history,
+                              onChanged: (value) =>
+                                  setState(() => _history = value),
+                            ),
+                          ],
+                        ),
+                        if (journals.isEmpty)
+                          EmptyNotice(
+                            icon: Icons.receipt_long_outlined,
+                            title: strings.text('noMatches'),
+                            message: strings.text(
+                              query.isEmpty ? 'noActivity' : 'tryAnotherSearch',
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-            ],
-          ),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Show reversals and corrected originals'),
-            value: _history,
-            onChanged: (v) => setState(() => _history = v),
-          ),
-          const SizedBox(height: 12),
-          if (journals.isEmpty)
-            const EmptyNotice(
-              icon: Icons.receipt_long_outlined,
-              title: 'No transactions here yet',
-              message: 'Add income, an expense or a transfer. Your entries are saved even without an internet connection.',
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                  sliver: SliverList.builder(
+                    itemCount: journals.length,
+                    itemBuilder: (context, index) {
+                      final entry = journals[index];
+                      return JournalTile(
+                        key: ValueKey(entry.id),
+                        journal: entry,
+                        postings: postings[entry.id] ?? const [],
+                        accounts: accounts,
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          for (final journal in journals)
-            JournalTile(journal: journal, snapshot: data),
-        ],
+          ),
+        ),
       );
     },
   );
 }
 
 class JournalTile extends StatelessWidget {
-  const JournalTile({required this.journal, required this.snapshot, super.key});
+  const JournalTile({
+    required this.journal,
+    required this.postings,
+    required this.accounts,
+    super.key,
+  });
+
   final LedgerJournal journal;
-  final FinanceSnapshot snapshot;
+  final Iterable<LedgerPosting> postings;
+  final Map<String, LedgerAccount> accounts;
+
   @override
   Widget build(BuildContext context) {
-    final value = snapshot.postings
-        .where((p) => p.journalId == journal.id && p.amountMinor > 0)
-        .fold(BigInt.zero, (sum, p) => sum + BigInt.from(p.amountMinor));
-    final colors = Theme.of(context).colorScheme;
+    final strings = VaultStrings.of(context);
+    final theme = Theme.of(context);
+    final value = postings
+        .where((posting) => posting.amountMinor > 0)
+        .fold(
+          BigInt.zero,
+          (sum, posting) => sum + BigInt.from(posting.amountMinor),
+        );
+    final isMove = journal.kind == 'transfer';
+    // The ledger records the destination debit first. A move reads from its
+    // source account to its destination.
+    final ordered = isMove
+        ? (postings.toList()
+            ..sort((a, b) => a.amountMinor.compareTo(b.amountMinor)))
+        : postings;
+    final names = {
+      for (final posting in ordered)
+        if (accounts[posting.accountId] case final account?)
+          if (account.kind == 'asset' || account.kind == 'liability')
+            account.name,
+    };
+    final date = MaterialLocalizations.of(context)
+        .formatMediumDate(DateTime.parse(journal.occurredOn));
+    final kind = recordKindLabel(strings, journal.kind);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Card.outlined(
         child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: colors.surfaceContainerHighest,
-            child: Icon(switch (journal.kind) {
+          leading: VaultIcon(
+            icon: switch (journal.kind) {
               'income' => Icons.south_west,
               'expense' => Icons.north_east,
               'transfer' => Icons.swap_horiz,
               'reversal' => Icons.undo,
               _ => Icons.receipt_outlined,
-            }, color: colors.primary),
+            },
           ),
           title: Text(journal.description),
-          subtitle: Text(
-            '${journal.occurredOn} · ${journal.kind}${journal.deletedAtUs != null ? ' · Reversed' : ''}\n${formatInr(value)}',
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('$date · $kind'),
+              if (names.isNotEmpty)
+                Text(names.join(isMove && names.length == 2 ? ' → ' : ' · ')),
+              if (journal.deletedAtUs != null)
+                Text(strings.text('recordUndone')),
+              Text(formatInr(value), style: theme.textTheme.titleMedium),
+            ],
           ),
-          isThreeLine: true,
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push('/transaction/${journal.id}'),
         ),
@@ -150,6 +250,19 @@ class JournalTile extends StatelessWidget {
     );
   }
 }
+
+String recordKindLabel(VaultStrings strings, String kind) =>
+    strings.text(switch (kind) {
+      'income' => 'income',
+      'expense' => 'expense',
+      'transfer' => 'transfer',
+      'opening' => 'openingRecord',
+      'adjustment' => 'balanceChange',
+      'reversal' => 'reversalRecord',
+      'repayment' => 'loanPayment',
+      'business' => 'business',
+      _ => 'moneyRecord',
+    });
 
 class JournalDetailPage extends ConsumerStatefulWidget {
   const JournalDetailPage({required this.id, super.key});
@@ -163,7 +276,7 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
   Object? _error;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Transaction details')),
+    appBar: AppBar(title: const Text('Money record')),
     body: FinanceView(
       builder: (data) {
         final journal = data.journals
@@ -171,7 +284,7 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
             .firstOrNull;
         if (journal == null) {
           return const VaultContent(
-            children: [Text('Transaction unavailable in this family.')],
+            children: [Text('We couldn’t find this money record.')],
           );
         }
         final postings =
@@ -186,16 +299,19 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
             .where((j) => j.reversesId == journal.id)
             .firstOrNull;
         final link = data.journalLinks[journal.id];
+        final strings = VaultStrings.of(context);
         return VaultContent(
           maxWidth: 800,
           children: [
             MetricCard(
-              title: journal.deletedAtUs != null
-                  ? 'Reversed ${journal.kind}'
-                  : journal.kind[0].toUpperCase() + journal.kind.substring(1),
+              title: recordKindLabel(strings, journal.kind),
               value: formatInr(value),
               icon: Icons.receipt_long_outlined,
-              detail: journal.occurredOn,
+              detail: [
+                MaterialLocalizations.of(context)
+                    .formatMediumDate(DateTime.parse(journal.occurredOn)),
+                if (journal.deletedAtUs != null) strings.text('recordUndone'),
+              ].join(' · '),
               emphasis: true,
             ),
             const SizedBox(height: 24),
@@ -215,7 +331,7 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
               TextButton.icon(
                 onPressed: () => context.push('/asset/${link!.aggregateId}'),
                 icon: const Icon(Icons.diamond_outlined),
-                label: const Text('View related holding'),
+                label: const Text('Open the related item'),
               ),
             if (link?.aggregateType == 'debt')
               TextButton.icon(
@@ -253,15 +369,18 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
                     OutlinedButton.icon(
                       onPressed: _busy
                           ? null
-                          : () =>
-                                context.push('/transaction/${journal.id}/edit'),
+                          : () {
+                              ScaffoldMessenger.of(context)
+                                  .removeCurrentSnackBar();
+                              context.push('/transaction/${journal.id}/edit');
+                            },
                       icon: const Icon(Icons.edit_outlined),
-                      label: const Text('Correct entry'),
+                      label: const Text('Correct this record'),
                     ),
                   OutlinedButton.icon(
                     onPressed: _busy ? null : () => _reverse(journal.id),
                     icon: const Icon(Icons.undo),
-                    label: const Text('Reverse entry'),
+                    label: const Text('Undo this record'),
                   ),
                 ],
               ),
@@ -270,13 +389,13 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
                 onPressed: () =>
                     context.push('/transaction/${journal.reversesId}'),
                 icon: const Icon(Icons.history),
-                label: const Text('View original entry'),
+                label: const Text('See the original record'),
               ),
             if (reversed != null)
               TextButton.icon(
                 onPressed: () => context.push('/transaction/${reversed.id}'),
                 icon: const Icon(Icons.undo),
-                label: const Text('View reversal'),
+                label: const Text('See the undo record'),
               ),
             if (_error != null) ...[
               const SizedBox(height: 16),
@@ -285,7 +404,7 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
             const SizedBox(height: 24),
             Card.outlined(
               child: ExpansionTile(
-                title: const Text('Balanced accounting entries'),
+                title: const Text('Accounts in this record'),
                 children: [
                   for (final posting in postings)
                     ListTile(
@@ -305,7 +424,7 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
             ),
             const SizedBox(height: 24),
             LinkedDocuments(journalId: journal.id),
-            const SectionHeading('Audit history'),
+            const SectionHeading('Change history'),
             AuditHistory(entityId: journal.id),
           ],
         );
@@ -316,7 +435,7 @@ class _JournalDetailPageState extends ConsumerState<JournalDetailPage> {
     final text = await showDialog<String>(
       context: context,
       builder: (_) => const ReasonDialog(
-        title: 'Reverse this entry?',
+        title: 'Undo this money record?',
         message: 'This adds equal and opposite entries. The original and its audit trail stay intact.',
         confirmLabel: 'Reverse',
       ),

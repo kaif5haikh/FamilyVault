@@ -32,6 +32,7 @@ class DebtEditor extends ConsumerStatefulWidget {
 
 class _DebtEditorState extends ConsumerState<DebtEditor> {
   final _form = GlobalKey<FormState>();
+  final _termsPanel = ExpansibleController();
   final _name = TextEditingController(),
       _counterparty = TextEditingController(),
       _principal = TextEditingController();
@@ -57,6 +58,7 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
 
   @override
   void dispose() {
+    _termsPanel.dispose();
     for (final controller in [
       _name,
       _counterparty,
@@ -148,7 +150,7 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'The original opening entry will be reversed and replaced. Existing repayments must fit within the revised principal and dates.',
+                      'Your original record stays in history. The corrected amount and date must still fit the payments you’ve already saved.',
                     ),
                     const SizedBox(height: 24),
                   ] else ...[
@@ -160,7 +162,7 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                     ),
                     if (_creating)
                       RecordChoice<DebtDirection>(
-                        'Loan direction',
+                        'Who received the money?',
                         _direction,
                         [
                           for (final value in DebtDirection.values)
@@ -178,14 +180,14 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                   ],
                   if (_creating || _correcting) ...[
                     RecordField(
-                      'Opening principal',
+                      'Original loan amount',
                       _principal,
                       money: true,
                       required: true,
                       enabled: enabled,
                     ),
                     RecordDate(
-                      'Opening date',
+                      'Date the loan started',
                       _date,
                       (v) => setState(() => _date = v),
                       enabled: enabled,
@@ -193,9 +195,11 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                     SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
                       value: _funded,
-                      title: const Text('Record the cash or bank movement'),
+                      title: const Text(
+                        'Also record money going into or out of an account',
+                      ),
                       subtitle: const Text(
-                        'Choose this if funds changed hands on the opening date. Leave it off to carry in an existing balance.',
+                        'Turn this on to show the money movement in the account. Leave it off for an existing loan balance.',
                       ),
                       onChanged: enabled
                           ? (v) => setState(() => _funded = v)
@@ -222,58 +226,66 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                       maxLength: 400,
                       lines: 2,
                     )
-                  else ...[
-                    const SectionHeading('Interest and repayment terms'),
-                    RecordChoice<InterestMethod>(
-                      'Interest method',
-                      _method,
-                      [
-                        for (final method in InterestMethod.values)
-                          (method, interestLabel(method)),
-                      ],
-                      (v) => setState(() => _method = v),
-                      enabled: enabled,
-                    ),
-                    if (_method != InterestMethod.unrecorded)
-                      RecordField(
-                        'Annual rate (%)',
-                        _rate,
-                        scale: 2,
-                        required: true,
-                        enabled: enabled,
-                        hint: 'Enter zero for a confirmed interest-free loan.',
+                  else
+                    ExpansionTile(
+                      controller: _termsPanel,
+                      maintainState: true,
+                      tilePadding: EdgeInsets.zero,
+                      title: const Text(
+                        'Interest and payment dates (optional)',
                       ),
-                    RecordField(
-                      'Term in months (optional)',
-                      _months,
-                      scale: 0,
-                      enabled: enabled,
+                      children: [
+                        RecordChoice<InterestMethod>(
+                          'Interest method',
+                          _method,
+                          [
+                            for (final method in InterestMethod.values)
+                              (method, interestLabel(method)),
+                          ],
+                          (v) => setState(() => _method = v),
+                          enabled: enabled,
+                        ),
+                        if (_method != InterestMethod.unrecorded)
+                          RecordField(
+                            'Interest per year (%)',
+                            _rate,
+                            scale: 2,
+                            required: true,
+                            enabled: enabled,
+                            hint: 'Enter zero for a confirmed interest-free loan.',
+                          ),
+                        RecordField(
+                          'Months to repay (optional)',
+                          _months,
+                          scale: 0,
+                          enabled: enabled,
+                        ),
+                        RecordField(
+                          'Agreed monthly payment (optional)',
+                          _emi,
+                          money: true,
+                          enabled: enabled,
+                        ),
+                        _optionalDate(
+                          'First instalment due',
+                          _firstDue,
+                          (v) => setState(() => _firstDue = v),
+                        ),
+                        _optionalDate(
+                          'Final due date',
+                          _due,
+                          (v) => setState(() => _due = v),
+                        ),
+                        const SizedBox(height: 18),
+                        RecordField(
+                          'Notes (optional)',
+                          _notes,
+                          maxLength: 4000,
+                          lines: 3,
+                          enabled: enabled,
+                        ),
+                      ],
                     ),
-                    RecordField(
-                      'Agreed EMI (optional)',
-                      _emi,
-                      money: true,
-                      enabled: enabled,
-                    ),
-                    _optionalDate(
-                      'First instalment due',
-                      _firstDue,
-                      (v) => setState(() => _firstDue = v),
-                    ),
-                    _optionalDate(
-                      'Final due date',
-                      _due,
-                      (v) => setState(() => _due = v),
-                    ),
-                    const SizedBox(height: 18),
-                    RecordField(
-                      'Notes (optional)',
-                      _notes,
-                      maxLength: 4000,
-                      lines: 3,
-                      enabled: enabled,
-                    ),
-                  ],
                   if (_error != null) FailureNotice(_error!),
                   const SizedBox(height: 20),
                   FilledButton.icon(
@@ -283,7 +295,7 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
                       _saving
                           ? 'Saving…'
                           : _correcting
-                          ? 'Save principal correction'
+                          ? 'Save the corrected loan amount'
                           : 'Save loan',
                     ),
                   ),
@@ -315,6 +327,12 @@ class _DebtEditorState extends ConsumerState<DebtEditor> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) {
+      if (!_correcting &&
+          (_method != InterestMethod.unrecorded ||
+              _months.text.isNotEmpty ||
+              _emi.text.isNotEmpty)) {
+        _termsPanel.expand();
+      }
       return;
     }
     setState(() {
@@ -485,13 +503,13 @@ class _RepaymentEditorState extends ConsumerState<RepaymentEditor> {
                   ),
                   const SizedBox(height: 24),
                   RecordField(
-                    'Principal amount',
+                    'Amount paid toward the loan',
                     _principal,
                     money: true,
                     enabled: !_saving,
                   ),
                   RecordField(
-                    'Interest amount',
+                    'Interest paid',
                     _interest,
                     money: true,
                     enabled: !_saving,

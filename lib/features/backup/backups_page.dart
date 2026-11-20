@@ -88,7 +88,7 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
     final destination = ref.watch(localBackupProvider);
     final generated = _generated;
     return VaultPage(
-      title: 'Encrypted backups',
+      title: 'Safe copies',
       children: [
         FutureBuilder<LocalBackupStatus?>(
           future: _last ??= destination.read(session.identity),
@@ -100,7 +100,7 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
             final status = snapshot.data;
             if (status == null) {
               return const Text(
-                'Create a backup to keep a copy of this vault.',
+                'Keep a safe copy so you can bring your records back if you lose this phone.',
               );
             }
             final date = DateTime.fromMicrosecondsSinceEpoch(
@@ -110,13 +110,13 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SectionHeading('Latest backup'),
+                const SectionHeading('Latest safe copy'),
                 Text(MaterialLocalizations.of(context).formatMediumDate(date)),
                 const SizedBox(height: 8),
                 Text(
                   status.exportedAtUs == null
-                      ? 'Verified on this device.'
-                      : 'Your last file copy was read back and verified.',
+                      ? 'Your safe copy is ready on this phone.'
+                      : 'Your saved file was checked and is ready to use.',
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
@@ -124,20 +124,20 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
                       ? null
                       : () => _copy(session, destination, status),
                   icon: const Icon(Icons.download_outlined),
-                  label: const Text('Save a verified copy'),
+                  label: const Text('Save a copy file'),
                 ),
               ],
             );
           },
         ),
         const SizedBox(height: 24),
-        const SectionHeading('Create backup'),
+        const SectionHeading('Recovery key'),
         if (session.identity.isCloud)
           const Text(
-            'This backup includes the records and changes on this device.',
+            'This copy includes the records and changes saved on this phone.',
           ),
         const Text(
-          'Keep the recovery key somewhere separate. You need it to open the backup.',
+          'The recovery key opens your safe copy. Keep it somewhere separate from the file.',
         ),
         const SizedBox(height: 12),
         if (generated == null) ...[
@@ -175,7 +175,7 @@ class _BackupsPageState extends ConsumerState<BackupsPage> {
               ? null
               : () => _create(session, destination),
           icon: const Icon(Icons.backup_outlined),
-          label: const Text('Create encrypted backup'),
+          label: const Text('Make a safe copy'),
         ),
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) FailureNotice(_error!),
