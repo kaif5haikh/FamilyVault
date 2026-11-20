@@ -49,6 +49,7 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
   CloudJson? _selected;
   VaultIdentity? _recent;
   EnrollmentResult? _enrollment;
+  String? _joined;
   Object? _error;
   bool _busy = false;
   late final StreamSubscription<String?> _identitySubscription;
@@ -71,6 +72,7 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
         _enrollment = null;
         _selected = null;
         _recent = null;
+        _joined = null;
       });
     }, onError: (Object _) {});
     if (_gateway.userId != null) {
@@ -158,6 +160,63 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
     }
   });
 
+  Future<void> _reviewInvitation(CloudJson invitation) async {
+    final user = _gateway.userId;
+    final familyName = cloudText(invitation, 'family_name');
+    final invitedBy = invitation['invited_by_name'];
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final strings = VaultStrings.of(context);
+        return AlertDialog(
+          scrollable: true,
+          title: Text(
+            strings.message('Join {family}?', {'family': familyName}),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (invitedBy is String && invitedBy.isNotEmpty)
+                Text(strings.message('Invited by {name}', {'name': invitedBy})),
+              Text(strings.text('familyReviewAccess')),
+              const SizedBox(height: 8),
+              Text(strings.text('familyReviewPhone')),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(strings.text('familyNotNow')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(strings.text('acceptFamilyInvitation')),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted ||
+        accepted != true ||
+        user == null ||
+        user != _gateway.userId) {
+      return;
+    }
+    await _run(() async {
+      final id = cloudText(invitation, 'invite_id');
+      await _gateway.accept(id);
+      if (!mounted || user != _gateway.userId) return;
+      setState(() {
+        _joined = familyName;
+        _invitations = _invitations
+            .where((row) => row['invite_id'] != id)
+            .toList();
+      });
+      await _refresh();
+    });
+  }
+
   Future<CloudWorkspaceCache> _cache() async {
     final root = ref.read(vaultLifecycleProvider).root;
     return CloudWorkspaceCache(
@@ -204,6 +263,7 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
           _selected = null;
           _enrollment = null;
           _recent = null;
+          _joined = null;
         });
       }
     }
@@ -214,13 +274,22 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
     if (_gateway.userId == null) {
       return _signInForm();
     }
+    final strings = VaultStrings.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (_busy) const LinearProgressIndicator(),
         if (_error != null) FailureNotice(_error!),
+        if (_joined case final name?)
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              strings.message('You joined {family}.', {'family': name}),
+            ),
+          ),
         if (_families.isEmpty &&
             _invitations.isEmpty &&
+            _joined == null &&
             !_busy &&
             _error == null)
           Text(
@@ -233,28 +302,37 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
             child: ListTile(
               leading: const Icon(Icons.mail_outline),
               title: Text(cloudText(invite, 'family_name')),
-              subtitle: Text(context.tr('Family invitation')),
+              subtitle: Text(strings.text('reviewFamilyInvitation')),
               trailing: const Icon(Icons.chevron_right),
-              onTap: _busy
-                  ? null
-                  : () => _run(() async {
-                      await _gateway.accept(cloudText(invite, 'invite_id'));
-                      await _refresh();
-                    }),
+              onTap: _busy ? null : () => _reviewInvitation(invite),
             ),
           ),
         for (final family in _families)
           Card.outlined(
-            child: ListTile(
-              leading: const Icon(Icons.group_outlined),
-              title: Text(cloudText(family, 'family_name')),
-              subtitle: Text(
-                cloudText(family, 'role') == 'administrator'
-                    ? context.tr('Administrator')
-                    : context.tr('Family member'),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    cloudText(family, 'family_name'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  Text(
+                    strings.text(
+                      cloudText(family, 'role') == 'administrator'
+                          ? 'familyManager'
+                          : 'familyMember',
+                    ),
+                  ),
+                  if (_selected?['family_id'] != family['family_id'])
+                    OutlinedButton.icon(
+                      onPressed: _busy ? null : () => _register(family),
+                      icon: const Icon(Icons.phone_android_outlined),
+                      label: Text(strings.text('setUpFamilyPhone')),
+                    ),
+                ],
               ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: _busy ? null : () => _register(family),
             ),
           ),
         if (_enrollment case final enrollment?) ...[
@@ -301,13 +379,19 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
                 icon: const Icon(Icons.folder_open_outlined),
                 label: Text(context.tr('Open family records')),
               ),
-            if (_selected != null &&
-                enrollment.workspace?['role'] == 'administrator')
-              FamilyAdminPanel(
-                key: ValueKey(enrollment.deviceId),
-                familyId: cloudText(_selected!, 'family_id'),
-                memberId: cloudText(_selected!, 'member_id'),
-                gateway: _gateway,
+            if (_selected case final selection?
+                when enrollment.workspace?['role'] == 'administrator')
+              ExpansionTile(
+                title: Text(strings.text('familyInvitesAndPhones')),
+                children: [
+                  FamilyAdminPanel(
+                    key: ValueKey(enrollment.deviceId),
+                    familyId: cloudText(selection, 'family_id'),
+                    memberId: cloudText(selection, 'member_id'),
+                    gateway: _gateway,
+                    startsWithInvite: false,
+                  ),
+                ],
               ),
           ],
         ],
@@ -349,6 +433,8 @@ class _ConnectedAccessState extends ConsumerState<_ConnectedAccess> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SectionHeading(context.tr('Sign in to your family account')),
+        Text(VaultStrings.of(context).text('familySignInHelp')),
+        const SizedBox(height: 12),
         TextFormField(
           controller: _email,
           keyboardType: TextInputType.emailAddress,

@@ -3,6 +3,11 @@ part of 'vault_strings.dart';
 // Copy for feature screens and the safe messages returned by services.
 // Keep English keys and variable placeholders stable when editing a translation.
 const _hindiMessages = <String, String>{
+  "Join {family}?": "{family} से जुड़ें?",
+  "Invited by {name}": "{name} ने बुलाया है",
+  "You joined {family}.": "आप {family} से जुड़ गए हैं।",
+  "Open until {date}": "{date} तक खुला है",
+  "Phone used by {name}": "{name} का फ़ोन",
   "Change audit": "बदलावों का हिसाब",
   "Enter zero or a positive amount.": "शून्य या उससे बड़ी रकम लिखें।",
   "Choose an option.": "एक विकल्प चुनें।",

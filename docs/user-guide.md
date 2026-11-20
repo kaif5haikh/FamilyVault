@@ -12,11 +12,20 @@ lock first. Enter the family name and the name you want people to see on changes
 Use **Unlock records** when prompted. The app locks in the background, after
 five idle minutes or when you choose **Lock FamilyVault** in Settings.
 
-Use **Sign in to a family** for shared records. Each person uses their own
-account. Show the approval code on a new phone to the family administrator.
-They can compare it and approve the phone. Approved family members can read
-and edit shared records and documents. Use the **Family** tab to see who
-has access.
+## Invite or join your family
+
+Open **Family** to see the family name and who can use the shared records.
+If you manage the family, choose **Add family member**. Use the email the
+person will use to sign in and finish the verification prompts. Once the
+app says the invitation is ready, tell them which email to use. You can
+check pending invitations and phones under **Invitations and phones**.
+
+Choose **I have a family invitation** on the welcome screen, or **Sign in
+to a family** on the access screen. Use your own prepared account. Review
+the family name and shared access, then choose **Accept invitation** or
+**Not now**. After accepting, set up this phone and show its approval code
+to the family administrator. Approved members can use shared money records
+and documents.
 [Family access setup](supabase-development.md#provision-a-development-family).
 
 ## Record family money
@@ -73,7 +82,7 @@ records, sign in and have the phone approved.
 
 ## Get help
 
-Open **Show me how** from More. Search for a task such as gold, bank, loan
-or safe copy. The guide gives a short explanation and opens the screen
-where you can try it. You can read the guide without internet. You can also
-take the tour again from More.
+Open **Show me how** from More, Money or Family, or choose **Help** in
+Documents. Search for a task such as adding a bank account or inviting your
+mother. The guide explains the next step and opens the screen where you can
+try it. You can read the guide without internet and replay the tour from More.

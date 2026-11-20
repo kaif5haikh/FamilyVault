@@ -6,7 +6,8 @@ documents, independent identities, local plus encrypted Drive backups.
 
 ADR 0030 records the family-focused navigation, daily money shortcuts,
 optional remembered tour and offline help. ADR 0031 records the owner's
-choice of default English and conversational Hindi.
+choice of default English and conversational Hindi. ADR 0032 records the
+invitation review, direct invite form and named phone status.
 
 - Select conservative, explicitly documented accounting/rounding defaults where
   engineering requires a choice; preserve data and expose terms rather than

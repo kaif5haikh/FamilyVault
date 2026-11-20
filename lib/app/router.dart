@@ -74,14 +74,24 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/', builder: (context, state) => const WelcomePage()),
-      GoRoute(path: '/access', builder: (context, state) => const AccessPage()),
+      GoRoute(
+        path: '/access',
+        builder: (_, state) {
+          final join = state.uri.queryParameters['join'] == '1';
+          return AccessPage(key: ValueKey(join), join: join);
+        },
+      ),
       GoRoute(path: '/restore', builder: (_, _) => const RestoreBackupPage()),
       GoRoute(path: '/about', builder: (context, state) => const AboutPage()),
       GoRoute(
         path: '/welcome-tour',
         builder: (_, _) => const WelcomeTourPage(),
       ),
-      GoRoute(path: '/help', builder: (_, _) => const HelpPage()),
+      GoRoute(
+        path: '/help',
+        builder: (_, state) =>
+            HelpPage(area: state.uri.queryParameters['area']),
+      ),
       GoRoute(
         path: '/help/:topic',
         builder: (_, state) {
@@ -135,6 +145,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       _sectionRoute('/loans', 'liabilities', const DebtsPage()),
       _sectionRoute('/planning', 'budgets', const PlanningPage()),
       _sectionRoute('/reports', 'reports', const ReportsPage()),
+      GoRoute(
+        path: '/family/manage',
+        builder: (_, state) => FamilyManagementPage(
+          invite: state.uri.queryParameters['invite'] == '1',
+        ),
+      ),
       _sectionRoute(
         '/settings',
         'settings',

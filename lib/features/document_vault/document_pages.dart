@@ -199,6 +199,11 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
               selected: _archive,
               onSelected: (value) => setState(() => _archive = value),
             ),
+            TextButton.icon(
+              onPressed: () => context.push('/help?area=documents'),
+              icon: const Icon(Icons.help_outline),
+              label: Text(strings.text('shortHelp')),
+            ),
           ],
         ),
         const SizedBox(height: 12),

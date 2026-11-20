@@ -139,10 +139,11 @@ void main() {
 
       expect(find.text('Your records are locked'), findsOneWidget);
       await tap('Sign in to a family');
-      await tap('Synthetic shared family');
+      await tap('Set up this phone');
       expect(find.text('Device approved'), findsOneWidget);
       expect(find.text('Money available'), findsNothing);
-      await tap('Confirm you manage the family');
+      await tap('Invitations and phones');
+      await tap('Verify to see invitations and phones');
       await tap('Continue');
       final code = find.byWidgetPredicate(
         (w) =>
@@ -150,7 +151,7 @@ void main() {
       );
       await tester.enterText(code, '123456');
       await tap('Verify code');
-      expect(find.text('Invite a family member'), findsOneWidget);
+      expect(find.text('Add family member'), findsOneWidget);
       expect(find.text('Synthetic admin'), findsOneWidget);
       expect(lifecycle.status.phase, VaultPhase.locked);
       expect(tester.takeException(), isNull);

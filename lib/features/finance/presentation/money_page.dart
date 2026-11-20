@@ -14,6 +14,14 @@ class MoneyPage extends StatelessWidget {
       maxWidth: 680,
       children: [
         const MoneyActions(),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TextButton.icon(
+            onPressed: () => context.push('/help?area=money'),
+            icon: const Icon(Icons.help_outline),
+            label: Text(strings.text('help')),
+          ),
+        ),
         const SizedBox(height: 20),
         for (final (key, path, icon) in const [
           ('accounts', '/accounts', Icons.account_balance_outlined),

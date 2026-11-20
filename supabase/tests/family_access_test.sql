@@ -118,6 +118,22 @@ BEGIN
     PERFORM pg_temp.login_as(owner_user, owner_session, 'aal2');
     invite := public.fv_invite_member(owner_device, owner_proof, login_email, 'Synthetic member ' || slot, 'member');
     ASSERT public.fv_invite_member(owner_device, owner_proof, login_email, 'Synthetic member ' || slot, 'member') = invite;
+    IF slot = 1 THEN
+      RESET ROLE;
+      UPDATE fv_data.invitations
+        SET created_at = statement_timestamp() - interval '8 days', expires_at = statement_timestamp() - interval '1 day'
+        WHERE id = invite;
+      SET LOCAL ROLE authenticated;
+      PERFORM pg_temp.login_as(member_user, member_session);
+      ASSERT public.fv_list_access()->'invitations' = '[]'::jsonb;
+      BEGIN
+        PERFORM public.fv_accept_invite(invite);
+        RAISE EXCEPTION 'An expired invitation could be accepted';
+      EXCEPTION WHEN insufficient_privilege THEN NULL;
+      END;
+      PERFORM pg_temp.login_as(owner_user, owner_session, 'aal2');
+      invite := public.fv_invite_member(owner_device, owner_proof, login_email, 'Synthetic member ' || slot, 'member');
+    END IF;
     PERFORM pg_temp.login_as(outsider, outsider_session);
     ASSERT public.fv_list_access()->'invitations' = '[]'::jsonb;
     BEGIN
@@ -127,7 +143,15 @@ BEGIN
     END;
     PERFORM pg_temp.login_as(member_user, member_session);
     ASSERT (public.fv_list_access()->'invitations'->0->>'invite_id')::uuid = invite;
+    ASSERT public.fv_list_access()->'invitations'->0->>'invited_by_name' = 'Synthetic owner';
     ASSERT public.fv_accept_invite(invite) = owner_family;
+    PERFORM pg_temp.login_as(owner_user, owner_session, 'aal2');
+    BEGIN
+      PERFORM public.fv_invite_member(owner_device, owner_proof, login_email, 'Another member', 'member');
+      RAISE EXCEPTION 'A member received a duplicate membership invitation';
+    EXCEPTION WHEN invalid_parameter_value THEN NULL;
+    END;
+    PERFORM pg_temp.login_as(member_user, member_session);
     ASSERT public.fv_accept_invite(invite) = owner_family;
     member_id := (public.fv_list_access()->'families'->0->>'member_id')::uuid;
     ASSERT public.fv_request_device(owner_family, member_device, member_proof, 'Synthetic member phone', member_sign, member_exchange) = 'pending';

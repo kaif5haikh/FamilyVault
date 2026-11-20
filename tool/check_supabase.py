@@ -461,8 +461,12 @@ def run(scratch: Path, *, mobile: bool, objects: bool):
         owner_session = verified['access_token']
         invite = rpc('invite_member', {**owner_fields, 'p_email': 'member@example.invalid', 'p_name': 'Synthetic member',
             'p_relationship': 'member'}, owner_session)
+        assert rpc('list_access', {}, outsider_session)['invitations'] == []
+        review, = rpc('list_access', {}, member_session)['invitations']
+        assert review['invite_id'] == invite and review['invited_by_name'] == 'Synthetic owner'
         rpc('accept_invite', {'p_invite': invite}, outsider_session, status=403)
         assert rpc('accept_invite', {'p_invite': invite}, member_session) == family
+        assert rpc('list_access', {}, member_session)['invitations'] == []
         member_fields, member_fingerprint, member_keys = request_device(member_session)
         rpc('bind_device', member_fields, member_session, status=403)
         rpc('approve_device', {**owner_fields, 'p_candidate': member_fields['p_device'], 'p_fingerprint': member_fingerprint}, owner_session, status=204)

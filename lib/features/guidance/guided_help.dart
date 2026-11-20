@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../app/vault_providers.dart';
 import '../../core/localization/vault_strings.dart';
 import '../../shared/widgets/vault_widgets.dart';
+import '../auth/cloud_providers.dart';
 import '../foundation/foundation_pages.dart' show VaultPage;
 
 enum HelpTopic {
@@ -76,7 +77,7 @@ enum HelpTopic {
   invite(
     Icons.person_add_alt_outlined,
     '/family',
-    'family member invite sign in add access न्योता बुलाएँ इजाज़त',
+    'family member invite sign in add access father dad mother mom sister join accept papa mummy पापा पिता माँ मम्मी बहन जुड़ें न्योता बुलाएँ इजाज़त',
   ),
   own(
     Icons.inventory_2_outlined,
@@ -99,9 +100,31 @@ enum HelpTopic {
   String second(VaultStrings strings) => strings.text('help.$name.second');
 
   static Iterable<HelpTopic> search(String query, VaultStrings strings) {
+    const filler = {
+      'how',
+      'do',
+      'does',
+      'i',
+      'my',
+      'a',
+      'an',
+      'the',
+      'to',
+      'me',
+      'can',
+      'मैं',
+      'क्या',
+      'के',
+      'को',
+      'है',
+      'कैसे',
+      'मेरे',
+      'मेरी',
+      'मुझे',
+    };
     final words = _searchText(query)
-        .split(RegExp(r'[\s,.?!]+'))
-        .where((part) => part.isNotEmpty);
+        .split(RegExp(r'[\s,.?!।]+'))
+        .where((part) => part.isNotEmpty && !filler.contains(part));
     return values.where((topic) {
       final terms = _searchText('${topic.title(strings)} ${topic.keywords}');
       return words.every(terms.contains);
@@ -118,7 +141,9 @@ enum HelpTopic {
 }
 
 class HelpPage extends StatefulWidget {
-  const HelpPage({super.key});
+  const HelpPage({this.area, super.key});
+
+  final String? area;
 
   @override
   State<HelpPage> createState() => _HelpPageState();
@@ -130,7 +155,19 @@ class _HelpPageState extends State<HelpPage> {
   @override
   Widget build(BuildContext context) {
     final strings = VaultStrings.of(context);
-    final topics = HelpTopic.search(_query.trim(), strings).toList();
+    final topics = _query.trim().isNotEmpty
+        ? HelpTopic.search(_query.trim(), strings)
+        : switch (widget.area) {
+            'money' => const [
+              HelpTopic.received,
+              HelpTopic.spent,
+              HelpTopic.move,
+              HelpTopic.available,
+              HelpTopic.bank,
+            ],
+            'documents' => const [HelpTopic.addPaper, HelpTopic.findPaper],
+            _ => HelpTopic.values,
+          };
     return Scaffold(
       appBar: AppBar(title: Text(strings.text('help'))),
       body: VaultContent(
@@ -181,7 +218,13 @@ class _TopicGuidePageState extends ConsumerState<TopicGuidePage> {
     final status = ref.watch(vaultProvider);
     final session = status.session;
     final open = session != null && !session.closed;
-    final canGo = topic == HelpTopic.recover ? !status.hasVault : open;
+    final joining =
+        topic == HelpTopic.invite &&
+        !open &&
+        ref.watch(cloudConfigProvider).cloudConfigured;
+    final canGo = topic == HelpTopic.recover
+        ? !status.hasVault
+        : open || joining;
     return GuideFrame(
       title: strings.text('help'),
       heading: _step == 0 ? topic.title(strings) : strings.text('guideReady'),
@@ -198,12 +241,20 @@ class _TopicGuidePageState extends ConsumerState<TopicGuidePage> {
           context.go('/help');
         }
       },
-      primaryLabel: strings.text(_step == 0 ? 'next' : 'openScreen'),
+      primaryLabel: strings.text(
+        _step == 0
+            ? 'next'
+            : joining
+            ? 'joinFamily'
+            : 'openScreen',
+      ),
       onNext: _step == 0
           ? () => setState(() => _step++)
           : canGo
           ? () {
-              if (topic == HelpTopic.addPaper ||
+              if (joining) {
+                context.push('/access?join=1');
+              } else if (topic == HelpTopic.addPaper ||
                   topic == HelpTopic.findPaper ||
                   topic == HelpTopic.invite) {
                 context.go(topic.location);

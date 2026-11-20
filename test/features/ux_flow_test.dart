@@ -140,6 +140,29 @@ void main() {
     await tapVisible(tester, find.text(choice).last);
   }
 
+  testWidgets(
+    'a local family sees its own name and cannot reach invite controls',
+    (tester) async {
+      phone(tester, large: true);
+      await openLocalRecords(tester);
+      final container = await mount(tester);
+      await ready(tester, area('family'));
+      await tapVisible(tester, area('family'));
+      await ready(tester, find.text('Synthetic family'));
+      expect(find.text('Synthetic member'), findsOneWidget);
+      expect(find.text('Add family member'), findsNothing);
+      container.read(routerProvider).go('/family/manage?invite=1');
+      await ready(
+        tester,
+        find.text('Only the family administrator can manage family access.'),
+      );
+      expect(find.text('Save invitation'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await databaseIO(tester, lifecycle.lock);
+      await unmount(tester);
+    },
+  );
+
   testWidgets('first tour can go back and remembers completion on relaunch', (
     tester,
   ) async {

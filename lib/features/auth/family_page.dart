@@ -6,8 +6,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../app/vault_providers.dart';
 import '../../core/database/app_database.dart';
 import '../../core/localization/vault_strings.dart';
-import '../../core/security/vault_identity.dart';
 import '../../shared/widgets/vault_widgets.dart';
+import '../foundation/foundation_pages.dart';
 import 'cloud_providers.dart';
 import 'family_admin_panel.dart';
 
@@ -23,6 +23,21 @@ final _familyMembersProvider = StreamProvider.autoDispose<List<FamilyMember>>((
       .watch();
 });
 
+final _familyNameProvider = StreamProvider.autoDispose<String?>((ref) {
+  final session = ref.watch(vaultProvider).session;
+  if (session == null || session.closed) return const Stream.empty();
+  final db = session.db;
+  return (db.select(db.familySpaces)
+        ..where((row) => row.id.equals(session.identity.familyId)))
+      .watchSingleOrNull()
+      .map((row) => row?.name);
+});
+
+bool _canManage(List<FamilyMember> members, String memberId) => members.any(
+  (member) =>
+      member.id == memberId && member.active && member.role == 'administrator',
+);
+
 class FamilyPage extends ConsumerWidget {
   const FamilyPage({super.key});
 
@@ -33,7 +48,9 @@ class FamilyPage extends ConsumerWidget {
     final strings = VaultStrings.of(context);
     final identity = session.identity;
     final shared = identity.isCloud;
-    final config = ref.watch(cloudConfigProvider);
+    final configured = ref.watch(cloudConfigProvider).cloudConfigured;
+    final name =
+        ref.watch(_familyNameProvider).asData?.value ?? strings.text('family');
     return VaultContent(
       maxWidth: 680,
       children: [
@@ -43,24 +60,17 @@ class FamilyPage extends ConsumerWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                VaultIcon(
-                  icon: shared
-                      ? Icons.group_outlined
-                      : Icons.phone_android_outlined,
-                ),
+                const VaultIcon(icon: Icons.group_outlined),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        strings.text(shared ? 'sharedFamily' : 'localOnly'),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
+                      Text(name, style: Theme.of(context).textTheme.titleLarge),
                       const SizedBox(height: 4),
                       Text(
                         strings.text(
-                          shared ? 'sharedFamilyHelp' : 'localFamilyHelp',
+                          shared ? 'familySpaceHelp' : 'localFamilyHelp',
                         ),
                       ),
                     ],
@@ -70,8 +80,7 @@ class FamilyPage extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(height: 20),
-        SectionHeading(strings.text('people')),
+        const SizedBox(height: 12),
         ref
             .watch(_familyMembersProvider)
             .when(
@@ -79,53 +88,74 @@ class FamilyPage extends ConsumerWidget {
               error: (error, _) => FailureNotice(error),
               data: (members) {
                 final mayManage =
-                    shared &&
-                    members.any(
-                      (member) =>
-                          member.id == identity.memberId &&
-                          member.active &&
-                          member.role == 'administrator',
-                    );
+                    shared && _canManage(members, identity.memberId);
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (mayManage)
+                      FilledButton.icon(
+                        onPressed: () =>
+                            context.push('/family/manage?invite=1'),
+                        icon: const Icon(Icons.person_add_alt_outlined),
+                        label: Text(strings.text('addFamilyMember')),
+                      ),
+                    const SizedBox(height: 12),
+                    SectionHeading(strings.text('people')),
                     for (final member in members)
                       ListTile(
-                        leading: const Icon(Icons.person_outline),
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          child: Text(
+                            member.displayName.trim().characters.firstOrNull ??
+                                '?',
+                          ),
+                        ),
                         title: Text(member.displayName),
                         subtitle: Text(
                           [
                             if (member.id == identity.memberId)
                               strings.text('you'),
+                            if (!shared) strings.text('phone'),
                             if (shared)
                               strings.text(
                                 member.role == 'administrator'
                                     ? 'familyManager'
                                     : 'familyMember',
                               ),
-                            if (!member.active) strings.text('accessEnded'),
-                            if (!shared && member.id == identity.memberId)
-                              strings.text('phone'),
+                            if (shared)
+                              strings.text(
+                                member.active
+                                    ? 'familyHasAccess'
+                                    : 'accessEnded',
+                              ),
                           ].join(' · '),
                         ),
                       ),
-                    if (shared) Text(strings.text('managedAccess')),
+                    if (shared)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(strings.text('familyRolesHelp')),
+                      ),
                     if (mayManage)
-                      ExpansionTile(
-                        title: Text(strings.text('manageFamily')),
-                        children: [_FamilyControls(identity: identity)],
+                      VaultLink(
+                        icon: Icons.devices_outlined,
+                        title: strings.text('familyInvitesAndPhones'),
+                        onTap: () => context.push('/family/manage'),
                       ),
                   ],
                 );
               },
             ),
-        const SizedBox(height: 16),
         if (!shared)
-          if (config.cloudConfigured)
+          if (configured)
             OutlinedButton.icon(
-              onPressed: ref.read(vaultProvider.notifier).lock,
-              icon: const Icon(Icons.lock_outline),
-              label: Text(strings.text('lockToJoin')),
+              onPressed: () async {
+                final router = GoRouter.of(context);
+                await ref.read(vaultProvider.notifier).lock();
+                router.go('/access?join=1');
+              },
+              icon: const Icon(Icons.login),
+              label: Text(strings.text('joinFamily')),
             )
           else
             Text(strings.text('familyUnavailable')),
@@ -140,22 +170,49 @@ class FamilyPage extends ConsumerWidget {
   }
 }
 
-class _FamilyControls extends ConsumerWidget {
-  const _FamilyControls({required this.identity});
+class FamilyManagementPage extends ConsumerWidget {
+  const FamilyManagementPage({required this.invite, super.key});
 
-  final VaultIdentity identity;
+  final bool invite;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => ref
-      .watch(cloudGatewayProvider)
-      .when(
-        loading: () => const LinearProgressIndicator(),
-        error: (error, _) => FailureNotice(error),
-        data: (gateway) => FamilyAdminPanel(
-          key: ValueKey(identity.deviceId),
-          familyId: identity.familyId,
-          memberId: identity.memberId,
-          gateway: gateway,
-        ),
-      );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final strings = VaultStrings.of(context);
+    final session = ref.watch(vaultProvider).session;
+    final identity = session?.identity;
+    return VaultPage(
+      title: strings.text(
+        invite ? 'addFamilyMember' : 'familyInvitesAndPhones',
+      ),
+      children: [
+        if (identity == null || !identity.isCloud)
+          Text(strings.text('familyAdminOnly'))
+        else
+          ref
+              .watch(_familyMembersProvider)
+              .when(
+                loading: () => const LinearProgressIndicator(),
+                error: (error, _) => FailureNotice(error),
+                data: (members) {
+                  if (!_canManage(members, identity.memberId)) {
+                    return Text(strings.text('familyAdminOnly'));
+                  }
+                  return ref
+                      .watch(cloudGatewayProvider)
+                      .when(
+                        loading: () => const LinearProgressIndicator(),
+                        error: (error, _) => FailureNotice(error),
+                        data: (gateway) => FamilyAdminPanel(
+                          key: ValueKey(identity.deviceId),
+                          familyId: identity.familyId,
+                          memberId: identity.memberId,
+                          startsWithInvite: invite,
+                          gateway: gateway,
+                        ),
+                      );
+                },
+              ),
+      ],
+    );
+  }
 }

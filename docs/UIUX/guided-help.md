@@ -1,9 +1,10 @@
 # Show me how
 
-Open **Show me how** from the welcome screen or More. The workspace also has a
-Help control. The questions and steps are built into the app and available
-offline. Search matches words in the question or common terms such as
-salary, jewellery, loan, bank, backup and family.
+Open **Show me how** from the welcome screen or More. Money and Documents
+start with help for that section. Searching from either one still checks all
+16 topics. Family opens the invitation guide directly. The questions and
+steps are available offline, including everyday searches like “invite my
+mother” or “बहन न्योता”.
 
 Each topic first explains what the action does. The next step explains which
 fields or choices to use. **Back** returns to the explanation, **Exit guide**
@@ -19,7 +20,7 @@ next to the Add button or search field. The real workflow confirms a save.
 | See what we own or what we owe, or add a loan | Ownership list, loan list or loan form |
 | Add or find a family document | Documents with a hint by the relevant control |
 | Make a safe copy or bring back saved data | Safe copies or the setup restore screen |
-| Invite someone | Family, with the existing administrator verification for invites |
+| Invite someone or use an invitation | Family, or the family sign-in screen on a configured app before records are open |
 
 An example does not create records by itself. Protected destinations require
 the usual open records, and restore requires a phone without a FamilyVault

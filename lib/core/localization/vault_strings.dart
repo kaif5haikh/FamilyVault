@@ -63,6 +63,35 @@ final class VaultStrings {
   }
 
   static const _en = <String, String>{
+    'familySpaceHelp':
+        'This is your family space. See who can use your shared records.',
+    'familyHasAccess': 'Has access',
+    'familyRolesHelp': 'Family members can use shared money records and documents. The family administrator manages invitations and approves phones.',
+    'addFamilyMember': 'Add family member',
+    'familyInvitesAndPhones': 'Invitations and phones',
+    'familyAdminOnly':
+        'Only the family administrator can manage family access.',
+    'verifyFamilyAccess': 'Verify to see invitations and phones',
+    'familyInviteReady':
+        'The invitation is ready. Ask them to sign in with the email you used.',
+    'noFamilyInvites': 'No invitations are waiting.',
+    'familyInviteAccountHelp': 'Use the email they will sign in with. They need their own account before they can join.',
+    'familyInviteName': 'Their name',
+    'familyInviteEmail': 'Their email address',
+    'familyInviteEmailError': 'Enter a valid email address.',
+    'familyRelationshipExample': 'For example, father or sister',
+    'familyInviteNext': 'After they accept, you will approve their phone.',
+    'saveFamilyInvitation': 'Save invitation',
+    'hasFamilyInvitation': 'I have a family invitation',
+    'familyReviewAccess': 'You will be able to use this family’s shared money records and documents.',
+    'familyReviewPhone':
+        'After you accept, ask the family administrator to approve this phone.',
+    'familyNotNow': 'Not now',
+    'acceptFamilyInvitation': 'Accept invitation',
+    'reviewFamilyInvitation': 'Review your family invitation',
+    'setUpFamilyPhone': 'Set up this phone',
+    'familySignInHelp':
+        'Sign in with your own account. Use the email that was invited.',
     'choosePaperFile': 'Choose a file',
     'scanPaper': 'Use the camera',
     'documentUpdates': 'Updates to shared papers',
@@ -224,6 +253,32 @@ final class VaultStrings {
   };
 
   static const _hi = <String, String>{
+    'familySpaceHelp': 'यह आपके परिवार की जगह है। यहाँ देखें कि साझा रिकॉर्ड कौन इस्तेमाल कर सकता है।',
+    'familyHasAccess': 'इजाज़त है',
+    'familyRolesHelp': 'परिवार के लोग पैसों के साझा रिकॉर्ड और दस्तावेज़ इस्तेमाल कर सकते हैं। परिवार का एडमिन न्योते और फ़ोन की इजाज़त सँभालता है।',
+    'addFamilyMember': 'परिवार का सदस्य जोड़ें',
+    'familyInvitesAndPhones': 'न्योते और फ़ोन',
+    'familyAdminOnly': 'सिर्फ़ परिवार का एडमिन इजाज़त में बदलाव कर सकता है।',
+    'verifyFamilyAccess': 'न्योते और फ़ोन देखने के लिए पहचान जाँचें',
+    'familyInviteReady':
+        'न्योता तैयार है। उनसे कहें कि इसी ईमेल से साइन इन करें।',
+    'noFamilyInvites': 'कोई न्योता बाकी नहीं है।',
+    'familyInviteAccountHelp': 'वही ईमेल लिखें जिससे वे साइन इन करेंगे। परिवार से जुड़ने के लिए उनका अपना खाता होना चाहिए।',
+    'familyInviteName': 'उनका नाम',
+    'familyInviteEmail': 'उनका ईमेल पता',
+    'familyInviteEmailError': 'सही ईमेल पता लिखें।',
+    'familyRelationshipExample': 'जैसे पापा या बहन',
+    'familyInviteNext':
+        'वे न्योता स्वीकार करेंगे, फिर आप उनके फ़ोन को इजाज़त देंगे।',
+    'saveFamilyInvitation': 'न्योता सेव करें',
+    'hasFamilyInvitation': 'मेरे पास परिवार का न्योता है',
+    'familyReviewAccess': 'आप इस परिवार के पैसों के साझा रिकॉर्ड और दस्तावेज़ इस्तेमाल कर सकेंगे।',
+    'familyReviewPhone': 'न्योता स्वीकार करने के बाद परिवार के एडमिन से इस फ़ोन को इजाज़त देने को कहें।',
+    'familyNotNow': 'अभी नहीं',
+    'acceptFamilyInvitation': 'न्योता स्वीकार करें',
+    'reviewFamilyInvitation': 'परिवार का न्योता देखें',
+    'setUpFamilyPhone': 'इस फ़ोन को तैयार करें',
+    'familySignInHelp': 'अपने खाते से साइन इन करें। वही ईमेल इस्तेमाल करें जिस पर न्योता मिला है।',
     'choosePaperFile': 'फ़ाइल चुनें',
     'scanPaper': 'कैमरा खोलें',
     'documentUpdates': 'साझा दस्तावेज़ों की जानकारी',

@@ -24,14 +24,14 @@ class WelcomePage extends ConsumerStatefulWidget {
 class _WelcomePageState extends ConsumerState<WelcomePage> {
   bool _starting = false;
 
-  Future<void> _start() async {
+  Future<void> _start({bool join = false}) async {
     if (_starting) return;
     setState(() => _starting = true);
     await finishIntro(ref);
     if (!mounted) return;
     ref.invalidate(introSeenProvider);
     setState(() => _starting = false);
-    unawaited(context.push<void>('/access'));
+    unawaited(context.push<void>(join ? '/access?join=1' : '/access'));
   }
 
   @override
@@ -39,6 +39,7 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
     final strings = VaultStrings.of(context);
     final text = Theme.of(context).textTheme;
     final seen = ref.watch(introSeenProvider).asData?.value ?? false;
+    final configured = ref.watch(cloudConfigProvider).cloudConfigured;
     return VaultPage(
       title: 'FamilyVault',
       children: [
@@ -61,6 +62,12 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
             child: Text(strings.text('start')),
           ),
         ),
+        if (configured)
+          OutlinedButton.icon(
+            onPressed: _starting ? null : () => _start(join: true),
+            icon: const Icon(Icons.mail_outline),
+            label: Text(strings.text('hasFamilyInvitation')),
+          ),
         if (!seen)
           SizedBox(
             width: double.infinity,
@@ -81,14 +88,15 @@ class _WelcomePageState extends ConsumerState<WelcomePage> {
 }
 
 class AccessPage extends ConsumerStatefulWidget {
-  const AccessPage({super.key});
+  const AccessPage({this.join = false, super.key});
+  final bool join;
   @override
   ConsumerState<AccessPage> createState() => _AccessPageState();
 }
 
 class _AccessPageState extends ConsumerState<AccessPage> {
   bool _creating = false;
-  bool _cloud = false;
+  late bool _cloud = widget.join;
   final _form = GlobalKey<FormState>();
   final _family = TextEditingController();
   final _owner = TextEditingController();
@@ -110,7 +118,7 @@ class _AccessPageState extends ConsumerState<AccessPage> {
     final configured = ref.watch(cloudConfigProvider).cloudConfigured;
     if (_cloud && configured) {
       return VaultPage(
-        title: strings.text('family'),
+        title: strings.text('joinFamily'),
         children: [
           TextButton.icon(
             onPressed: () => setState(() => _cloud = false),
