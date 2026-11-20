@@ -620,3 +620,50 @@ separately. Continue with the business UI and executable backend policies.
   captures. Verified that task ADB, temporary provider services and the
   task-named system temporary paths were absent. Kept both signed releases
   and required evidence. No files were created on the handset for the test.
+
+## 2026-11-20 Family onboarding and handset retest
+
+- Verified the wired Motorola moto g34 5G in authorized ADB state. The phone
+  has Android 15, API 35, arm64-v8a and 16 GiB reported available. Preserved
+  both exact signed build 5 artifacts under the ignored QA directory and
+  matched the original signing certificate. Updated the same package from
+  build 4 to build 5 with `adb install --streaming -r --user 0`. The
+  installed APK hash matched. The first cold launch took 1,690 ms.
+- The handset opened its known synthetic local vault and exercised Family,
+  Money and its daily forms, accounts, ownership, debt, reports, document
+  file/camera choices, More, and the replayable tour. The captures use
+  the Android-protected app. Source and Git review found no implementation
+  from the accidental request.
+- Implemented the dedicated add-member page, acknowledged invite status,
+  invited-user review and acceptance, and named phone status. Kept the same
+  server authorization and added an inviter name to the existing scoped
+  response. Added contextual help from Money and Documents, family search
+  phrasing, and a direct invitation entry on configured welcome screens.
+- The first 320-point, 200% Hindi invite review clipped its actions. Made
+  the dialog scrollable. The focused Hindi review and verified invite-form
+  cases passed after the change.
+- The full-suite rerun also confirmed the administrator entry from the
+  opaque lock screen. The test uses the explicitly named phone setup
+  action, then the optional Invitations and phones controls. The local
+  directory test closes its Drift streams before teardown.
+- `bash tool/check.sh` passed 143 Flutter tests, five Deno tests, analysis,
+  generation, SQL and the dependency audit. The two opt-in tests passed
+  with real local Auth, Data API and private Storage. The API showed the
+  inviter only to the invited account. Tests also covered MFA and access
+  revocation. Recorded the source change as `6eba5cd`.
+- On build 5, the real bank guide opened its account form. Android Settings
+  switched to Hindi. After the normal device approval, the app reopened
+  the known synthetic expense with no default network. The original radio
+  values were restored. Opened the existing synthetic PDF preview.
+- `bash tool/build_android_release.sh` built signed 0.1.0+6. Verified the
+  original signing certificate and preserved build 5 digests. The Moto G34
+  installed build 6 in place, confirmed its exact APK digest and launched
+  the activity in 681 ms. After normal Android approval, opened the Family
+  screen, exercised contextual Money help in Hindi and restored the original
+  English preference. The scoped crash-buffer check returned zero fatal
+  exceptions for the app process.
+- The exact build 6 opened document help and found the invitation guide
+  from “invite my mother”. Checked the APK and App Bundle, the preserved
+  build 5 files, Android capture protection and the restored radio state.
+  Removed the task scratch and the known synthetic test fixture. Verified
+  that this run's provider services and temporary roots were gone.

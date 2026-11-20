@@ -5,6 +5,25 @@ Historical baseline evidence: 9 Flutter host tests,
 establish working auth, finance, sync, documents, backups or production readiness.
 Record exact command, date, outcome and material platform/provider limits below.
 
+## 2026-11-20 Guided family access
+
+- `bash tool/check.sh` passed formatting, generation, analysis, 143 Flutter
+  tests, five Deno tests, SQL checks and the 184-package advisory query.
+- The large-text Hindi review, explicit accept action, administrator form,
+  local-only guard and family help search passed. The existing test for
+  administrator verification before opening protected records also passed.
+- SQL verified expired, invalid and duplicate invitations, and kept the
+  inviter name scoped to the invited account. The two opt-in Flutter client
+  tests passed under `python3 -B tool/check_supabase.py --mobile --storage`.
+  The same run exercised Supabase Auth, MFA, invitation and phone approval.
+- The exact signed build 5 installed in place and reopened a known
+  synthetic expense offline. The original radio settings were restored.
+  The signed build 6 APK and App Bundle retained the original certificate.
+  The Moto G34 installed the matching APK, unlocked the local test vault,
+  opened Family in Hindi and English, opened contextual Money and Documents
+  help, and found the invitation guide by typing “invite my mother”.
+  [Handset evidence](../testing/android-physical-device-validation.md#2026-11-20-exact-build-5-handset-retest).
+
 ## 2026-11-20 English and Hindi
 
 - `bash tool/check.sh` passed analysis, formatting, generation, 139 Flutter

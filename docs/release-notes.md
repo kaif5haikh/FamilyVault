@@ -41,7 +41,14 @@ restart and remembered the selected language.
 Android build 5 uses English by default and offers conversational Hindi.
 The welcome screen and Settings have the same language picker. Hindi covers
 the tour, help, money, documents, family management and safe copies. The
-signed files passed release checks and await the handset retest.
-[Hindi copy audit](UIUX/hindi-copy-audit.md). [Build 5 details](testing/android-physical-device-validation.md#signed-build-5-with-english-and-hindi).
+Moto G34 verified the exact build 5 APK, both languages and offline reopening.
+[Hindi copy audit](UIUX/hindi-copy-audit.md). [Build 5 handset results](testing/android-physical-device-validation.md#2026-11-20-exact-build-5-handset-retest).
+
+Android build 6 puts the family name, people, roles and access on the Family
+tab. Administrators can open an invitation form from there. Invited people
+can review shared access, accept and see the phone approval step. Money and
+Documents link to help for those tasks. The local Supabase run verified the
+existing family access controls with the updated invitation response.
+[Build 6 results](testing/android-physical-device-validation.md#2026-11-20-signed-build-6-with-guided-family-access).
 
 [Installation](installation.md). [User guide](user-guide.md). [Migration guide](migration-guide.md). [Recovery](backup-recovery.md).

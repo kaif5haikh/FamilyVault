@@ -413,3 +413,81 @@ left in place. Phone queries and screenshots streamed to the host. The
 test restored the original radio settings and kept existing app data.
 See `manifest.txt` and `evidence/cleanup.txt` beside the preserved build 4
 files.
+
+## 2026-11-20 Exact build 5 handset retest
+
+The wired ADB transport reported `device` for a Motorola moto g34 5G
+running Android 15, API 35, arm64-v8a. Android reported 16 GiB available
+and a 720 × 1600 display at 280 dpi. The handset was in landscape at
+the time of the screenshots.
+
+`adb install --streaming -r --user 0` updated `app.familyvault.familyvault`
+from version 0.1.0 build 4 to build 5. The installer and `apksigner` accepted
+the existing development certificate. The on-device base APK's SHA-256 was
+`294465225e08fd72e2dfa863e7bb9d336e31505bb40eef770626cfc1e44bbe5b`, matching
+the preserved APK. The first cold launch reported 1,690 ms. The known
+synthetic local vault opened with the standard Android device check.
+
+| Test on the exact build 5 APK | Observation |
+| --- | --- |
+| Navigation and forms | Opened all five destinations, received, spent and move forms, Accounts, What we own, What we owe, and Reports. Returned from the money forms and secondary pages. |
+| Documents and family | Opened file and camera choices, searched for the existing synthetic PDF and opened its preview. Family displayed the known synthetic operator and the local-only status. Shared family access requires a configured server. |
+| Intro and help | Replayed the tour, reached its second step and skipped. Searched for bank and followed the guide to the bank-account form. The first-use path was also covered by a clean host fixture. |
+| English and Hindi | Opened Settings in English, selected Hindi and verified translated Settings and Family labels. The protected screen reopened in Hindi after restart. |
+| Offline restart | Android reported airplane mode with no active default network. A timed-out attempt took 791 ms. On the completed retry, the app launched in 822 ms. After the owner's normal Android approval, Hindi and the known 29-paise synthetic expense were visible with no network. Verified the restored radio settings. |
+| Memory | A scoped `dumpsys meminfo` sample reported 100,699 KiB total PSS while the vault was open. |
+| Capture protection | Captured the protected lock, Family, money form, document choices and Hindi Family screens. UI checks used the Android accessibility tree. |
+
+The build 5 APK and App Bundle, redacted install receipt, UI observations and
+protected screenshots are retained under
+`.local/qa/family-onboarding-moto-20261120/`. The retest exercised existing
+synthetic records and form entry points. The phone kept its existing data.
+The new signed release is documented separately below.
+
+## 2026-11-20 Signed build 6 with guided family access
+
+`bash tool/build_android_release.sh` built the APK and App Bundle from the
+family onboarding changes. `apksigner`, `zipalign`, `jarsigner` and
+bundletool passed. Both artifacts match the original development certificate
+SHA-256 `1e1f07c0060bc0206c4ee8d9984646ecd08a2f8f286fdc1208acaf697973be86`.
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `build/app/outputs/flutter-apk/app-release.apk` | 95,162,265 | `5a87e13c52e8ff9e104f98d52fccb02093c844c4cc5fcdf4ae3bc35bb664d72a` |
+| `build/app/outputs/bundle/release/app-release.aab` | 83,968,588 | `4a9f1a298b404cd9b628c5324131c254414a9169cbc598735ed06c2b547102b0` |
+
+The build 6 APK updated the same package in place on the Moto G34. Android
+reported version 0.1.0 and code 6. The installed base APK's digest matched
+the tested artifact. The first cold launch took 681 ms to the protected
+activity. The build 5 originals were checked again against their saved
+digests.
+
+After the owner's Android approval, the exact build 6 reopened the known
+synthetic vault in Hindi. Family showed its member list and Money opened its
+own Show me how topics. Settings switched back to English and the Family
+screen opened again. Documents opened its contextual help. Searching from
+there for “invite my mother” found the family invitation guide. No fatal
+exception appeared in the scoped crash-buffer
+sample for that process. The protected captures `build6-family-hindi.png`
+and `build6-family-english.png` are retained with the redacted observations.
+
+The 320-point host test checked the Hindi review dialog, accepting and
+keeping an invitation pending, and the next phone approval step at 200%
+text. A verified administrator form check saved a synthetic invitation
+and showed it under Pending invitations. The SQL and disposable Supabase
+tests exercised real Auth, the verified inviter view, outsider denial,
+expiry, duplicate membership, MFA, phone approval and revoked sessions.
+The signed handset app used its local vault. A hosted family needs its own
+configured Supabase service and would require a separate handset check.
+
+### Cleanup
+
+Removed the task's `.cache/tmp/fv-family-onboarding-20261120` directory and
+the exact encrypted widget fixture left by the interrupted layout test.
+Confirmed the test vault and provider roots, provider pods, task-only ADB
+listener, and task-named system temporary paths were absent. The phone's
+radio settings and English preference were restored. Android fixture files
+were unnecessary because the device test used the existing synthetic vault.
+The two signed releases and the checked screen captures remain in ignored
+project paths. See `manifest.txt` and `evidence/cleanup.txt` in the task QA
+directory.

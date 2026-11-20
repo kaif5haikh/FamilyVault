@@ -19,8 +19,8 @@ Baseline `6b5d93c`. Device signed build 3 and its digests are preserved in
 - [x] Ship English and conversational Hindi choices, preserve the original
   Marathi catalog and verify the language preference and large Hindi text.
 - [x] Build and verify signed build 5 with the original certificate.
-- [ ] Install build 5 on the Moto G34 and repeat English and Hindi checks
-  when the wired device is available to ADB.
+- [x] Install the exact signed build 5 on the Moto G34, verify both languages
+  and reopen the known synthetic expense offline.
 
 See the [Android validation report](../testing/android-physical-device-validation.md#2026-11-20-usb-retest-and-language-correction)
 for commands, digests and evidence.
