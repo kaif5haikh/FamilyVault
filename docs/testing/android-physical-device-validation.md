@@ -256,3 +256,84 @@ checks listed above remain open.
 - [x] Startup, memory, themes, rotation and capture protection measurements.
 - [x] Regression checks, final artifact verification and signed physical retest.
 - [x] Evidence retained, temporary files verified removed, and fixes pushed.
+
+## 2026-11-20 Family usability update
+
+The handset baseline for this update was the Motorola Moto G34 5G with
+Android 15, API 35, arm64 and a 720 × 1600 display at 280 dpi. On 19 November
+ADB brought the existing signed build 3 to its locked screen. The hot return
+took 175 ms in that sample. Both build 3 binaries were copied to
+`.local/qa/ux-moto-20261119/baseline/` and their digests rechecked.
+
+After the session resumed on 20 November, repeated USB discovery found no
+Motorola device. Installation, first use, accessibility, restart and timing
+for the redesigned build on that handset remain pending. The physical results
+above describe build 3.
+
+### Recorded validation
+
+| Check | Result |
+| --- | --- |
+| `bash tool/check.sh` | Formatter, code generation, analysis, 137 Flutter cases, five Deno cases, migration, SQL and dependency checks passed. |
+| Local Supabase with `--mobile --storage` | Two joined tests passed using independent clients with local Auth, Data API and private Storage. |
+| First use and help | Host tests finished and skipped the tour, reopened the app with saved preferences, searched offline and followed real money and document routes. Marathi choices persisted. |
+| Money and records | Host tests verified exact received, spent, moved and corrected amounts, assets, loans and business stock with encrypted Drift. A transfer shows the source before the receiving account. |
+| Privacy and accessibility | Host tests checked device lock with document views and pending streams, Android button target sizes, 320-point layouts at 200% text and wide layouts at 1200 points. |
+| Documents and safe copies | Host tests covered picker handoff through lock, opening, export, access audit and verified local and mock Drive restore. |
+| Temporary Android 16 emulator | Installed the first signed build 4 candidate and matched its installed APK digest. The emulator process stopped before the activity launched. Two alternate renderer configurations were tried. The captured host exits were 139, 132 and 139. |
+
+The source changes fixed duplicate navigation state on rapid route changes,
+an earlier save notice covering the correction form, and races between
+record views detaching and the encrypted database closing. Rendered checks
+also found a long label splitting on the smallest navigation layout.
+
+### Rendered evidence
+
+These screenshots came from host widget tests using synthetic records, the
+phone-sized viewport and Flutter SDK fonts. The Android app keeps its platform
+capture protection.
+
+| Local evidence under `.local/qa/ux-moto-20261119/evidence/` | View checked |
+| --- | --- |
+| `home-synthetic.png` | Home totals, direct daily actions and activity at 390 logical points |
+| `home-320-large-text.png` | Cash total and both rows of navigation at 320 points and 200% text |
+| `welcome-tour.png` and `guide-money-received.png` | Optional tour and help before opening the real form |
+| `money-received.png` | Amount, account, category, date and optional note in one normal-sized view |
+| `documents-search.png` and `family-local.png` | Document search and explicit local family access |
+
+The corresponding host and emulator command output is in
+`full-check-final.txt`, `local-supabase.txt`, `large-label-regression.txt` and
+`emulator-validation.txt`. Hosted Supabase, Google OAuth and iOS builds
+require separate validation.
+
+### Signed build 4
+
+`bash tool/build_android_release.sh` built 0.1.0+4. APK signature and
+alignment, App Bundle signature and structure checks passed. Both files
+match the existing development certificate SHA-256
+`1e1f07c0060bc0206c4ee8d9984646ecd08a2f8f286fdc1208acaf697973be86`.
+The package ID is `app.familyvault.familyvault`, with minimum SDK 24,
+target SDK 36 and arm64-v8a, armeabi-v7a and x86_64 libraries. Android app
+backup, debugging and cleartext traffic are disabled. The permission audit
+matched build 3.
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `build/app/outputs/flutter-apk/app-release.apk` | 94,752,841 | `057eeb5764150f58c6b15449182e84afaef4726d312b2745d5ef79c5ba8c5e0c` |
+| `build/app/outputs/bundle/release/app-release.aab` | 83,563,683 | `93e3d1526e312da77678c667a4fe911d1d905586c64ebf38c108b2e2eb45f617` |
+
+The final files and checks are recorded in `final-artifacts.txt` and
+`release-build-final.txt`. Validate installation, the first-use tour, returning
+access, accessibility and core workflows on the Moto G34 once USB is
+available. The emulated installation receipt belongs to the earlier signed
+candidate and its automated launch could not be exercised.
+
+### Cleanup
+
+Removed the recorded scratch tree and the three synthetic vaults from
+interrupted host runs. Disposed of both temporary emulator configurations,
+their app data and the synthetic passcode. Verified that the QA listeners,
+disposable Pods, test cluster paths and task-named system temporary paths
+were gone. The Moto G34 received no new fixture files. The original signed
+binaries, final release files and local evidence are retained.
+See `manifest.txt` and `evidence/cleanup.txt`.

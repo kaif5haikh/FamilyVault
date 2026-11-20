@@ -5,6 +5,30 @@ Historical baseline evidence: 9 Flutter host tests,
 establish working auth, finance, sync, documents, backups or production readiness.
 Record exact command, date, outcome and material platform/provider limits below.
 
+## 2026-11-20 Family usability regression
+
+- `bash tool/check.sh` passed formatting, generation and analysis, 137
+  Flutter tests and five Deno tests. The 130 existing Flutter cases still
+  run. Seven additions cover tour completion and skip, Marathi persistence,
+  offline help and route guards, exact income and transfers, tab and Back
+  behavior, touch targets, 320-point layouts at 200% text and lock with
+  pending query cleanup.
+- The financial UI cases wrote encrypted Drift records and verified whole
+  paise after corrections, value changes, loan payments and inventory. The
+  document and safe-copy cases kept the picker lock handoff, preview, export,
+  integrity and restore assertions.
+- `python3 -B tool/check_supabase.py --mobile --storage` passed two joined
+  provider tests with independent clients and local Auth, Data API and private
+  Storage. It checked receipt replay, paise, revisions, family boundary and
+  historical document keys. The Drive test exercised its synthetic HTTP
+  provider.
+- The package check queried 184 hosted Pub dependencies with no advisory
+  matches. The PostgreSQL migration and access checks, 51 PostgreSQL design
+  probes and 50 future SQLite design probes passed.
+- The Moto G34 ran signed build 3 at the beginning of this validation. USB
+  was unavailable for the redesigned build during the resumed session.
+  [Android device and artifact evidence](../testing/android-physical-device-validation.md).
+
 ## 2026-11-19 Moto G34 Android validation
 
 - `bash tool/check.sh` passed. Flutter analysis was clean and 130 Flutter

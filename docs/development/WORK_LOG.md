@@ -544,3 +544,40 @@ separately. Continue with the business UI and executable backend policies.
   with the project path manifest, package and radio checks, and the isolated
   PostgreSQL and Podman inventory. The release stays installed and locked.
   The original binaries and final validation evidence are retained.
+
+## 2026-11-20 Family usability update
+
+- Reviewed each routed flow, the previous Android QA report and the signed
+  build 3 lock screen on the Moto G34. Preserved both original signed files
+  and verified their digests. Committed the audit and permanent cleanup
+  instructions in `d72b510`.
+- Implemented the five-tab workspace, compact Home, specific money forms,
+  document shortcuts, family access view, tour and offline guidance. Kept
+  the required data, receipt and access rules and added Marathi to the
+  common language catalog.
+- The targeted host tests found overlapping shell navigation, a correction
+  save covered by a previous notice and a linked-document read interrupted
+  by lock. Updated those flows and their regression tests. A whole-suite
+  run exposed a Drift query-stream cleanup race during vault lock. Retrying
+  the close after the pending cleanup preserves the fail-closed state and
+  releases the database. Added a lock, reopen and exact-balance regression.
+- Confirmed `kaif5haikh/FamilyVault` is public and uses the designated SSH
+  origin. Moto G34 USB was absent during the resumed work. Host captures use
+  only synthetic data. Ownership and test paths are recorded in
+  `.local/qa/ux-moto-20261119/manifest.txt`.
+- Committed the vault cleanup fix in `a9d25f2` and the redesign in
+  `ddeec73`. The final captures exposed a split Documents label at
+  320 points and 200% text. Adjusted the wrapped navigation label size in
+  `dbe2547` and verified both rows visually. The final Flutter run passed
+  137 cases. The full check passed SQL validation, dependency audit and five
+  Deno tests. Both joined local Supabase tests passed.
+- A disposable Android 16 emulator installed the first signed candidate
+  and reported its matching digest, then exited before launch. Renderer
+  retries also exited at the emulator process level. Physical build 4
+  behavior remains pending a USB connection.
+- The final `bash tool/build_android_release.sh` completed with the original
+  certificate on both outputs. Rechecked build 3's saved digests. Removed
+  exact task scratch paths, fixtures, disposable emulators and their ADB
+  listener. Verified there were no task-named system temporary paths.
+  Next device action is an in-place install of the verified build 4 APK on
+  the Moto G34 without clearing its existing app data.

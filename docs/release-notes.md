@@ -31,4 +31,11 @@ camera, notification and hosted-service checks. Live Supabase and Google
 Drive require approved service and OAuth configuration. iOS build and runtime
 validation require macOS with Xcode. [Physical Android validation](testing/android-physical-device-validation.md).
 
+Android build 4 adds the five-tab layout, a shorter Home, separate received
+and spent forms, clearer ownership and debt screens, an optional tour and
+offline Show me how. Marathi is available for guidance and common tasks.
+The host regression, local provider and signing checks passed. The signed
+build 4 handset check is pending a Moto G34 USB connection.
+[Family usability results](testing/android-physical-device-validation.md#2026-11-20-family-usability-update).
+
 [Installation](installation.md). [User guide](user-guide.md). [Migration guide](migration-guide.md). [Recovery](backup-recovery.md).

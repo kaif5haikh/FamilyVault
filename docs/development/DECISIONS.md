@@ -4,6 +4,9 @@ See ADR 0004 for execution authority and migration strategy. Confirmed product
 choices in ADR 0003 remain binding: INR integer paise, shared family records and
 documents, independent identities, local plus encrypted Drive backups.
 
+ADR 0030 records the family-focused navigation, daily money shortcuts,
+optional remembered tour, Marathi support and offline help.
+
 - Select conservative, explicitly documented accounting/rounding defaults where
   engineering requires a choice; preserve data and expose terms rather than
   silently guessing loan/valuation facts. No real family records are seeded.

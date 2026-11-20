@@ -4,6 +4,16 @@ The signed Android 0.1.0 development release was physically exercised on a
 Motorola Moto G34 5G. See the device report for the build-by-build results.
 The implementation baseline was `b9a2705`.
 
+The usability update adds a five-tab workspace, a compact Home screen,
+direct received, spent and move forms, an optional remembered tour and 16
+offline help topics. Shared navigation, guidance and daily money labels
+include Marathi. Detailed screens with untranslated labels use English.
+The encrypted Drift workflows and local provider tests passed.
+The signed 0.1.0+4 APK and App Bundle verify under the original development
+certificate. The Moto G34 physical results cover build 3. Build 4 remains
+pending a USB-connected handset for physical validation.
+[Usability checklist](../UIUX/implementation-checklist.md).
+
 | Area | Actual baseline | Current result |
 | --- | --- | --- |
 | App | Locked welcome/access/about, theme, Riverpod/GoRouter | Device-authenticated local setup/unlock, encrypted overview and automatic privacy/locking wired/tested |
